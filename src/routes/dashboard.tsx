@@ -66,8 +66,11 @@ export const Route = createFileRoute("/dashboard")({
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
-const formatDate = (date: string) =>
-  new Date(date).toLocaleDateString("pt-BR");
+const formatDate = (date: string) => {
+  if (!date) return "—";
+  const [year, month, day] = date.split("-");
+  return `${day}/${month}/${year}`;
+};
 
 const getStatusInfo = (status: string, returnDate: string) => {
   const today = new Date().toISOString().split("T")[0];
@@ -119,7 +122,7 @@ function StatCard({
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">{title}</p>
-          <p className="text-lg font-bold text-white mt-0.5 truncate">{value}</p>
+          <p className="text-sm sm:text-lg font-bold text-white mt-0.5 leading-tight">{value}</p>
           {description && <p className="text-xs text-slate-500 mt-0.5">{description}</p>}
         </div>
       </CardContent>
@@ -489,7 +492,7 @@ function DashboardPage() {
                       <p className="text-2xl font-bold text-blue-400">{formatCurrency(Number(inv.invested_amount))}</p>
 
                       {/* Grid de info */}
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+                      <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] sm:text-xs">
                         <InfoRow label="Porcentagem" value={`${inv.profit_percent}%`} />
                         <InfoRow label="Lucro" value={formatCurrency(Number(inv.expected_profit || 0))} valueColor="text-emerald-400" />
                         <InfoRow label="Retorno" value={formatCurrency(Number(inv.expected_return || 0))} />
@@ -499,11 +502,11 @@ function DashboardPage() {
                       {/* Ações */}
                       {inv.status === "active" && (
                         <div className="flex gap-2 pt-1 border-t border-slate-700/60">
-                          <Button size="sm" variant="ghost" onClick={() => openEditModal(inv)} className="flex-1 text-slate-400 hover:text-white hover:bg-slate-700 text-xs h-8">
-                            <Pencil className="h-3 w-3 mr-1" /> Editar
+                          <Button size="sm" variant="ghost" onClick={() => openEditModal(inv)} className="flex-1 text-slate-400 hover:text-white hover:bg-slate-700 text-xs h-8 min-w-0">
+                            <Pencil className="h-3 w-3 mr-1 shrink-0" /> Editar
                           </Button>
-                          <Button size="sm" onClick={() => openFinishModal(inv)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs h-8">
-                            Finalizar <ArrowRight className="h-3 w-3 ml-1" />
+                          <Button size="sm" onClick={() => openFinishModal(inv)} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs h-8 min-w-0">
+                            Finalizar <ArrowRight className="h-3 w-3 ml-1 shrink-0" />
                           </Button>
                         </div>
                       )}
