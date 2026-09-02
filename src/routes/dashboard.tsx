@@ -109,14 +109,14 @@ function StatCard({ title, value, icon: Icon, color, iconColor, description, ind
       className="bg-zinc-900/80 border-zinc-800 hover:border-yellow-500/40 transition-all duration-300 hover:scale-[1.02] cursor-default group animate-fade-in-up"
       style={{ animationDelay: `${index * 80}ms`, animationFillMode: "both" }}
     >
-      <CardContent className="p-5 flex items-start gap-4">
-        <div className={`p-2.5 rounded-xl ${color} border border-zinc-800 group-hover:border-yellow-500/30 transition-colors`}>
-          <Icon className={`h-5 w-5 ${iconColor}`} />
+      <CardContent className="p-4 sm:p-5 flex items-start gap-3 sm:gap-4 overflow-hidden">
+        <div className={`p-2 sm:p-2.5 rounded-xl ${color} border border-zinc-800 group-hover:border-yellow-500/30 transition-colors shrink-0`}>
+          <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${iconColor}`} />
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">{title}</p>
+        <div className="min-w-0 flex-1 overflow-hidden">
+          <p className="text-[10px] sm:text-[11px] font-semibold text-zinc-500 uppercase tracking-wider truncate">{title}</p>
           <p className="stat-value text-zinc-100">{value}</p>
-          {description && <p className="text-[10px] text-zinc-600 mt-1 font-medium">{description}</p>}
+          {description && <p className="text-[9px] sm:text-[10px] text-zinc-600 mt-0.5 sm:mt-1 font-medium">{description}</p>}
         </div>
       </CardContent>
     </Card>
