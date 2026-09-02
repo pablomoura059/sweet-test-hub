@@ -1,6 +1,6 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Plus, Search, Pencil, Trash2, ArrowLeft, Users, Check,
   Camera, User, Phone, Calendar, FileText, DollarSign,
@@ -65,21 +65,61 @@ const formatDateBR = (date: string | null | undefined) => {
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
+const getSignedPhotoUrl = (url: string | null | undefined): string | null => {
+  if (!url) return null;
+  // Se já é URL absoluta (outro bucket, CDN, etc), retornar direto
+  if (url.startsWith('http')) return url;
+  // Se é path relativo, montar URL pública do Supabase Storage
+  const cleanPath = url.startsWith('/') ? url.slice(1) : url;
+  return `https://ajzcvdbakonpjlvknhpa.supabase.co/storage/v1/object/public/${cleanPath}`;
+};
+
 function PersonAvatar({ photoUrl, name, size = "md" }: {
   photoUrl: string | null | undefined; name: string; size?: "sm" | "md" | "lg" | "xl";
 }) {
+  const [imgError, setImgError] = useState(false);
+  const resolvedUrl = getSignedPhotoUrl(photoUrl);
+  const initials = name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
+
   const sc = { sm: "w-8 h-8", md: "w-10 h-10", lg: "w-14 h-14", xl: "w-20 h-20" };
   const ic = { sm: "h-4 w-4", md: "h-5 w-5", lg: "h-7 w-7", xl: "h-10 w-10" };
-  const initials = name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
+
   return (
     <div className={`${sc[size]} rounded-full overflow-hidden bg-[#1e2d42] border-2 border-[#26364D] flex items-center justify-center shrink-0`}>
-      {photoUrl ? (
-        <img src={photoUrl} alt={name} className="w-full h-full object-cover" />
+      {resolvedUrl && !imgError ? (
+        <img
+          src={resolvedUrl}
+          alt={name}
+          className="w-full h-full object-cover"
+          onError={() => setImgError(true)}
+        />
       ) : (
         <div className="flex flex-col items-center justify-center">
           {size === "xl" && <span className="text-sm font-bold text-[#718096]">{initials}</span>}
           <User className={ic[size] + " text-[#718096]"} />
         </div>
+      )}
+    </div>
+  );
+}
+
+function PersonAvatarSmall({ photoUrl, name }: {
+  photoUrl: string | null | undefined; name: string;
+}) {
+  const [imgError, setImgError] = useState(false);
+  const resolvedUrl = getSignedPhotoUrl(photoUrl);
+
+  return (
+    <div className="w-7 h-7 rounded-full overflow-hidden bg-[#1e2d42] border border-[#26364D] flex items-center justify-center shrink-0">
+      {resolvedUrl && !imgError ? (
+        <img
+          src={resolvedUrl}
+          alt={name}
+          className="w-full h-full object-cover"
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        <User className="h-3.5 w-3.5 text-[#718096]" />
       )}
     </div>
   );
@@ -132,8 +172,8 @@ function PeoplePage() {
     const path = `${userId}/${personId}.${ext}`;
     const { error } = await supabase.storage.from("person-photos").upload(path, file, { upsert: true });
     if (error) { toast.error("Erro ao fazer upload da foto"); return null; }
-    const { data } = supabase.storage.from("person-photos").getPublicUrl(path);
-    return data.publicUrl;
+    // Retornar path relativo para ser convertido em URL pública
+    return path;
   };
 
   const createMutation = useMutation({
@@ -145,7 +185,12 @@ function PeoplePage() {
         notes: formNotes || null, photo_url: null,
       }).select().single();
       if (error) throw error;
-      if (photoFile && data) await uploadPhoto(session.user.id, data.id, photoFile);
+      if (photoFile && data) {
+        const photoPath = await uploadPhoto(session.user.id, data.id, photoFile);
+        if (photoPath) {
+          await supabase.from("people").update({ photo_url: photoPath }).eq("id", data.id);
+        }
+      }
     },
     onSuccess: () => {
       toast.success("Pessoa cadastrada com sucesso!", { className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium !rounded-xl" });
@@ -355,7 +400,6 @@ function PeoplePage() {
         )}
       </main>
 
-      {/* Create / Edit Dialog */}
       <Dialog open={isFormOpen} onOpenChange={(open) => { if (!open) closeForm(); }}>
         <DialogContent className="bg-[#101A2B] border border-[#26364D] text-[#F3F6FA] max-h-[90vh] overflow-y-auto max-w-md animate-scale-in">
           <DialogHeader>
@@ -419,7 +463,6 @@ function PeoplePage() {
         </DialogContent>
       </Dialog>
 
-      {/* Profile Dialog */}
       <Dialog open={!!viewPerson} onOpenChange={() => setViewPerson(null)}>
         <DialogContent className="bg-[#101A2B] border border-[#26364D] text-[#F3F6FA] max-h-[90vh] overflow-y-auto max-w-md animate-scale-in">
           {viewPerson && (() => {
@@ -540,7 +583,6 @@ function PeoplePage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Dialog */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent className="bg-[#101A2B] border-[#26364D] animate-scale-in">
           <AlertDialogHeader>

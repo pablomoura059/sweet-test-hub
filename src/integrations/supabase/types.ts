@@ -31,6 +31,7 @@ export type Database = {
           notes: string | null
           created_at: string
           updated_at: string
+          person_id: string | null
         }
         Insert: {
           id?: string
@@ -46,6 +47,7 @@ export type Database = {
           actual_profit?: number | null
           profit_difference?: number | null
           finalized_at?: string | null
+          person_id?: string | null
         }
         Update: {
           id?: string
@@ -61,6 +63,36 @@ export type Database = {
           actual_profit?: number | null
           profit_difference?: number | null
           finalized_at?: string | null
+          person_id?: string | null
+        }
+      }
+      people: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          photo_url: string | null
+          phone: string | null
+          birth_date: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          photo_url?: string | null
+          phone?: string | null
+          birth_date?: string | null
+          notes?: string | null
+        }
+        Update: {
+          name?: string
+          photo_url?: string | null
+          phone?: string | null
+          birth_date?: string | null
+          notes?: string | null
         }
       }
     }
