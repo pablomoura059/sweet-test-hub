@@ -486,13 +486,13 @@ function DashboardPage() {
                       </div>
 
                       {/* Valor principal */}
-                      <p className="text-2xl font-bold text-blue-400">{formatCurrency(Number(invested_amount))}</p>
+                      <p className="text-2xl font-bold text-blue-400">{formatCurrency(Number(inv.invested_amount))}</p>
 
                       {/* Grid de info */}
                       <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
                         <InfoRow label="Porcentagem" value={`${inv.profit_percent}%`} />
-                        <InfoRow label="Lucro" value={formatCurrency(Number(invested_profit || 0))} valueColor="text-emerald-400" />
-                        <InfoRow label="Retorno" value={formatCurrency(Number(invested_return || 0))} />
+                        <InfoRow label="Lucro" value={formatCurrency(Number(inv.expected_profit || 0))} valueColor="text-emerald-400" />
+                        <InfoRow label="Retorno" value={formatCurrency(Number(inv.expected_return || 0))} />
                         <InfoRow label="Início" value={formatDate(inv.start_date)} />
                       </div>
 
