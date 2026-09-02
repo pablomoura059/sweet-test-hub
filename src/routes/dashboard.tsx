@@ -81,12 +81,12 @@ const getStatusInfo = (status: string, returnDate: string) => {
 };
 
 const STAT_CARDS = [
-  { key: "totalInvested", icon: Wallet, color: "bg-yellow-500/10", iconColor: "text-yellow-500" },
-  { key: "totalInStreet", icon: DollarSign, color: "bg-yellow-500/10", iconColor: "text-yellow-500" },
+  { key: "totalInvested", icon: Wallet, color: "bg-blue-600/10", iconColor: "text-blue-400" },
+  { key: "totalInStreet", icon: DollarSign, color: "bg-blue-600/10", iconColor: "text-blue-400" },
   { key: "expectedProfit", icon: TrendingUp, color: "bg-emerald-500/10", iconColor: "text-emerald-400" },
-  { key: "expectedReturn", icon: PieChart, color: "bg-yellow-500/10", iconColor: "text-yellow-500" },
+  { key: "expectedReturn", icon: PieChart, color: "bg-blue-600/10", iconColor: "text-blue-400" },
   { key: "receivedProfit", icon: Activity, color: "bg-emerald-500/10", iconColor: "text-emerald-400" },
-  { key: "activeCount", icon: Clock, color: "bg-yellow-500/10", iconColor: "text-yellow-500" },
+  { key: "activeCount", icon: Clock, color: "bg-blue-600/10", iconColor: "text-blue-400" },
 ] as const;
 
 const CARD_LABELS: Record<string, { title: string; description: string }> = {
@@ -106,17 +106,17 @@ function StatCard({ title, value, icon: Icon, color, iconColor, description, ind
 }) {
   return (
     <Card
-      className="bg-zinc-900/80 border-zinc-800 hover:border-yellow-500/40 transition-all duration-300 hover:scale-[1.02] cursor-default group animate-fade-in-up"
+      className="bg-[#162235] border-[#26364D] hover:border-blue-500/40 transition-all duration-300 hover:scale-[1.02] cursor-default group animate-fade-in-up"
       style={{ animationDelay: `${index * 80}ms`, animationFillMode: "both" }}
     >
       <CardContent className="p-3 sm:p-5 flex items-start gap-2.5 sm:gap-4 overflow-hidden">
-        <div className={`p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl ${color} border border-zinc-800 group-hover:border-yellow-500/30 transition-colors shrink-0`}>
+        <div className={`p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl ${color} border border-[#26364D] group-hover:border-blue-500/30 transition-colors shrink-0`}>
           <Icon className={`h-3.5 w-3.5 sm:h-5 sm:w-5 ${iconColor}`} />
         </div>
         <div className="min-w-0 flex-1 overflow-hidden">
-          <p className="text-[9px] sm:text-[11px] font-semibold text-zinc-500 uppercase tracking-wider truncate">{title}</p>
-          <p className="stat-value text-zinc-100 leading-none">{value}</p>
-          {description && <p className="text-[8px] sm:text-[10px] text-zinc-600 mt-0.5 sm:mt-1 font-medium">{description}</p>}
+          <p className="text-[9px] sm:text-[11px] font-semibold text-[#718096] uppercase tracking-wider truncate">{title}</p>
+          <p className="stat-value text-[#F3F6FA] leading-none">{value}</p>
+          {description && <p className="text-[8px] sm:text-[10px] text-[#718096] mt-0.5 sm:mt-1 font-medium">{description}</p>}
         </div>
       </CardContent>
     </Card>
@@ -136,26 +136,26 @@ function StatusBadge({ status, returnDate }: { status: string; returnDate: strin
 function SectionHeader({ title }: { title: string }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-zinc-800 to-transparent" />
-      <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-widest px-2">{title}</h2>
-      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-zinc-800 to-transparent" />
+      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#26364D] to-transparent" />
+      <h2 className="text-xs font-bold text-[#718096] uppercase tracking-widest px-2">{title}</h2>
+      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-[#26364D] to-transparent" />
     </div>
   );
 }
 
-function InfoRow({ label, value, valueColor = "text-zinc-300" }: { label: string; value: string; valueColor?: string }) {
+function InfoRow({ label, value, valueColor = "text-[#AAB5C5]" }: { label: string; value: string; valueColor?: string }) {
   return (
     <div className="flex justify-between items-center gap-2 py-1">
-      <span className="text-[11px] text-zinc-600 font-medium">{label}</span>
+      <span className="text-[11px] text-[#718096] font-medium">{label}</span>
       <span className={`text-[11px] font-semibold ${valueColor}`}>{value}</span>
     </div>
   );
 }
 
-function SummaryRow({ label, value, valueColor = "text-zinc-200" }: { label: string; value: string; valueColor?: string }) {
+function SummaryRow({ label, value, valueColor = "text-[#F3F6FA]" }: { label: string; value: string; valueColor?: string }) {
   return (
     <div className="flex justify-between items-center py-1.5">
-      <span className="text-xs text-zinc-500 font-medium">{label}</span>
+      <span className="text-xs text-[#AAB5C5] font-medium">{label}</span>
       <span className={`text-sm font-semibold ${valueColor}`}>{value}</span>
     </div>
   );
@@ -224,7 +224,7 @@ function DashboardPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Empréstimo cadastrado com sucesso!", { className: "!bg-zinc-900 !border-yellow-500/30 !text-zinc-100 !font-medium" });
+      toast.success("Empréstimo cadastrado com sucesso!", { className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium" });
       queryClient.invalidateQueries({ queryKey: ["investments"] });
       setIsNewLoanOpen(false);
       setFormData(emptyForm);
@@ -238,7 +238,7 @@ function DashboardPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Empréstimo atualizado!", { className: "!bg-zinc-900 !border-yellow-500/30 !text-zinc-100 !font-medium" });
+      toast.success("Empréstimo atualizado!", { className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium" });
       queryClient.invalidateQueries({ queryKey: ["investments"] });
       setEditData(null);
     },
@@ -258,7 +258,7 @@ function DashboardPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Empréstimo finalizado!", { className: "!bg-zinc-900 !border-yellow-500/30 !text-zinc-100 !font-medium" });
+      toast.success("Empréstimo finalizado!", { className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium" });
       queryClient.invalidateQueries({ queryKey: ["investments"] });
       setFinishData(null);
     },
@@ -271,7 +271,7 @@ function DashboardPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Empréstimo excluído", { className: "!bg-zinc-900 !border-yellow-500/30 !text-zinc-100 !font-medium" });
+      toast.success("Empréstimo excluído", { className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium" });
       queryClient.invalidateQueries({ queryKey: ["investments"] });
       setDeleteId(null);
     },
@@ -347,35 +347,35 @@ function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#0B0D10" }}>
+    <div className="min-h-screen" style={{ backgroundColor: "#0B1220" }}>
       {/* ── Header ─────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800/60">
+      <header className="sticky top-0 z-40 bg-[#101A2B]/95 backdrop-blur-xl border-b border-[#26364D]/60">
         <div className="flex items-center justify-between px-4 py-3 max-w-5xl mx-auto">
           <div className="flex items-center gap-3">
             <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors">
+                <Button variant="ghost" size="icon" className="text-[#718096] hover:text-[#F3F6FA] hover:bg-[#162235] transition-colors">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="bg-zinc-950 border-zinc-800 w-72">
+              <SheetContent side="left" className="bg-[#101A2B] border-[#26364D] w-72">
                 <SheetHeader>
-                  <SheetTitle className="text-zinc-100 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-yellow-600 to-yellow-700 flex items-center justify-center shadow-lg shadow-yellow-600/20">
+                  <SheetTitle className="text-[#F3F6FA] flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2F6FED] to-[#1a4fd4] flex items-center justify-center shadow-lg shadow-blue-600/20">
                       <span className="text-sm font-bold text-white">$</span>
                     </div>
                     <div>
-                      <div className="text-sm font-bold">Empréstimos</div>
-                      <div className="text-[10px] text-zinc-600 font-normal">Sistema financeiro</div>
+                      <div className="text-sm font-bold text-[#F3F6FA]">Empréstimos</div>
+                      <div className="text-[10px] text-[#718096] font-normal">Sistema financeiro</div>
                     </div>
                   </SheetTitle>
                 </SheetHeader>
                 <nav className="mt-8 space-y-1">
-                  <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-yellow-600/10 border border-yellow-600/30 text-yellow-500 text-sm font-semibold cursor-default">
+                  <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-[#2F6FED]/10 border border-[#2F6FED]/30 text-[#2F6FED] text-sm font-semibold cursor-default">
                     <Activity className="h-4 w-4" />
                     Dashboard
                   </button>
-                  <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-500 hover:text-zinc-200 hover:bg-zinc-900 text-sm transition-colors cursor-pointer">
+                  <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[#718096] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm transition-colors cursor-pointer">
                     <LogOut className="h-4 w-4" />
                     Sair
                   </button>
@@ -383,72 +383,72 @@ function DashboardPage() {
               </SheetContent>
             </Sheet>
 
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-yellow-600 to-yellow-700 flex items-center justify-center shadow-lg shadow-yellow-600/20">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2F6FED] to-[#1a4fd4] flex items-center justify-center shadow-lg shadow-blue-600/20">
               <span className="text-sm font-bold text-white">$</span>
             </div>
-            <h1 className="text-base font-bold text-zinc-100 tracking-tight">Empréstimos</h1>
+            <h1 className="text-base font-bold text-[#F3F6FA] tracking-tight">Empréstimos</h1>
           </div>
 
           <Dialog open={isNewLoanOpen} onOpenChange={setIsNewLoanOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" className="bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-500 hover:to-yellow-600 text-white shadow-lg shadow-yellow-600/20 font-semibold transition-all duration-200 active:scale-95">
+              <Button size="sm" className="bg-gradient-to-r from-[#2F6FED] to-[#1a4fd4] hover:from-[#3d7ef5] hover:to-[#2a5ee0] text-white shadow-lg shadow-blue-600/20 font-semibold transition-all duration-200 active:scale-95">
                 <Plus className="h-4 w-4" />
                 Novo
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-zinc-950 border border-zinc-800 text-zinc-100 max-h-[90vh] overflow-y-auto max-w-md animate-scale-in">
+            <DialogContent className="bg-[#101A2B] border border-[#26364D] text-[#F3F6FA] max-h-[90vh] overflow-y-auto max-w-md animate-scale-in">
               <DialogHeader>
-                <DialogTitle className="text-lg font-bold text-zinc-100">Novo Empréstimo</DialogTitle>
-                <DialogDescription className="text-zinc-500 text-sm">Cadastre um novo empréstimo ou investimento</DialogDescription>
+                <DialogTitle className="text-lg font-bold text-[#F3F6FA]">Novo Empréstimo</DialogTitle>
+                <DialogDescription className="text-[#AAB5C5] text-sm">Cadastre um novo empréstimo ou investimento</DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmitLoan} className="space-y-5">
                 <div className="space-y-1.5">
-                  <Label htmlFor="person_name" className="text-xs font-semibold text-zinc-400">Nome da Pessoa *</Label>
-                  <Input id="person_name" value={formData.person_name} onChange={(e) => setFormData({ ...formData, person_name: e.target.value })} placeholder="Nome completo" className="bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-700 focus:border-yellow-600 focus:ring-1 focus:ring-yellow-600/50" required />
+                  <Label htmlFor="person_name" className="text-xs font-semibold text-[#AAB5C5]">Nome da Pessoa *</Label>
+                  <Input id="person_name" value={formData.person_name} onChange={(e) => setFormData({ ...formData, person_name: e.target.value })} placeholder="Nome completo" className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50" required />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="invested_amount" className="text-xs font-semibold text-zinc-400">Valor (R$) *</Label>
-                    <Input id="invested_amount" type="number" step="0.01" min="0" value={formData.invested_amount} onChange={(e) => setFormData({ ...formData, invested_amount: e.target.value })} placeholder="0,00" className="bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-700 focus:border-yellow-600 focus:ring-1 focus:ring-yellow-600/50" required />
+                    <Label htmlFor="invested_amount" className="text-xs font-semibold text-[#AAB5C5]">Valor (R$) *</Label>
+                    <Input id="invested_amount" type="number" step="0.01" min="0" value={formData.invested_amount} onChange={(e) => setFormData({ ...formData, invested_amount: e.target.value })} placeholder="0,00" className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50" required />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="profit_percent" className="text-xs font-semibold text-zinc-400">Porcentagem (%) *</Label>
-                    <Input id="profit_percent" type="number" step="0.01" min="0" value={formData.profit_percent} onChange={(e) => setFormData({ ...formData, profit_percent: e.target.value })} placeholder="30" className="bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-700 focus:border-yellow-600 focus:ring-1 focus:ring-yellow-600/50" required />
+                    <Label htmlFor="profit_percent" className="text-xs font-semibold text-[#AAB5C5]">Porcentagem (%) *</Label>
+                    <Input id="profit_percent" type="number" step="0.01" min="0" value={formData.profit_percent} onChange={(e) => setFormData({ ...formData, profit_percent: e.target.value })} placeholder="30" className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50" required />
                   </div>
                 </div>
 
                 {formData.invested_amount && formData.profit_percent && (
-                  <div className="p-3 rounded-xl bg-yellow-600/5 border border-yellow-600/20 space-y-1.5">
-                    <p className="text-[10px] font-bold text-yellow-600 uppercase tracking-wider">Prévia do cálculo</p>
+                  <div className="p-3 rounded-xl bg-[#C9A45C]/5 border border-[#C9A45C]/20 space-y-1.5">
+                    <p className="text-[10px] font-bold text-[#C9A45C] uppercase tracking-wider">Prévia do cálculo</p>
                     <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div><span className="text-zinc-500">Lucro:</span> <span className="text-emerald-400 font-semibold ml-1">{formatCurrency(calcProfit())}</span></div>
-                      <div><span className="text-zinc-500">Retorno:</span> <span className="text-zinc-200 font-semibold ml-1">{formatCurrency(calcReturn())}</span></div>
+                      <div><span className="text-[#AAB5C5]">Lucro:</span> <span className="text-emerald-400 font-semibold ml-1">{formatCurrency(calcProfit())}</span></div>
+                      <div><span className="text-[#AAB5C5]">Retorno:</span> <span className="text-[#F3F6FA] font-semibold ml-1">{formatCurrency(calcReturn())}</span></div>
                     </div>
                   </div>
                 )}
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="start_date" className="text-xs font-semibold text-zinc-400">Data de Início *</Label>
-                    <Input id="start_date" type="date" value={formData.start_date} onChange={(e) => setFormData({ ...formData, start_date: e.target.value })} className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-yellow-600 focus:ring-1 focus:ring-yellow-600/50 [&::-webkit-calendar-picker-indicator]:invert-50" required />
+                    <Label htmlFor="start_date" className="text-xs font-semibold text-[#AAB5C5]">Data de Início *</Label>
+                    <Input id="start_date" type="date" value={formData.start_date} onChange={(e) => setFormData({ ...formData, start_date: e.target.value })} className="bg-[#162235] border-[#26364D] text-[#F3F6FA] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50 [&::-webkit-calendar-picker-indicator]:invert-50" required />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="return_date" className="text-xs font-semibold text-zinc-400">Data de Retorno *</Label>
-                    <Input id="return_date" type="date" value={formData.return_date} onChange={(e) => setFormData({ ...formData, return_date: e.target.value })} className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-yellow-600 focus:ring-1 focus:ring-yellow-600/50 [&::-webkit-calendar-picker-indicator]:invert-50" required />
+                    <Label htmlFor="return_date" className="text-xs font-semibold text-[#AAB5C5]">Data de Retorno *</Label>
+                    <Input id="return_date" type="date" value={formData.return_date} onChange={(e) => setFormData({ ...formData, return_date: e.target.value })} className="bg-[#162235] border-[#26364D] text-[#F3F6FA] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50 [&::-webkit-calendar-picker-indicator]:invert-50" required />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="notes" className="text-xs font-semibold text-zinc-400">Observações</Label>
-                  <Textarea id="notes" value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="Observações opcionais..." className="bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-700 resize-none focus:border-yellow-600 focus:ring-1 focus:ring-yellow-600/50" rows={3} />
+                  <Label htmlFor="notes" className="text-xs font-semibold text-[#AAB5C5]">Observações</Label>
+                  <Textarea id="notes" value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="Observações opcionais..." className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] resize-none focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50" rows={3} />
                 </div>
 
                 <div className="flex gap-3 pt-1">
-                  <Button type="button" variant="outline" onClick={() => setIsNewLoanOpen(false)} className="flex-1 border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100 transition-colors" disabled={createMutation.isPending}>
+                  <Button type="button" variant="outline" onClick={() => setIsNewLoanOpen(false)} className="flex-1 border-[#26364D] text-[#AAB5C5] hover:bg-[#162235] hover:text-[#F3F6FA] transition-colors" disabled={createMutation.isPending}>
                     Cancelar
                   </Button>
-                  <Button type="submit" className="flex-1 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-500 hover:to-yellow-600 text-white font-semibold transition-all active:scale-95" disabled={createMutation.isPending}>
+                  <Button type="submit" className="flex-1 bg-gradient-to-r from-[#2F6FED] to-[#1a4fd4] hover:from-[#3d7ef5] hover:to-[#2a5ee0] text-white font-semibold transition-all active:scale-95" disabled={createMutation.isPending}>
                     {createMutation.isPending ? "Salvando..." : "Salvar"}
                   </Button>
                 </div>
@@ -483,7 +483,7 @@ function DashboardPage() {
           {isLoading ? (
             <div className="grid sm:grid-cols-2 gap-3">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-5 space-y-4">
+                <div key={i} className="bg-[#162235] border border-[#26364D] rounded-2xl p-5 space-y-4">
                   <div className="flex items-center justify-between">
                     <Skeleton className="h-4 w-32 rounded skeleton-shimmer" />
                     <Skeleton className="h-5 w-20 rounded-full skeleton-shimmer" />
@@ -506,24 +506,24 @@ function DashboardPage() {
                 return (
                   <Card
                     key={inv.id}
-                    className="bg-zinc-900/80 border-zinc-800 hover:border-zinc-700 transition-all duration-300 hover:scale-[1.01] group animate-fade-in-up"
+                    className="bg-[#162235] border-[#26364D] hover:border-[#2F6FED]/40 transition-all duration-300 hover:scale-[1.01] group animate-fade-in-up"
                     style={{ animationDelay: `${idx * 60}ms`, animationFillMode: "both" }}
                   >
                     <CardContent className="p-5 space-y-4">
                       {/* Header */}
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
-                          <User className="h-4 w-4 text-zinc-600 shrink-0" />
-                          <p className="font-bold text-zinc-100 truncate text-sm">{inv.person_name}</p>
+                          <User className="h-4 w-4 text-[#718096] shrink-0" />
+                          <p className="font-bold text-[#F3F6FA] truncate text-sm">{inv.person_name}</p>
                         </div>
                         <StatusBadge status={inv.status} returnDate={inv.return_date} />
                       </div>
 
                       {/* Valor principal */}
-                      <p className="text-xl sm:text-2xl font-bold text-zinc-100 leading-none">{formatCurrency(Number(inv.invested_amount))}</p>
+                      <p className="text-xl sm:text-2xl font-bold text-[#F3F6FA] leading-none">{formatCurrency(Number(inv.invested_amount))}</p>
 
                       {/* Grid de info */}
-                      <div className="border-t border-zinc-800/60 pt-3 space-y-0">
+                      <div className="border-t border-[#26364D]/60 pt-3 space-y-0">
                         <InfoRow label="Porcentagem" value={`${inv.profit_percent}%`} />
                         <InfoRow label="Lucro" value={formatCurrency(Number(inv.expected_profit || 0))} valueColor="text-emerald-400" />
                         <InfoRow label="Retorno" value={formatCurrency(Number(inv.expected_return || 0))} />
@@ -532,16 +532,16 @@ function DashboardPage() {
 
                       {/* Ações */}
                       {inv.status === "active" && (
-                        <div className="flex gap-2 pt-2 border-t border-zinc-800/60">
-                          <Button size="sm" variant="ghost" onClick={() => openEditModal(inv)} className="flex-1 text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 text-xs h-8 transition-colors">
+                        <div className="flex gap-2 pt-2 border-t border-[#26364D]/60">
+                          <Button size="sm" variant="ghost" onClick={() => openEditModal(inv)} className="flex-1 text-[#718096] hover:text-[#F3F6FA] hover:bg-[#18263A] text-xs h-8 transition-colors">
                             <Pencil className="h-3 w-3 mr-1 shrink-0" /> Editar
                           </Button>
-                          <Button size="sm" onClick={() => openFinishModal(inv)} className="flex-1 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-500 hover:to-yellow-600 text-white text-xs h-8 font-semibold transition-all active:scale-95 shadow-md shadow-yellow-600/10">
+                          <Button size="sm" onClick={() => openFinishModal(inv)} className="flex-1 bg-gradient-to-r from-[#2F6FED] to-[#1a4fd4] hover:from-[#3d7ef5] hover:to-[#2a5ee0] text-white text-xs h-8 font-semibold transition-all active:scale-95 shadow-md shadow-blue-600/10">
                             Finalizar <ArrowRight className="h-3 w-3 ml-1 shrink-0" />
                           </Button>
                         </div>
                       )}
-                      <Button size="sm" variant="ghost" onClick={() => setDeleteId(inv.id)} className="w-full text-zinc-600 hover:text-red-400 hover:bg-red-500/10 text-xs h-8 transition-colors">
+                      <Button size="sm" variant="ghost" onClick={() => setDeleteId(inv.id)} className="w-full text-[#718096] hover:text-red-400 hover:bg-red-500/10 text-xs h-8 transition-colors">
                         <Trash2 className="h-3 w-3 mr-1" /> Excluir
                       </Button>
                     </CardContent>
@@ -550,14 +550,14 @@ function DashboardPage() {
               })}
             </div>
           ) : (
-            <Card className="bg-zinc-900/60 border-zinc-800">
+            <Card className="bg-[#162235]/60 border-[#26364D]">
               <CardContent className="p-12 flex flex-col items-center text-center gap-3">
-                <div className="w-14 h-14 rounded-2xl bg-zinc-800/60 flex items-center justify-center">
-                  <Wallet className="h-7 w-7 text-zinc-600" />
+                <div className="w-14 h-14 rounded-2xl bg-[#18263A]/60 flex items-center justify-center">
+                  <Wallet className="h-7 w-7 text-[#718096]" />
                 </div>
                 <div>
-                  <p className="text-zinc-400 font-semibold text-sm">Nenhum empréstimo cadastrado</p>
-                  <p className="text-zinc-600 text-xs mt-1">Clique em "Novo" para começar</p>
+                  <p className="text-[#AAB5C5] font-semibold text-sm">Nenhum empréstimo cadastrado</p>
+                  <p className="text-[#718096] text-xs mt-1">Clique em "Novo" para começar</p>
                 </div>
               </CardContent>
             </Card>
@@ -567,43 +567,43 @@ function DashboardPage() {
 
       {/* ── Modal de Edição ─────────────────────────────── */}
       <Dialog open={!!editData} onOpenChange={() => setEditData(null)}>
-        <DialogContent className="bg-zinc-950 border border-zinc-800 text-zinc-100 max-h-[90vh] overflow-y-auto max-w-md animate-scale-in">
+        <DialogContent className="bg-[#101A2B] border border-[#26364D] text-[#F3F6FA] max-h-[90vh] overflow-y-auto max-w-md animate-scale-in">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold">Editar Empréstimo</DialogTitle>
-            <DialogDescription className="text-zinc-500 text-sm">Altere os dados do empréstimo</DialogDescription>
+            <DialogDescription className="text-[#AAB5C5] text-sm">Altere os dados do empréstimo</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleEditSubmit} className="space-y-5">
             <div className="space-y-1.5">
-              <Label htmlFor="edit_person_name" className="text-xs font-semibold text-zinc-400">Nome da Pessoa *</Label>
-              <Input id="edit_person_name" value={formData.person_name} onChange={(e) => setFormData({ ...formData, person_name: e.target.value })} className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-yellow-600 focus:ring-1 focus:ring-yellow-600/50" required />
+              <Label htmlFor="edit_person_name" className="text-xs font-semibold text-[#AAB5C5]">Nome da Pessoa *</Label>
+              <Input id="edit_person_name" value={formData.person_name} onChange={(e) => setFormData({ ...formData, person_name: e.target.value })} className="bg-[#162235] border-[#26364D] text-[#F3F6FA] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50" required />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="edit_amount" className="text-xs font-semibold text-zinc-400">Valor (R$) *</Label>
-                <Input id="edit_amount" type="number" step="0.01" min="0" value={formData.invested_amount} onChange={(e) => setFormData({ ...formData, invested_amount: e.target.value })} className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-yellow-600 focus:ring-1 focus:ring-yellow-600/50" required />
+                <Label htmlFor="edit_amount" className="text-xs font-semibold text-[#AAB5C5]">Valor (R$) *</Label>
+                <Input id="edit_amount" type="number" step="0.01" min="0" value={formData.invested_amount} onChange={(e) => setFormData({ ...formData, invested_amount: e.target.value })} className="bg-[#162235] border-[#26364D] text-[#F3F6FA] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50" required />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="edit_percent" className="text-xs font-semibold text-zinc-400">Porcentagem (%) *</Label>
-                <Input id="edit_percent" type="number" step="0.01" min="0" value={formData.profit_percent} onChange={(e) => setFormData({ ...formData, profit_percent: e.target.value })} className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-yellow-600 focus:ring-1 focus:ring-yellow-600/50" required />
+                <Label htmlFor="edit_percent" className="text-xs font-semibold text-[#AAB5C5]">Porcentagem (%) *</Label>
+                <Input id="edit_percent" type="number" step="0.01" min="0" value={formData.profit_percent} onChange={(e) => setFormData({ ...formData, profit_percent: e.target.value })} className="bg-[#162235] border-[#26364D] text-[#F3F6FA] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50" required />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="edit_start" className="text-xs font-semibold text-zinc-400">Data de Início *</Label>
-                <Input id="edit_start" type="date" value={formData.start_date} onChange={(e) => setFormData({ ...formData, start_date: e.target.value })} className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-yellow-600 focus:ring-1 focus:ring-yellow-600/50 [&::-webkit-calendar-picker-indicator]:invert-50" required />
+                <Label htmlFor="edit_start" className="text-xs font-semibold text-[#AAB5C5]">Data de Início *</Label>
+                <Input id="edit_start" type="date" value={formData.start_date} onChange={(e) => setFormData({ ...formData, start_date: e.target.value })} className="bg-[#162235] border-[#26364D] text-[#F3F6FA] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50 [&::-webkit-calendar-picker-indicator]:invert-50" required />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="edit_return" className="text-xs font-semibold text-zinc-400">Data de Retorno *</Label>
-                <Input id="edit_return" type="date" value={formData.return_date} onChange={(e) => setFormData({ ...formData, return_date: e.target.value })} className="bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-yellow-600 focus:ring-1 focus:ring-yellow-600/50 [&::-webkit-calendar-picker-indicator]:invert-50" required />
+                <Label htmlFor="edit_return" className="text-xs font-semibold text-[#AAB5C5]">Data de Retorno *</Label>
+                <Input id="edit_return" type="date" value={formData.return_date} onChange={(e) => setFormData({ ...formData, return_date: e.target.value })} className="bg-[#162235] border-[#26364D] text-[#F3F6FA] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50 [&::-webkit-calendar-picker-indicator]:invert-50" required />
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="edit_notes" className="text-xs font-semibold text-zinc-400">Observações</Label>
-              <Textarea id="edit_notes" value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} className="bg-zinc-900 border-zinc-800 text-zinc-100 resize-none focus:border-yellow-600 focus:ring-1 focus:ring-yellow-600/50" rows={3} />
+              <Label htmlFor="edit_notes" className="text-xs font-semibold text-[#AAB5C5]">Observações</Label>
+              <Textarea id="edit_notes" value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} className="bg-[#162235] border-[#26364D] text-[#F3F6FA] resize-none focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50" rows={3} />
             </div>
             <div className="flex gap-3 pt-1">
-              <Button type="button" variant="outline" onClick={() => setEditData(null)} className="flex-1 border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100 transition-colors">Cancelar</Button>
-              <Button type="submit" className="flex-1 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-500 hover:to-yellow-600 text-white font-semibold transition-all active:scale-95" disabled={updateMutation.isPending}>
+              <Button type="button" variant="outline" onClick={() => setEditData(null)} className="flex-1 border-[#26364D] text-[#AAB5C5] hover:bg-[#162235] hover:text-[#F3F6FA] transition-colors">Cancelar</Button>
+              <Button type="submit" className="flex-1 bg-gradient-to-r from-[#2F6FED] to-[#1a4fd4] hover:from-[#3d7ef5] hover:to-[#2a5ee0] text-white font-semibold transition-all active:scale-95" disabled={updateMutation.isPending}>
                 {updateMutation.isPending ? "Salvando..." : "Salvar"}
               </Button>
             </div>
@@ -613,15 +613,15 @@ function DashboardPage() {
 
       {/* ── Modal de Finalização ─────────────────────────── */}
       <Dialog open={!!finishData} onOpenChange={() => setFinishData(null)}>
-        <DialogContent className="bg-zinc-950 border border-zinc-800 text-zinc-100 max-w-md animate-scale-in">
+        <DialogContent className="bg-[#101A2B] border border-[#26364D] text-[#F3F6FA] max-w-md animate-scale-in">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold">Finalizar Empréstimo</DialogTitle>
-            <DialogDescription className="text-zinc-500 text-sm">Informe o valor realmente recebido</DialogDescription>
+            <DialogDescription className="text-[#AAB5C5] text-sm">Informe o valor realmente recebido</DialogDescription>
           </DialogHeader>
           {finishData && (
             <div className="space-y-5">
-              <div className="rounded-xl bg-zinc-900/80 border border-zinc-800 p-4 space-y-1">
-                <h4 className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-3">Resumo</h4>
+              <div className="rounded-xl bg-[#162235]/80 border border-[#26364D] p-4 space-y-1">
+                <h4 className="text-[10px] font-bold text-[#718096] uppercase tracking-widest mb-3">Resumo</h4>
                 <SummaryRow label="Pessoa" value={finishData.investment.person_name} />
                 <SummaryRow label="Valor emprestado" value={formatCurrency(Number(finishData.investment.invested_amount))} />
                 <SummaryRow label="Retorno previsto" value={formatCurrency(Number(finishData.investment.expected_return))} />
@@ -629,20 +629,20 @@ function DashboardPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="actual_received" className="text-xs font-semibold text-zinc-400">Valor recebido (R$)</Label>
+                <Label htmlFor="actual_received" className="text-xs font-semibold text-[#AAB5C5]">Valor recebido (R$)</Label>
                 <Input id="actual_received" type="number" step="0.01" min="0" value={finishData.actual_received}
                   onChange={(e) => setFinishData({ ...finishData, actual_received: e.target.value })}
-                  className="bg-zinc-900 border-zinc-800 text-zinc-100 text-lg font-semibold placeholder:text-zinc-700 focus:border-yellow-600 focus:ring-1 focus:ring-yellow-600/50" />
+                  className="bg-[#162235] border-[#26364D] text-[#F3F6FA] text-lg font-semibold placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50" />
               </div>
 
               {finishData.actual_received && (
-                <div className="rounded-xl bg-yellow-600/5 border border-yellow-600/20 p-3 space-y-1.5">
+                <div className="rounded-xl bg-[#C9A45C]/5 border border-[#C9A45C]/20 p-3 space-y-1.5">
                   <div className="flex justify-between text-xs">
-                    <span className="text-zinc-500">Lucro real:</span>
+                    <span className="text-[#AAB5C5]">Lucro real:</span>
                     <span className="text-emerald-400 font-semibold">{formatCurrency(parseFloat(finishData.actual_received) - Number(finishData.investment.invested_amount))}</span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-zinc-500">Diferença:</span>
+                    <span className="text-[#AAB5C5]">Diferença:</span>
                     <span className={parseFloat(finishData.actual_received) - Number(finishData.investment.invested_amount) - Number(finishData.investment.expected_profit) >= 0 ? "text-emerald-400 font-semibold" : "text-red-400 font-semibold"}>
                       {formatCurrency(parseFloat(finishData.actual_received) - Number(finishData.investment.invested_amount) - Number(finishData.investment.expected_profit))}
                     </span>
@@ -651,8 +651,8 @@ function DashboardPage() {
               )}
 
               <div className="flex gap-3">
-                <Button type="button" variant="outline" onClick={() => setFinishData(null)} className="flex-1 border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100 transition-colors">Cancelar</Button>
-                <Button onClick={handleFinish} className="flex-1 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-500 hover:to-yellow-600 text-white font-semibold transition-all active:scale-95 shadow-md shadow-yellow-600/10" disabled={finishMutation.isPending}>
+                <Button type="button" variant="outline" onClick={() => setFinishData(null)} className="flex-1 border-[#26364D] text-[#AAB5C5] hover:bg-[#162235] hover:text-[#F3F6FA] transition-colors">Cancelar</Button>
+                <Button onClick={handleFinish} className="flex-1 bg-gradient-to-r from-[#2F6FED] to-[#1a4fd4] hover:from-[#3d7ef5] hover:to-[#2a5ee0] text-white font-semibold transition-all active:scale-95 shadow-md shadow-blue-600/10" disabled={finishMutation.isPending}>
                   {finishMutation.isPending ? "Finalizando..." : "Confirmar"}
                 </Button>
               </div>
@@ -663,15 +663,15 @@ function DashboardPage() {
 
       {/* ── Dialog de Exclusão ───────────────────────────── */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
-        <AlertDialogContent className="bg-zinc-950 border-zinc-800 animate-scale-in">
+        <AlertDialogContent className="bg-[#101A2B] border-[#26364D] animate-scale-in">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-zinc-100 font-bold">Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription className="text-zinc-500 text-sm">
+            <AlertDialogTitle className="text-[#F3F6FA] font-bold">Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription className="text-[#AAB5C5] text-sm">
               Tem certeza que deseja excluir este empréstimo? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100 transition-colors">Cancelar</AlertDialogCancel>
+            <AlertDialogCancel className="border-[#26364D] text-[#AAB5C5] hover:bg-[#162235] hover:text-[#F3F6FA] transition-colors">Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={() => deleteId && deleteMutation.mutate(deleteId)} className="bg-red-600 hover:bg-red-700 text-white transition-colors active:scale-95">
               {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
             </AlertDialogAction>

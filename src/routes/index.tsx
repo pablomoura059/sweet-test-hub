@@ -21,10 +21,10 @@ function Index() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#0f172a" }}>
+    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#0B1220" }}>
       <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 rounded-full border-4 border-blue-600 border-t-transparent animate-spin" />
-        <p className="text-slate-400">Carregando...</p>
+        <div className="w-12 h-12 rounded-full border-4 border-[#2F6FED] border-t-transparent animate-spin" />
+        <p className="text-[#718096]">Carregando...</p>
       </div>
     </div>
   );
