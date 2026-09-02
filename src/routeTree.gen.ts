@@ -10,6 +10,7 @@ import { Route as rootRouteImport } from "./routes/__root";
 import { Route as IndexRouteImport } from "./routes/index";
 import { Route as LoginRouteImport } from "./routes/login";
 import { Route as DashboardRouteImport } from "./routes/dashboard";
+import { Route as ResetPasswordRouteImport } from "./routes/reset-password";
 
 const IndexRoute = IndexRouteImport.update({
   id: "/",
@@ -29,26 +30,36 @@ const DashboardRoute = DashboardRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any);
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: "/reset-password",
+  path: "/reset-password",
+  getParentRoute: () => rootRouteImport,
+} as any);
+
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute;
   "/login": typeof LoginRoute;
   "/dashboard": typeof DashboardRoute;
+  "/reset-password": typeof ResetPasswordRoute;
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute;
   "/login": typeof LoginRoute;
   "/dashboard": typeof DashboardRoute;
+  "/reset-password": typeof ResetPasswordRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
   "/": typeof IndexRoute;
   "/login": typeof LoginRoute;
   "/dashboard": typeof DashboardRoute;
+  "/reset-password": typeof ResetPasswordRoute;
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute;
   LoginRoute: typeof LoginRoute;
   DashboardRoute: typeof DashboardRoute;
+  ResetPasswordRoute: typeof ResetPasswordRoute;
 }
 
 declare module "@tanstack/react-router" {
@@ -74,6 +85,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof DashboardRouteImport;
       parentRoute: typeof rootRouteImport;
     };
+    "/reset-password": {
+      id: "/reset-password";
+      path: "/reset-password";
+      fullPath: "/reset-password";
+      preLoaderRoute: typeof ResetPasswordRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
   }
 }
 
@@ -81,6 +99,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute,
   LoginRoute,
   DashboardRoute,
+  ResetPasswordRoute,
 };
 
 export const routeTree = rootRouteImport._addFileChildren(rootRouteChildren)._addFileTypes<FileRouteTypes>();

@@ -1,12 +1,20 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
-import { Eye, EyeOff, Lock, Mail, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, AlertCircle, ArrowLeft, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -19,6 +27,12 @@ function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Modal de recuperação de senha
+  const [isRecoveryOpen, setIsRecoveryOpen] = useState(false);
+  const [recoveryEmail, setRecoveryEmail] = useState("");
+  const [isRecoveryLoading, setIsRecoveryLoading] = useState(false);
+  const [recoverySent, setRecoverySent] = useState(false);
 
   // Verificar se já está logado
   useState(() => {
@@ -58,20 +72,35 @@ function LoginPage() {
     }
   };
 
-  const handleForgotPassword = async () => {
-    if (!email) {
+  const handleForgotPassword = () => {
+    setIsRecoveryOpen(true);
+    setRecoveryEmail(email);
+    setRecoverySent(false);
+  };
+
+  const handleSendRecovery = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!recoveryEmail) {
       toast.error("Digite seu e-mail para recuperar a senha");
       return;
     }
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
+    setIsRecoveryLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(recoveryEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
 
-    if (error) {
+      if (error) {
+        toast.error(error.message);
+      } else {
+        setRecoverySent(true);
+        toast.success("Link de recuperação enviado! Verifique seu e-mail.");
+      }
+    } catch (err) {
       toast.error("Erro ao enviar e-mail de recuperação");
-    } else {
-      toast.success("E-mail de recuperação enviado!");
+    } finally {
+      setIsRecoveryLoading(false);
     }
   };
 
@@ -191,6 +220,82 @@ function LoginPage() {
           Acesso restrito a administradores
         </p>
       </div>
+
+      {/* Modal de Recuperação de Senha */}
+      <Dialog open={isRecoveryOpen} onOpenChange={setIsRecoveryOpen}>
+        <DialogContent className="bg-slate-800 border-slate-700 text-white max-w-sm">
+          {!recoverySent ? (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-white">Recuperar senha</DialogTitle>
+                <DialogDescription className="text-slate-400">
+                  Informe seu e-mail para receber o link de recuperação
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleSendRecovery} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="recovery-email" className="text-slate-300">
+                    E-mail
+                  </Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                    <Input
+                      id="recovery-email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      value={recoveryEmail}
+                      onChange={(e) => setRecoveryEmail(e.target.value)}
+                      className="pl-10 bg-slate-900/50 border-slate-600 text-white placeholder:text-slate-500"
+                      required
+                    />
+                  </div>
+                </div>
+                <DialogFooter className="flex gap-2 sm:flex-col sm:space-y-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsRecoveryOpen(false)}
+                    className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                    disabled={isRecoveryLoading}
+                  >
+                    {isRecoveryLoading ? "Enviando..." : "Enviar link"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </>
+          ) : (
+            <>
+              <div className="flex flex-col items-center text-center py-4">
+                <div className="w-16 h-16 rounded-full bg-green-600/20 flex items-center justify-center mb-4">
+                  <CheckCircle className="h-8 w-8 text-green-500" />
+                </div>
+                <h3 className="text-lg font-semibold text-white mb-2">E-mail enviado!</h3>
+                <p className="text-slate-400 text-sm mb-4">
+                  Enviamos um link de recuperação para <strong className="text-white">{recoveryEmail}</strong>
+                </p>
+                <p className="text-slate-500 text-xs mb-6">
+                  Verifique também a pasta de spam.
+                </p>
+                <Button
+                  onClick={() => {
+                    setIsRecoveryOpen(false);
+                    setRecoverySent(false);
+                  }}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  Entendi
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
