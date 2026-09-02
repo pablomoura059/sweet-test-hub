@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { Toaster } from "sonner";
 
 function NotFoundComponent() {
   return (
@@ -108,6 +109,17 @@ function RootShell({ children }: { children: ReactNode }) {
       </head>
       <body>
         {children}
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            classNames: {
+              toast: "!bg-[#101A2B] !border !rounded-xl !shadow-xl",
+              success: "!border-emerald-500/30",
+              error: "!border-red-500/30",
+              description: "!text-[#AAB5C5]",
+            },
+          }}
+        />
         <Scripts />
       </body>
     </html>

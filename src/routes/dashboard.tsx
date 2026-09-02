@@ -17,6 +17,11 @@ import {
   AlertCircle,
   Clock,
   User,
+  Search,
+  Filter,
+  ChevronRight,
+  Calendar,
+  TrendingDown,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -74,11 +79,13 @@ const formatDate = (date: string) => {
 const getStatusInfo = (status: string, returnDate: string) => {
   const today = new Date().toISOString().split("T")[0];
   const isLate = status === "active" && returnDate < today;
-  if (isLate) return { label: "ATRASADO", bg: "bg-red-500/15", text: "text-red-400", icon: AlertCircle };
-  if (status === "active") return { label: "ATIVO", bg: "bg-emerald-500/15", text: "text-emerald-400", icon: CheckCircle };
-  if (status === "finished") return { label: "FINALIZADO", bg: "bg-blue-500/15", text: "text-blue-400", icon: CheckCircle };
-  return { label: "CANCELADO", bg: "bg-slate-500/15", text: "text-slate-400", icon: Clock };
+  if (isLate) return { label: "Atrasado", bg: "bg-red-500/15", text: "text-red-400", icon: AlertCircle };
+  if (status === "active") return { label: "Ativo", bg: "bg-emerald-500/15", text: "text-emerald-400", icon: CheckCircle };
+  if (status === "finished") return { label: "Finalizado", bg: "bg-blue-500/15", text: "text-blue-400", icon: CheckCircle };
+  return { label: "Cancelado", bg: "bg-slate-500/15", text: "text-slate-400", icon: Clock };
 };
+
+type FilterType = "all" | "active" | "finished" | "late" | "cancelled";
 
 const STAT_CARDS = [
   { key: "totalInvested", icon: Wallet, color: "bg-blue-600/10", iconColor: "text-blue-400" },
@@ -126,7 +133,7 @@ function StatCard({ title, value, icon: Icon, color, iconColor, description, ind
 function StatusBadge({ status, returnDate }: { status: string; returnDate: string }) {
   const { label, bg, text, icon: Icon } = getStatusInfo(status, returnDate);
   return (
-    <span className={`inline-flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wide ${bg} ${text}`}>
+    <span className={`inline-flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full font-bold tracking-wide ${bg} ${text}`}>
       <Icon className="h-3 w-3" />
       {label}
     </span>
@@ -143,21 +150,18 @@ function SectionHeader({ title }: { title: string }) {
   );
 }
 
-function InfoRow({ label, value, valueColor = "text-[#AAB5C5]" }: { label: string; value: string; valueColor?: string }) {
+function FilterChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
   return (
-    <div className="flex justify-between items-center gap-2 py-1">
-      <span className="text-[11px] text-[#718096] font-medium">{label}</span>
-      <span className={`text-[11px] font-semibold ${valueColor}`}>{value}</span>
-    </div>
-  );
-}
-
-function SummaryRow({ label, value, valueColor = "text-[#F3F6FA]" }: { label: string; value: string; valueColor?: string }) {
-  return (
-    <div className="flex justify-between items-center py-1.5">
-      <span className="text-xs text-[#AAB5C5] font-medium">{label}</span>
-      <span className={`text-sm font-semibold ${valueColor}`}>{value}</span>
-    </div>
+    <button
+      onClick={onClick}
+      className={`px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all duration-200 ${
+        active
+          ? "bg-[#2F6FED] text-white shadow-md shadow-blue-600/20"
+          : "bg-[#162235] border border-[#26364D] text-[#718096] hover:text-[#F3F6FA] hover:border-blue-500/30"
+      }`}
+    >
+      {label}
+    </button>
   );
 }
 
@@ -169,8 +173,10 @@ function DashboardPage() {
   const [isNewLoanOpen, setIsNewLoanOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [finishData, setFinishData] = useState<{ investment: Investment; actual_received: string } | null>(null);
+  const [finishData, setFinishData] = useState<{ investment: Investment; actual_received: string; finalized_date: string } | null>(null);
   const [editData, setEditData] = useState<Investment | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filter, setFilter] = useState<FilterType>("all");
 
   const emptyForm = {
     person_name: "",
@@ -224,7 +230,7 @@ function DashboardPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Empréstimo cadastrado com sucesso!", { className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium" });
+      toast.success("Empréstimo cadastrado com sucesso!", { className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium !rounded-xl" });
       queryClient.invalidateQueries({ queryKey: ["investments"] });
       setIsNewLoanOpen(false);
       setFormData(emptyForm);
@@ -238,7 +244,7 @@ function DashboardPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Empréstimo atualizado!", { className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium" });
+      toast.success("Empréstimo atualizado com sucesso!", { className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium !rounded-xl" });
       queryClient.invalidateQueries({ queryKey: ["investments"] });
       setEditData(null);
     },
@@ -246,19 +252,19 @@ function DashboardPage() {
   });
 
   const finishMutation = useMutation({
-    mutationFn: async ({ id, actual_received }: { id: string; actual_received: number }) => {
+    mutationFn: async ({ id, actual_received, finalized_at }: { id: string; actual_received: number; finalized_at: string }) => {
       const investment = investments?.find((i) => i.id === id);
       if (!investment) throw new Error("Não encontrado");
       const actual_profit = actual_received - Number(investment.invested_amount);
       const profit_difference = actual_profit - Number(investment.expected_profit);
       const { error } = await supabase.from("investments").update({
         actual_received, actual_profit, profit_difference,
-        status: "finished", finalized_at: new Date().toISOString(),
+        status: "finished", finalized_at: finalized_at,
       }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Empréstimo finalizado!", { className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium" });
+      toast.success("Empréstimo finalizado com sucesso!", { className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium !rounded-xl" });
       queryClient.invalidateQueries({ queryKey: ["investments"] });
       setFinishData(null);
     },
@@ -271,7 +277,7 @@ function DashboardPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Empréstimo excluído", { className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium" });
+      toast.success("Empréstimo excluído com sucesso.", { className: "!bg-[#101A2B] !border-red-500/30 !text-[#F3F6FA] !font-medium !rounded-xl" });
       queryClient.invalidateQueries({ queryKey: ["investments"] });
       setDeleteId(null);
     },
@@ -302,7 +308,11 @@ function DashboardPage() {
 
   const handleFinish = () => {
     if (!finishData) return;
-    finishMutation.mutate({ id: finishData.investment.id, actual_received: parseFloat(finishData.actual_received) });
+    finishMutation.mutate({
+      id: finishData.investment.id,
+      actual_received: parseFloat(finishData.actual_received),
+      finalized_at: finishData.finalized_date,
+    });
   };
 
   const openEditModal = (investment: Investment) => {
@@ -331,7 +341,11 @@ function DashboardPage() {
   };
 
   const openFinishModal = (investment: Investment) => {
-    setFinishData({ investment, actual_received: String(investment.expected_return) });
+    setFinishData({
+      investment,
+      actual_received: String(investment.expected_return),
+      finalized_date: new Date().toISOString().split("T")[0],
+    });
   };
 
   const statValue = (key: string) => {
@@ -345,6 +359,25 @@ function DashboardPage() {
     };
     return vals[key] || "—";
   };
+
+  // ─── Filtering ───────────────────────────────────────────────────────────────
+
+  const today = new Date().toISOString().split("T")[0];
+
+  const filteredInvestments = investments?.filter((inv) => {
+    const matchesSearch = inv.person_name.toLowerCase().includes(searchQuery.toLowerCase());
+    let matchesFilter = true;
+    if (filter === "active") matchesFilter = inv.status === "active" && inv.return_date >= today;
+    else if (filter === "finished") matchesFilter = inv.status === "finished";
+    else if (filter === "late") matchesFilter = inv.status === "active" && inv.return_date < today;
+    else if (filter === "cancelled") matchesFilter = inv.status === "cancelled";
+    return matchesSearch && matchesFilter;
+  }) || [];
+
+  const upcomingDue = activeInvestments
+    .filter((i) => i.return_date >= today)
+    .sort((a, b) => a.return_date.localeCompare(b.return_date))
+    .slice(0, 5);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#0B1220" }}>
@@ -386,14 +419,15 @@ function DashboardPage() {
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2F6FED] to-[#1a4fd4] flex items-center justify-center shadow-lg shadow-blue-600/20">
               <span className="text-sm font-bold text-white">$</span>
             </div>
-            <h1 className="text-base font-bold text-[#F3F6FA] tracking-tight">(Seu Nome) Emprestimos</h1>
+            <h1 className="text-sm sm:text-base font-bold text-[#F3F6FA] tracking-tight whitespace-nowrap">(Seu Nome) Emprestimos</h1>
           </div>
 
           <Dialog open={isNewLoanOpen} onOpenChange={setIsNewLoanOpen}>
             <DialogTrigger asChild>
               <Button size="sm" className="bg-gradient-to-r from-[#2F6FED] to-[#1a4fd4] hover:from-[#3d7ef5] hover:to-[#2a5ee0] text-white shadow-lg shadow-blue-600/20 font-semibold transition-all duration-200 active:scale-95">
                 <Plus className="h-4 w-4" />
-                Novo
+                <span className="hidden sm:inline">Novo Empréstimo</span>
+                <span className="sm:hidden">Novo</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="bg-[#101A2B] border border-[#26364D] text-[#F3F6FA] max-h-[90vh] overflow-y-auto max-w-md animate-scale-in">
@@ -477,9 +511,69 @@ function DashboardPage() {
           ))}
         </div>
 
+        {/* Upcoming due dates */}
+        {upcomingDue.length > 0 && (
+          <section className="space-y-3 animate-fade-in-up" style={{ animationDelay: "200ms", animationFillMode: "both" }}>
+            <SectionHeader title="Próximos Vencimentos" />
+            <div className="bg-[#162235] border border-[#26364D] rounded-2xl overflow-hidden">
+              <div className="divide-y divide-[#26364D]/60">
+                {upcomingDue.map((inv, idx) => {
+                  const statusInfo = getStatusInfo(inv.status, inv.return_date);
+                  return (
+                    <div key={inv.id} className="flex items-center justify-between px-4 py-3 hover:bg-[#18263A]/50 transition-colors">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`p-1.5 rounded-lg ${statusInfo.bg} shrink-0`}>
+                          <Calendar className={`h-3.5 w-3.5 ${statusInfo.text}`} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-[#F3F6FA] truncate">{inv.person_name}</p>
+                          <p className="text-[10px] text-[#718096]">{formatDate(inv.return_date)}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <div className="text-right">
+                          <p className="text-xs font-bold text-[#F3F6FA] whitespace-nowrap">{formatCurrency(Number(inv.expected_return))}</p>
+                          <span className={`inline-flex items-center gap-1 text-[9px] font-semibold ${statusInfo.text}`}>
+                            <statusInfo.icon className="h-2.5 w-2.5" />
+                            {statusInfo.label}
+                          </span>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-[#718096]" />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Investments list */}
         <section className="space-y-3">
           <SectionHeader title="Todos os Empréstimos" />
+
+          {/* Search and filters */}
+          <div className="space-y-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#718096]" />
+              <Input
+                type="text"
+                placeholder="Buscar por pessoa..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50 text-xs h-9"
+              />
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Filter className="h-3.5 w-3.5 text-[#718096] shrink-0" />
+              <FilterChip label="Todos" active={filter === "all"} onClick={() => setFilter("all")} />
+              <FilterChip label="Ativos" active={filter === "active"} onClick={() => setFilter("active")} />
+              <FilterChip label="Finalizados" active={filter === "finished"} onClick={() => setFilter("finished")} />
+              <FilterChip label="Atrasados" active={filter === "late"} onClick={() => setFilter("late")} />
+              <FilterChip label="Cancelados" active={filter === "cancelled"} onClick={() => setFilter("cancelled")} />
+            </div>
+          </div>
+
           {isLoading ? (
             <div className="grid sm:grid-cols-2 gap-3">
               {[1, 2, 3, 4].map((i) => (
@@ -499,9 +593,9 @@ function DashboardPage() {
                 </div>
               ))}
             </div>
-          ) : investments && investments.length > 0 ? (
+          ) : filteredInvestments.length > 0 ? (
             <div className="grid sm:grid-cols-2 gap-3">
-              {investments.map((inv, idx) => {
+              {filteredInvestments.map((inv, idx) => {
                 const statusInfo = getStatusInfo(inv.status, inv.return_date);
                 return (
                   <Card
@@ -509,8 +603,8 @@ function DashboardPage() {
                     className="bg-[#162235] border-[#26364D] hover:border-[#2F6FED]/40 transition-all duration-300 hover:scale-[1.01] group animate-fade-in-up"
                     style={{ animationDelay: `${idx * 60}ms`, animationFillMode: "both" }}
                   >
-                    <CardContent className="p-5 space-y-4">
-                      {/* Header */}
+                    <CardContent className="p-4 sm:p-5 space-y-3">
+                      {/* Header: name + status */}
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
                           <User className="h-4 w-4 text-[#718096] shrink-0" />
@@ -522,12 +616,30 @@ function DashboardPage() {
                       {/* Valor principal */}
                       <p className="text-xl sm:text-2xl font-bold text-[#F3F6FA] leading-none">{formatCurrency(Number(inv.invested_amount))}</p>
 
-                      {/* Grid de info */}
-                      <div className="border-t border-[#26364D]/60 pt-3 space-y-0">
-                        <InfoRow label="Porcentagem" value={`${inv.profit_percent}%`} />
-                        <InfoRow label="Lucro" value={formatCurrency(Number(inv.expected_profit || 0))} valueColor="text-emerald-400" />
-                        <InfoRow label="Retorno" value={formatCurrency(Number(inv.expected_return || 0))} />
-                        <InfoRow label="Início" value={formatDate(inv.start_date)} />
+                      {/* Grid de info 2 colunas */}
+                      <div className="border-t border-[#26364D]/60 pt-3">
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+                          <div className="flex justify-between items-center py-1">
+                            <span className="text-[11px] text-[#718096] font-medium">Porcentagem</span>
+                            <span className="text-[11px] font-semibold text-[#AAB5C5]">{inv.profit_percent}%</span>
+                          </div>
+                          <div className="flex justify-between items-center py-1">
+                            <span className="text-[11px] text-[#718096] font-medium">Lucro</span>
+                            <span className="text-[11px] font-semibold text-emerald-400">{formatCurrency(Number(inv.expected_profit || 0))}</span>
+                          </div>
+                          <div className="flex justify-between items-center py-1">
+                            <span className="text-[11px] text-[#718096] font-medium">Retorno</span>
+                            <span className="text-[11px] font-semibold text-[#AAB5C5]">{formatCurrency(Number(inv.expected_return || 0))}</span>
+                          </div>
+                          <div className="flex justify-between items-center py-1">
+                            <span className="text-[11px] text-[#718096] font-medium">Início</span>
+                            <span className="text-[11px] font-semibold text-[#AAB5C5]">{formatDate(inv.start_date)}</span>
+                          </div>
+                          <div className="flex justify-between items-center py-1 col-span-2">
+                            <span className="text-[11px] text-[#718096] font-medium">Data de retorno</span>
+                            <span className="text-[11px] font-semibold text-[#AAB5C5]">{inv.return_date ? formatDate(inv.return_date) : "—"}</span>
+                          </div>
+                        </div>
                       </div>
 
                       {/* Ações */}
@@ -553,11 +665,15 @@ function DashboardPage() {
             <Card className="bg-[#162235]/60 border-[#26364D]">
               <CardContent className="p-12 flex flex-col items-center text-center gap-3">
                 <div className="w-14 h-14 rounded-2xl bg-[#18263A]/60 flex items-center justify-center">
-                  <Wallet className="h-7 w-7 text-[#718096]" />
+                  <Search className="h-7 w-7 text-[#718096]" />
                 </div>
                 <div>
-                  <p className="text-[#AAB5C5] font-semibold text-sm">Nenhum empréstimo cadastrado</p>
-                  <p className="text-[#718096] text-xs mt-1">Clique em "Novo" para começar</p>
+                  <p className="text-[#AAB5C5] font-semibold text-sm">
+                    {searchQuery || filter !== "all" ? "Nenhum resultado encontrado" : "Nenhum empréstimo cadastrado"}
+                  </p>
+                  <p className="text-[#718096] text-xs mt-1">
+                    {searchQuery || filter !== "all" ? "Ajuste os filtros ou a busca" : "Clique em Novo para começar"}
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -622,10 +738,24 @@ function DashboardPage() {
             <div className="space-y-5">
               <div className="rounded-xl bg-[#162235]/80 border border-[#26364D] p-4 space-y-1">
                 <h4 className="text-[10px] font-bold text-[#718096] uppercase tracking-widest mb-3">Resumo</h4>
-                <SummaryRow label="Pessoa" value={finishData.investment.person_name} />
-                <SummaryRow label="Valor emprestado" value={formatCurrency(Number(finishData.investment.invested_amount))} />
-                <SummaryRow label="Retorno previsto" value={formatCurrency(Number(finishData.investment.expected_return))} />
-                <SummaryRow label="Lucro previsto" value={formatCurrency(Number(finishData.investment.expected_profit))} valueColor="text-emerald-400" />
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center py-0.5">
+                    <span className="text-xs text-[#AAB5C5] font-medium">Pessoa</span>
+                    <span className="text-xs font-semibold text-[#F3F6FA]">{finishData.investment.person_name}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-0.5">
+                    <span className="text-xs text-[#AAB5C5] font-medium">Valor investido</span>
+                    <span className="text-xs font-semibold text-[#F3F6FA]">{formatCurrency(Number(finishData.investment.invested_amount))}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-0.5">
+                    <span className="text-xs text-[#AAB5C5] font-medium">Retorno previsto</span>
+                    <span className="text-xs font-semibold text-[#F3F6FA]">{formatCurrency(Number(finishData.investment.expected_return))}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-0.5">
+                    <span className="text-xs text-[#AAB5C5] font-medium">Lucro previsto</span>
+                    <span className="text-xs font-semibold text-emerald-400">{formatCurrency(Number(finishData.investment.expected_profit))}</span>
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-1.5">
@@ -633,6 +763,13 @@ function DashboardPage() {
                 <Input id="actual_received" type="number" step="0.01" min="0" value={finishData.actual_received}
                   onChange={(e) => setFinishData({ ...finishData, actual_received: e.target.value })}
                   className="bg-[#162235] border-[#26364D] text-[#F3F6FA] text-lg font-semibold placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50" />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="finalized_date" className="text-xs font-semibold text-[#AAB5C5]">Data de conclusão</Label>
+                <Input id="finalized_date" type="date" value={finishData.finalized_date}
+                  onChange={(e) => setFinishData({ ...finishData, finalized_date: e.target.value })}
+                  className="bg-[#162235] border-[#26364D] text-[#F3F6FA] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50 [&::-webkit-calendar-picker-indicator]:invert-50" />
               </div>
 
               {finishData.actual_received && (

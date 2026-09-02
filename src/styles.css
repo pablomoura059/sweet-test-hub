@@ -128,10 +128,11 @@
 
 /* Stat value responsive sizing */
 .stat-value {
-  font-size: clamp(14px, 3.5vw, 24px);
+  font-size: clamp(13px, 3.5vw, 22px);
   font-weight: 700;
   white-space: nowrap;
   font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   min-width: 0;
   overflow: hidden;
+  letter-spacing: -0.02em;
 }
