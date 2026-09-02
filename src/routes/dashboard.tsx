@@ -431,18 +431,13 @@ function DashboardPage() {
                     <Wallet className="h-4 w-4 shrink-0" />
                     Empréstimos
                   </button>
-                  {investments && investments.length > 0 && (
-                    <button
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
-                      onClick={() => { setIsMenuOpen(false); setFilter('all'); setSearchQuery(''); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                    >
-                      <Users className="h-4 w-4 shrink-0" />
-                      Pessoas
-                      <span className="ml-auto text-[10px] bg-[#162235] border border-[#26364D] text-[#718096] px-2 py-0.5 rounded-full font-medium">
-                        {Array.from(new Set(investments.map(i => i.person_name))).length}
-                      </span>
-                    </button>
-                  )}
+                  <button
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
+                    onClick={() => { setIsMenuOpen(false); router.navigate({ to: '/people' }); }}
+                  >
+                    <Users className="h-4 w-4 shrink-0" />
+                    Pessoas
+                  </button>
                   <button
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
                     onClick={() => { setIsMenuOpen(false); setFilter('finished'); setSearchQuery(''); window.scrollTo({ top: 0, behavior: 'smooth' }); }}

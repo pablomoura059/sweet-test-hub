@@ -11,6 +11,7 @@ import { Route as IndexRouteImport } from "./routes/index";
 import { Route as LoginRouteImport } from "./routes/login";
 import { Route as DashboardRouteImport } from "./routes/dashboard";
 import { Route as ResetPasswordRouteImport } from "./routes/reset-password";
+import { Route as PeopleRouteImport } from "./routes/people";
 
 const IndexRoute = IndexRouteImport.update({
   id: "/",
@@ -36,17 +37,25 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any);
 
+const PeopleRoute = PeopleRouteImport.update({
+  id: "/people",
+  path: "/people",
+  getParentRoute: () => rootRouteImport,
+} as any);
+
 export interface FileRoutesByFullPath {
   "/": typeof IndexRoute;
   "/login": typeof LoginRoute;
   "/dashboard": typeof DashboardRoute;
   "/reset-password": typeof ResetPasswordRoute;
+  "/people": typeof PeopleRoute;
 }
 export interface FileRoutesByTo {
   "/": typeof IndexRoute;
   "/login": typeof LoginRoute;
   "/dashboard": typeof DashboardRoute;
   "/reset-password": typeof ResetPasswordRoute;
+  "/people": typeof PeopleRoute;
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport;
@@ -54,12 +63,14 @@ export interface FileRoutesById {
   "/login": typeof LoginRoute;
   "/dashboard": typeof DashboardRoute;
   "/reset-password": typeof ResetPasswordRoute;
+  "/people": typeof PeopleRoute;
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute;
   LoginRoute: typeof LoginRoute;
   DashboardRoute: typeof DashboardRoute;
   ResetPasswordRoute: typeof ResetPasswordRoute;
+  PeopleRoute: typeof PeopleRoute;
 }
 
 declare module "@tanstack/react-router" {
@@ -92,6 +103,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof ResetPasswordRouteImport;
       parentRoute: typeof rootRouteImport;
     };
+    "/people": {
+      id: "/people";
+      path: "/people";
+      fullPath: "/people";
+      preLoaderRoute: typeof PeopleRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
   }
 }
 
@@ -100,6 +118,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute,
   DashboardRoute,
   ResetPasswordRoute,
+  PeopleRoute,
 };
 
 export const routeTree = rootRouteImport._addFileChildren(rootRouteChildren)._addFileTypes<FileRouteTypes>();
