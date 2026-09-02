@@ -115,7 +115,7 @@ function StatCard({ title, value, icon: Icon, color, iconColor, description, ind
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">{title}</p>
-          <p className="text-xl font-bold text-zinc-100 mt-1 break-words leading-tight">{value}</p>
+          <p className="stat-value text-zinc-100">{value}</p>
           {description && <p className="text-[10px] text-zinc-600 mt-1 font-medium">{description}</p>}
         </div>
       </CardContent>
