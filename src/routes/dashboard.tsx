@@ -643,16 +643,22 @@ function DashboardPage() {
                       </div>
 
                       {/* Ações */}
-                      {inv.status === "active" && (
-                        <div className="flex gap-2 pt-2 border-t border-[#26364D]/60">
-                          <Button size="sm" variant="ghost" onClick={() => openEditModal(inv)} className="flex-1 text-[#718096] hover:text-[#F3F6FA] hover:bg-[#18263A] text-xs h-8 transition-colors">
-                            <Pencil className="h-3 w-3 mr-1 shrink-0" /> Editar
-                          </Button>
+                      <div className="flex gap-2 pt-2 border-t border-[#26364D]/60">
+                        {inv.status === "active" ? (
+                          <>
+                            <Button size="sm" variant="ghost" onClick={() => openEditModal(inv)} className="flex-1 text-[#718096] hover:text-[#F3F6FA] hover:bg-[#18263A] text-xs h-8 transition-colors">
+                              <Pencil className="h-3 w-3 mr-1 shrink-0" /> Editar
+                            </Button>
+                            <Button size="sm" onClick={() => openFinishModal(inv)} className="flex-1 bg-gradient-to-r from-[#2F6FED] to-[#1a4fd4] hover:from-[#3d7ef5] hover:to-[#2a5ee0] text-white text-xs h-8 font-semibold transition-all active:scale-95 shadow-md shadow-blue-600/10">
+                              Finalizar <ArrowRight className="h-3 w-3 ml-1 shrink-0" />
+                            </Button>
+                          </>
+                        ) : (
                           <Button size="sm" onClick={() => openFinishModal(inv)} className="flex-1 bg-gradient-to-r from-[#2F6FED] to-[#1a4fd4] hover:from-[#3d7ef5] hover:to-[#2a5ee0] text-white text-xs h-8 font-semibold transition-all active:scale-95 shadow-md shadow-blue-600/10">
-                            Finalizar <ArrowRight className="h-3 w-3 ml-1 shrink-0" />
+                            Visualizar
                           </Button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                       <Button size="sm" variant="ghost" onClick={() => setDeleteId(inv.id)} className="w-full text-[#718096] hover:text-red-400 hover:bg-red-500/10 text-xs h-8 transition-colors">
                         <Trash2 className="h-3 w-3 mr-1" /> Excluir
                       </Button>
@@ -758,12 +764,46 @@ function DashboardPage() {
                 </div>
               </div>
 
+              <div className="rounded-xl bg-[#18263A] border border-[#26364D] p-3 space-y-3">
+                <h4 className="text-[10px] font-bold text-[#718096] uppercase tracking-widest">Valores</h4>
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[11px] text-[#718096]">Retorno previsto</span>
+                    <span className="text-xs font-semibold text-[#F3F6FA]">{formatCurrency(Number(finishData.investment.expected_return))}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[11px] text-[#718096]">Lucro previsto</span>
+                    <span className="text-xs font-semibold text-emerald-400">{formatCurrency(Number(finishData.investment.expected_profit))}</span>
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-1.5">
                 <Label htmlFor="actual_received" className="text-xs font-semibold text-[#AAB5C5]">Valor recebido (R$)</Label>
                 <Input id="actual_received" type="number" step="0.01" min="0" value={finishData.actual_received}
                   onChange={(e) => setFinishData({ ...finishData, actual_received: e.target.value })}
-                  className="bg-[#162235] border-[#26364D] text-[#F3F6FA] text-lg font-semibold placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50" />
+                  className="bg-[#162235] border-[#26364D] text-[#F3F6FA] text-base font-semibold placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50" />
               </div>
+
+              {finishData.actual_received && (
+                <div className="rounded-xl border p-3 space-y-1.5">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-[#718096]">Lucro real:</span>
+                    <span className="font-semibold text-emerald-400">{formatCurrency(parseFloat(finishData.actual_received) - Number(finishData.investment.invested_amount))}</span>
+                  </div>
+                  {(() => {
+                    const diff = parseFloat(finishData.actual_received) - Number(finishData.investment.invested_amount) - Number(finishData.investment.expected_profit);
+                    return (
+                      <div className="flex justify-between text-xs">
+                        <span className="text-[#718096]">Diferença:</span>
+                        <span className={diff >= 0 ? "font-semibold text-emerald-400" : "font-semibold text-red-400"}>
+                          {diff >= 0 ? "+" : ""}{formatCurrency(diff)}
+                        </span>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
 
               <div className="space-y-1.5">
                 <Label htmlFor="finalized_date" className="text-xs font-semibold text-[#AAB5C5]">Data de conclusão</Label>
