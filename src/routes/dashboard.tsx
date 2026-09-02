@@ -7,6 +7,7 @@ import {
   CheckCircle, AlertCircle, Clock, User, Search, Filter,
   ChevronRight, Calendar, Home, Users, BarChart2, Settings,
   type LucideIcon, ChevronDown, X, UserPlus, Check,
+  Camera,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -87,6 +88,24 @@ const CARD_LABELS: Record<string, { title: string; description: string }> = {
   receivedProfit: { title: "Lucro Recebido", description: "Realizado" },
   activeCount: { title: "Empréstimos Ativos", description: "Em andamento" },
 };
+
+// ─── Person Avatar ─────────────────────────────────────────────────────────────
+
+function PersonAvatarSmall({ photoUrl, name }: { photoUrl?: string | null; name: string }) {
+  const initials = name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
+  return (
+    <div className="w-16 h-16 rounded-full overflow-hidden bg-[#1e2d42] border-2 border-[#26364D] flex items-center justify-center shrink-0">
+      {photoUrl ? (
+        <img src={photoUrl} alt={name} className="w-full h-full object-cover" />
+      ) : (
+        <div className="flex flex-col items-center justify-center">
+          <span className="text-sm font-bold text-[#718096]">{initials}</span>
+          <User className="h-5 w-5 text-[#718096]" />
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─── Person Selector Component ────────────────────────────────────────────────
 
@@ -171,8 +190,12 @@ function PersonSelector({
                   onClick={() => { onSelect(p); setOpen(false); }}
                   className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-[#18263A] transition-colors text-left"
                 >
-                  <div className="w-7 h-7 rounded-full bg-[#1e2d42] border border-[#26364D] flex items-center justify-center shrink-0">
-                    <User className="h-3.5 w-3.5 text-[#718096]" />
+                  <div className="w-7 h-7 rounded-full bg-[#1e2d42] border border-[#26364D] flex items-center justify-center shrink-0 overflow-hidden">
+                    {p.photo_url ? (
+                      <img src={p.photo_url} alt={p.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <User className="h-3.5 w-3.5 text-[#718096]" />
+                    )}
                   </div>
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-[#F3F6FA] truncate">{p.name}</p>
@@ -282,7 +305,12 @@ function AddPersonDialog({
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [birthDate, setBirthDate] = useState("");
+  const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const applyPhoneMask = (value: string) => {
     const digits = value.replace(/\D/g, "").slice(0, 11);
@@ -291,39 +319,113 @@ function AddPersonDialog({
     return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
   };
 
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPhone(applyPhoneMask(e.target.value));
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setPhotoPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const uploadPhoto = async (userId: string, personId: string, file: File): Promise<string | null> => {
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `${userId}/${personId}.${ext}`;
+    const { error } = await supabase.storage.from("person-photos").upload(path, file, { upsert: true });
+    if (error) { toast.error("Erro ao fazer upload da foto"); return null; }
+    const { data } = supabase.storage.from("person-photos").getPublicUrl(path);
+    return data.publicUrl;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) { toast.error("Informe o nome da pessoa"); return; }
     setLoading(true);
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { setLoading(false); return; }
+
     const { data, error } = await supabase
       .from("people")
-      .insert({ user_id: session.user.id, name: name.trim(), phone: phone || null })
+      .insert({
+        user_id: session.user.id,
+        name: name.trim(),
+        phone: phone || null,
+        birth_date: birthDate || null,
+        notes: notes || null,
+        photo_url: null,
+      })
       .select()
       .single();
+
+    if (error) {
+      setLoading(false);
+      toast.error("Erro ao cadastrar pessoa");
+      return;
+    }
+
+    if (photoFile && data) {
+      const uploadedUrl = await uploadPhoto(session.user.id, data.id, photoFile);
+      if (uploadedUrl) {
+        await supabase.from("people").update({ photo_url: uploadedUrl }).eq("id", data.id);
+        data.photo_url = uploadedUrl;
+      }
+    }
+
     setLoading(false);
-    if (error) { toast.error("Erro ao cadastrar pessoa"); return; }
     toast.success("Pessoa cadastrada com sucesso!", {
       className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium !rounded-xl",
     });
     queryClient.invalidateQueries({ queryKey: ["people"] });
-    setName(""); setPhone("");
+    setName(""); setPhone(""); setBirthDate(""); setNotes("");
+    setPhotoPreview(null); setPhotoFile(null);
     onCreated(data as Person);
     onClose();
   };
 
+  const initials = name.trim().split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
+
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="bg-[#101A2B] border border-[#26364D] text-[#F3F6FA] max-w-md animate-scale-in">
+      <DialogContent className="bg-[#101A2B] border border-[#26364D] text-[#F3F6FA] max-h-[90vh] overflow-y-auto max-w-md animate-scale-in">
         <DialogHeader>
           <DialogTitle className="text-base font-bold text-[#F3F6FA]">Nova Pessoa</DialogTitle>
           <DialogDescription className="text-[#AAB5C5] text-sm">Cadastre uma nova pessoa para vincular ao empréstimo</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Foto de perfil */}
+          <div className="flex flex-col items-center gap-2">
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full overflow-hidden bg-[#1e2d42] border-2 border-[#26364D] flex items-center justify-center shrink-0">
+                {photoPreview ? (
+                  <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="flex flex-col items-center justify-center">
+                    {name.trim() && <span className="text-sm font-bold text-[#718096]">{initials}</span>}
+                    <User className="h-5 w-5 text-[#718096]" />
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-[#2F6FED] border-2 border-[#101A2B] flex items-center justify-center hover:bg-[#3d7ef5] transition-colors"
+              >
+                <Camera className="h-3 w-3 text-white" />
+              </button>
+            </div>
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
+            <p className="text-[10px] text-[#718096]">Toque para adicionar foto</p>
+          </div>
+
+          {/* Nome completo */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-[#AAB5C5]">Nome completo *</Label>
+            <Label htmlFor="new-person-name" className="text-xs font-semibold text-[#AAB5C5]">Nome completo *</Label>
             <Input
+              id="new-person-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Nome da pessoa"
@@ -332,19 +434,49 @@ function AddPersonDialog({
               required
             />
           </div>
+
+          {/* Telefone */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-[#AAB5C5]">Telefone</Label>
+            <Label htmlFor="new-person-phone" className="text-xs font-semibold text-[#AAB5C5]">Telefone</Label>
             <Input
+              id="new-person-phone"
               type="tel"
               value={phone}
-              onChange={(e) => setPhone(applyPhoneMask(e.target.value))}
+              onChange={handlePhoneChange}
               placeholder="(00) 00000-0000"
               className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50"
             />
           </div>
+
+          {/* Data de nascimento */}
+          <div className="space-y-1.5">
+            <Label htmlFor="new-person-birth" className="text-xs font-semibold text-[#AAB5C5]">Data de nascimento</Label>
+            <Input
+              id="new-person-birth"
+              type="date"
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+              className="bg-[#162235] border-[#26364D] text-[#F3F6FA] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50 [&::-webkit-calendar-picker-indicator]:invert-50"
+            />
+          </div>
+
+          {/* Observações */}
+          <div className="space-y-1.5">
+            <Label htmlFor="new-person-notes" className="text-xs font-semibold text-[#AAB5C5]">Observações</Label>
+            <Textarea
+              id="new-person-notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Observações opcionais..."
+              className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] resize-none focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50"
+              rows={3}
+            />
+          </div>
+
           <div className="flex gap-3">
             <Button type="button" variant="outline" onClick={onClose}
-              className="flex-1 border-[#26364D] text-[#AAB5C5] hover:bg-[#162235] hover:text-[#F3F6FA] transition-colors">
+              className="flex-1 border-[#26364D] text-[#AAB5C5] hover:bg-[#162235] hover:text-[#F3F6FA] transition-colors"
+              disabled={loading}>
               Cancelar
             </Button>
             <Button type="submit"
@@ -1079,21 +1211,6 @@ function DashboardPage() {
                   className="bg-[#162235] border-[#26364D] text-[#F3F6FA] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50 [&::-webkit-calendar-picker-indicator]:invert-50" />
               </div>
 
-              {finishData.actual_received && (
-                <div className="rounded-xl bg-[#C9A45C]/5 border border-[#C9A45C]/20 p-3 space-y-1.5">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-[#AAB5C5]">Lucro real:</span>
-                    <span className="text-emerald-400 font-semibold">{formatCurrency(parseFloat(finishData.actual_received) - Number(finishData.investment.invested_amount))}</span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-[#AAB5C5]">Diferença:</span>
-                    <span className={parseFloat(finishData.actual_received) - Number(finishData.investment.invested_amount) - Number(finishData.investment.expected_profit) >= 0 ? "text-emerald-400 font-semibold" : "text-red-400 font-semibold"}>
-                      {formatCurrency(parseFloat(finishData.actual_received) - Number(finishData.investment.invested_amount) - Number(finishData.investment.expected_profit))}
-                    </span>
-                  </div>
-                </div>
-              )}
-
               <div className="flex gap-3">
                 <Button type="button" variant="outline" onClick={() => setFinishData(null)} className="flex-1 border-[#26364D] text-[#AAB5C5] hover:bg-[#162235] hover:text-[#F3F6FA] transition-colors">Cancelar</Button>
                 <Button onClick={handleFinish} className="flex-1 bg-gradient-to-r from-[#2F6FED] to-[#1a4fd4] hover:from-[#3d7ef5] hover:to-[#2a5ee0] text-white font-semibold transition-all active:scale-95 shadow-md shadow-blue-600/10" disabled={finishMutation.isPending}>
@@ -1122,6 +1239,7 @@ function DashboardPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
     </div>
   );
 }
