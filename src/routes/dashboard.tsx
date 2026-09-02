@@ -1,32 +1,12 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
-  Wallet,
-  TrendingUp,
-  DollarSign,
-  PieChart,
-  Activity,
-  Plus,
-  LogOut,
-  Menu,
-  ArrowRight,
-  Trash2,
-  Pencil,
-  CheckCircle,
-  AlertCircle,
-  Clock,
-  User,
-  Search,
-  Filter,
-  ChevronRight,
-  Calendar,
-  TrendingDown,
-  Home,
-  Users,
-  BarChart2,
-  Settings,
-  type LucideIcon,
+  Wallet, TrendingUp, DollarSign, PieChart, Activity,
+  Plus, LogOut, Menu, ArrowRight, Trash2, Pencil,
+  CheckCircle, AlertCircle, Clock, User, Search, Filter,
+  ChevronRight, Calendar, Home, Users, BarChart2, Settings,
+  type LucideIcon, ChevronDown, X, UserPlus, Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,33 +17,32 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+  Dialog, DialogContent, DialogDescription,
+  DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger,
 } from "@/components/ui/sheet";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { Database } from "@/integrations/supabase/types";
 
 type Investment = Database["public"]["Tables"]["investments"]["Row"];
+
+type Person = {
+  id: string;
+  user_id: string;
+  name: string;
+  phone: string | null;
+  birth_date: string | null;
+  photo_url: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
 
 export const Route = createFileRoute("/dashboard")({
   component: DashboardPage,
@@ -108,6 +87,126 @@ const CARD_LABELS: Record<string, { title: string; description: string }> = {
   receivedProfit: { title: "Lucro Recebido", description: "Realizado" },
   activeCount: { title: "Empréstimos Ativos", description: "Em andamento" },
 };
+
+// ─── Person Selector Component ────────────────────────────────────────────────
+
+function PersonSelector({
+  people,
+  selectedPerson,
+  onSelect,
+  onAddNew,
+}: {
+  people: Person[];
+  selectedPerson: Person | null;
+  onSelect: (p: Person | null) => void;
+  onAddNew: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+
+  const filtered = people.filter((p) =>
+    p.name.toLowerCase().includes(query.toLowerCase())
+  );
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (selectedPerson) {
+      setQuery("");
+    }
+  }, [selectedPerson]);
+
+  return (
+    <div className="relative" ref={ref}>
+      <Label className="text-xs font-semibold text-[#AAB5C5] block mb-1.5">Nome da Pessoa *</Label>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-3 py-2.5 bg-[#162235] border border-[#26364D] rounded-lg text-left transition-all focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50 hover:border-[#2F6FED]/50"
+      >
+        <span className={selectedPerson ? "text-[#F3F6FA] text-sm" : "text-[#718096] text-sm"}>
+          {selectedPerson ? selectedPerson.name : "Selecione uma pessoa..."}
+        </span>
+        {selectedPerson ? (
+          <X
+            className="h-4 w-4 text-[#718096] hover:text-red-400 shrink-0 transition-colors"
+            onClick={(e) => { e.stopPropagation(); onSelect(null); }}
+          />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-[#718096] shrink-0" />
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute top-full left-0 right-0 mt-1 bg-[#162235] border border-[#26364D] rounded-xl shadow-xl z-50 max-h-64 overflow-hidden flex flex-col animate-scale-in">
+          <div className="p-2 border-b border-[#26364D]/60">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#718096]" />
+              <input
+                type="text"
+                placeholder="Buscar pessoa..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-2 bg-[#101A2B] border border-[#26364D] rounded-lg text-[#F3F6FA] placeholder:text-[#718096] text-xs focus:outline-none focus:border-[#2F6FED]"
+                autoFocus
+              />
+            </div>
+          </div>
+
+          <div className="overflow-y-auto flex-1">
+            {filtered.length > 0 ? (
+              filtered.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => { onSelect(p); setOpen(false); }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-[#18263A] transition-colors text-left"
+                >
+                  <div className="w-7 h-7 rounded-full bg-[#1e2d42] border border-[#26364D] flex items-center justify-center shrink-0">
+                    <User className="h-3.5 w-3.5 text-[#718096]" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-[#F3F6FA] truncate">{p.name}</p>
+                    {p.phone && (
+                      <p className="text-[10px] text-[#718096] truncate">{p.phone}</p>
+                    )}
+                  </div>
+                  {selectedPerson?.id === p.id && (
+                    <Check className="h-3.5 w-3.5 text-[#2F6FED] ml-auto shrink-0" />
+                  )}
+                </button>
+              ))
+            ) : (
+              <div className="px-3 py-4 text-center">
+                <p className="text-xs text-[#718096]">Nenhuma pessoa encontrada</p>
+              </div>
+            )}
+          </div>
+
+          <div className="p-2 border-t border-[#26364D]/60">
+            <button
+              type="button"
+              onClick={() => { setOpen(false); onAddNew(); }}
+              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg bg-[#2F6FED]/10 border border-[#2F6FED]/30 text-[#2F6FED] hover:bg-[#2F6FED]/20 transition-colors text-xs font-semibold"
+            >
+              <UserPlus className="h-3.5 w-3.5 shrink-0" />
+              Cadastrar nova pessoa
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─── Components ───────────────────────────────────────────────────────────────
 
@@ -169,6 +268,97 @@ function FilterChip({ label, active, onClick }: { label: string; active: boolean
   );
 }
 
+// ─── Add Person Dialog ────────────────────────────────────────────────────────
+
+function AddPersonDialog({
+  open,
+  onClose,
+  onCreated,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onCreated: (person: Person) => void;
+}) {
+  const queryClient = useQueryClient();
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const applyPhoneMask = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 11);
+    if (digits.length <= 2) return digits.length ? `(${digits}` : "";
+    if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) { toast.error("Informe o nome da pessoa"); return; }
+    setLoading(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setLoading(false); return; }
+    const { data, error } = await supabase
+      .from("people")
+      .insert({ user_id: session.user.id, name: name.trim(), phone: phone || null })
+      .select()
+      .single();
+    setLoading(false);
+    if (error) { toast.error("Erro ao cadastrar pessoa"); return; }
+    toast.success("Pessoa cadastrada com sucesso!", {
+      className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium !rounded-xl",
+    });
+    queryClient.invalidateQueries({ queryKey: ["people"] });
+    setName(""); setPhone("");
+    onCreated(data as Person);
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="bg-[#101A2B] border border-[#26364D] text-[#F3F6FA] max-w-md animate-scale-in">
+        <DialogHeader>
+          <DialogTitle className="text-base font-bold text-[#F3F6FA]">Nova Pessoa</DialogTitle>
+          <DialogDescription className="text-[#AAB5C5] text-sm">Cadastre uma nova pessoa para vincular ao empréstimo</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold text-[#AAB5C5]">Nome completo *</Label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Nome da pessoa"
+              className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50"
+              autoFocus
+              required
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold text-[#AAB5C5]">Telefone</Label>
+            <Input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(applyPhoneMask(e.target.value))}
+              placeholder="(00) 00000-0000"
+              className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50"
+            />
+          </div>
+          <div className="flex gap-3">
+            <Button type="button" variant="outline" onClick={onClose}
+              className="flex-1 border-[#26364D] text-[#AAB5C5] hover:bg-[#162235] hover:text-[#F3F6FA] transition-colors">
+              Cancelar
+            </Button>
+            <Button type="submit"
+              className="flex-1 bg-gradient-to-r from-[#2F6FED] to-[#1a4fd4] hover:from-[#3d7ef5] hover:to-[#2a5ee0] text-white font-semibold transition-all active:scale-95"
+              disabled={loading}>
+              {loading ? "Salvando..." : <><UserPlus className="h-4 w-4 mr-1" /> Cadastrar</>}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Main Component ──────────────────────────────────────────────────────────
 
 function DashboardPage() {
@@ -181,8 +371,10 @@ function DashboardPage() {
   const [editData, setEditData] = useState<Investment | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
+  const [isAddPersonOpen, setIsAddPersonOpen] = useState(false);
 
   const emptyForm = {
+    person_id: null as string | null,
     person_name: "",
     invested_amount: "",
     profit_percent: "",
@@ -198,6 +390,20 @@ function DashboardPage() {
       const { data: { session } } = await supabase.auth.getSession();
       return session;
     },
+  });
+
+  const { data: people } = useQuery({
+    queryKey: ["people", session?.user.id],
+    queryFn: async () => {
+      if (!session?.user.id) return [];
+      const { data } = await supabase
+        .from("people")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("name");
+      return (data || []) as Person[];
+    },
+    enabled: !!session?.user.id,
   });
 
   const handleLogout = async () => {
@@ -223,6 +429,7 @@ function DashboardPage() {
     mutationFn: async (data: typeof formData) => {
       const { error } = await supabase.from("investments").insert({
         user_id: session!.user.id,
+        person_id: data.person_id,
         person_name: data.person_name,
         invested_amount: parseFloat(data.invested_amount),
         profit_percent: parseFloat(data.profit_percent),
@@ -322,6 +529,7 @@ function DashboardPage() {
   const openEditModal = (investment: Investment) => {
     setEditData(investment);
     setFormData({
+      person_id: investment.person_id,
       person_name: investment.person_name,
       invested_amount: String(investment.invested_amount),
       profit_percent: String(investment.profit_percent),
@@ -335,6 +543,7 @@ function DashboardPage() {
     e.preventDefault();
     if (!editData) return;
     updateMutation.mutate({ id: editData.id, data: {
+      person_id: formData.person_id,
       person_name: formData.person_name,
       invested_amount: parseFloat(formData.invested_amount),
       profit_percent: parseFloat(formData.profit_percent),
@@ -364,8 +573,6 @@ function DashboardPage() {
     return vals[key] || "—";
   };
 
-  // ─── Filtering ───────────────────────────────────────────────────────────────
-
   const today = new Date().toISOString().split("T")[0];
 
   const filteredInvestments = investments?.filter((inv) => {
@@ -383,8 +590,22 @@ function DashboardPage() {
     .sort((a, b) => a.return_date.localeCompare(b.return_date))
     .slice(0, 5);
 
+  const handlePersonSelected = (person: Person | null) => {
+    setFormData({ ...formData, person_id: person?.id || null, person_name: person?.name || "" });
+  };
+
+  const handlePersonCreated = (person: Person) => {
+    setFormData({ ...formData, person_id: person.id, person_name: person.name });
+  };
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#0B1220" }}>
+      <AddPersonDialog
+        open={isAddPersonOpen}
+        onClose={() => setIsAddPersonOpen(false)}
+        onCreated={handlePersonCreated}
+      />
+
       {/* ── Header ─────────────────────────────────────────── */}
       <header className="sticky top-0 z-40 bg-[#101A2B]/95 backdrop-blur-xl border-b border-[#26364D]/60">
         <div className="flex items-center justify-between px-4 py-3 max-w-5xl mx-auto">
@@ -396,110 +617,81 @@ function DashboardPage() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="bg-[#101A2B] border-[#26364D] w-[300px] p-0 flex flex-col">
-              {/* Header */}
-              <div className="px-5 pt-6 pb-5 border-b border-[#26364D]/60">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2F6FED] to-[#1a4fd4] flex items-center justify-center shadow-lg shadow-blue-600/20 shrink-0">
-                    <span className="text-base font-bold text-white">$</span>
-                  </div>
-                  <div>
-                    <div className="text-sm font-bold text-[#F3F6FA] leading-tight">(Seu Nome) Emprestimos</div>
-                    <div className="text-[11px] text-[#718096] font-normal mt-0.5">Sistema financeiro</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Navigation */}
-              <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
-
-                {/* Grupo: Visão Geral */}
-                <div className="space-y-0.5">
-                  <p className="text-[9px] font-bold text-[#718096] uppercase tracking-widest px-3 mb-2">Visão Geral</p>
-                  <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#2F6FED]/10 border border-[#2F6FED]/30 text-[#2F6FED] text-sm font-semibold cursor-default">
-                    <Home className="h-4 w-4 shrink-0" />
-                    Dashboard
-                  </button>
-                </div>
-
-                {/* Grupo: Gestão */}
-                <div className="space-y-0.5">
-                  <p className="text-[9px] font-bold text-[#718096] uppercase tracking-widest px-3 mb-2">Gestão</p>
-                  <button
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
-                    onClick={() => { setIsMenuOpen(false); setFilter('all'); setSearchQuery(''); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                  >
-                    <Wallet className="h-4 w-4 shrink-0" />
-                    Empréstimos
-                  </button>
-                  <button
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
-                    onClick={() => { setIsMenuOpen(false); router.navigate({ to: '/people' }); }}
-                  >
-                    <Users className="h-4 w-4 shrink-0" />
-                    Pessoas
-                  </button>
-                  <button
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
-                    onClick={() => { setIsMenuOpen(false); setFilter('finished'); setSearchQuery(''); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                  >
-                    <CheckCircle className="h-4 w-4 shrink-0" />
-                    Finalizados
-                    <span className="ml-auto text-[10px] bg-[#162235] border border-[#26364D] text-[#718096] px-2 py-0.5 rounded-full font-medium">
-                      {investments?.filter(i => i.status === 'finished').length ?? 0}
-                    </span>
-                  </button>
-                </div>
-
-                {/* Grupo: Análises */}
-                <div className="space-y-0.5">
-                  <p className="text-[9px] font-bold text-[#718096] uppercase tracking-widest px-3 mb-2">Análises</p>
-                  <button
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
-                    onClick={() => { setIsMenuOpen(false); toast.info('Relatórios em breve!', { className: '!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium !rounded-xl' }); }}
-                  >
-                    <BarChart2 className="h-4 w-4 shrink-0" />
-                    Relatórios
-                  </button>
-                </div>
-
-                {/* Grupo: Sistema */}
-                <div className="space-y-0.5">
-                  <p className="text-[9px] font-bold text-[#718096] uppercase tracking-widest px-3 mb-2">Sistema</p>
-                  <button
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
-                    onClick={() => { setIsMenuOpen(false); toast.info('Configurações em breve!', { className: '!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium !rounded-xl' }); }}
-                  >
-                    <Settings className="h-4 w-4 shrink-0" />
-                    Configurações
-                  </button>
-                </div>
-
-                {/* Separator */}
-                <div className="h-px bg-[#26364D]/60 mx-1" />
-
-                {/* Sair */}
-                <button
-                  onClick={() => { setIsMenuOpen(false); handleLogout(); }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#718096] hover:text-red-400 hover:bg-red-500/10 text-sm font-medium transition-all duration-150 cursor-pointer"
-                >
-                  <LogOut className="h-4 w-4 shrink-0" />
-                  Sair
-                </button>
-              </nav>
-
-              {/* Footer */}
-              <div className="px-5 py-4 border-t border-[#26364D]/60">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-[#162235] border border-[#26364D] flex items-center justify-center shrink-0">
-                    <User className="h-3.5 w-3.5 text-[#718096]" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-semibold text-[#AAB5C5]">Administrador</p>
-                    <p className="text-[9px] text-[#718096] truncate">{session?.user?.email}</p>
+                <div className="px-5 pt-6 pb-5 border-b border-[#26364D]/60">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2F6FED] to-[#1a4fd4] flex items-center justify-center shadow-lg shadow-blue-600/20 shrink-0">
+                      <span className="text-base font-bold text-white">$</span>
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-[#F3F6FA] leading-tight">(Seu Nome) Emprestimos</div>
+                      <div className="text-[11px] text-[#718096] font-normal mt-0.5">Sistema financeiro</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </SheetContent>
+                <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+                  <div className="space-y-0.5">
+                    <p className="text-[9px] font-bold text-[#718096] uppercase tracking-widest px-3 mb-2">Visão Geral</p>
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#2F6FED]/10 border border-[#2F6FED]/30 text-[#2F6FED] text-sm font-semibold cursor-default">
+                      <Home className="h-4 w-4 shrink-0" />
+                      Dashboard
+                    </button>
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-[9px] font-bold text-[#718096] uppercase tracking-widest px-3 mb-2">Gestão</p>
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
+                      onClick={() => { setIsMenuOpen(false); setFilter("all"); setSearchQuery(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
+                      <Wallet className="h-4 w-4 shrink-0" />
+                      Empréstimos
+                    </button>
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
+                      onClick={() => { setIsMenuOpen(false); router.navigate({ to: "/people" }); }}>
+                      <Users className="h-4 w-4 shrink-0" />
+                      Pessoas
+                    </button>
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
+                      onClick={() => { setIsMenuOpen(false); setFilter("finished"); setSearchQuery(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}>
+                      <CheckCircle className="h-4 w-4 shrink-0" />
+                      Finalizados
+                      <span className="ml-auto text-[10px] bg-[#162235] border border-[#26364D] text-[#718096] px-2 py-0.5 rounded-full font-medium">
+                        {investments?.filter((i) => i.status === "finished").length ?? 0}
+                      </span>
+                    </button>
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-[9px] font-bold text-[#718096] uppercase tracking-widest px-3 mb-2">Análises</p>
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
+                      onClick={() => { setIsMenuOpen(false); toast.info("Relatórios em breve!", { className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium !rounded-xl" }); }}>
+                      <BarChart2 className="h-4 w-4 shrink-0" />
+                      Relatórios
+                    </button>
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-[9px] font-bold text-[#718096] uppercase tracking-widest px-3 mb-2">Sistema</p>
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
+                      onClick={() => { setIsMenuOpen(false); toast.info("Configurações em breve!", { className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium !rounded-xl" }); }}>
+                      <Settings className="h-4 w-4 shrink-0" />
+                      Configurações
+                    </button>
+                  </div>
+                  <div className="h-px bg-[#26364D]/60 mx-1" />
+                  <button onClick={() => { setIsMenuOpen(false); handleLogout(); }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#718096] hover:text-red-400 hover:bg-red-500/10 text-sm font-medium transition-all duration-150 cursor-pointer">
+                    <LogOut className="h-4 w-4 shrink-0" />
+                    Sair
+                  </button>
+                </nav>
+                <div className="px-5 py-4 border-t border-[#26364D]/60">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-[#162235] border border-[#26364D] flex items-center justify-center shrink-0">
+                      <User className="h-3.5 w-3.5 text-[#718096]" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold text-[#AAB5C5]">Administrador</p>
+                      <p className="text-[9px] text-[#718096] truncate">{session?.user?.email}</p>
+                    </div>
+                  </div>
+                </div>
+              </SheetContent>
             </Sheet>
 
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2F6FED] to-[#1a4fd4] flex items-center justify-center shadow-lg shadow-blue-600/20">
@@ -522,10 +714,12 @@ function DashboardPage() {
                 <DialogDescription className="text-[#AAB5C5] text-sm">Cadastre um novo empréstimo ou investimento</DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmitLoan} className="space-y-5">
-                <div className="space-y-1.5">
-                  <Label htmlFor="person_name" className="text-xs font-semibold text-[#AAB5C5]">Nome da Pessoa *</Label>
-                  <Input id="person_name" value={formData.person_name} onChange={(e) => setFormData({ ...formData, person_name: e.target.value })} placeholder="Nome completo" className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50" required />
-                </div>
+                <PersonSelector
+                  people={people || []}
+                  selectedPerson={people?.find((p) => p.id === formData.person_id) || null}
+                  onSelect={handlePersonSelected}
+                  onAddNew={() => setIsAddPersonOpen(true)}
+                />
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
@@ -580,8 +774,6 @@ function DashboardPage() {
 
       {/* ── Main ──────────────────────────────────────────── */}
       <main className="p-4 space-y-6 max-w-5xl mx-auto">
-
-        {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {STAT_CARDS.map(({ key, icon, color, iconColor }, index) => (
             <StatCard
@@ -597,13 +789,12 @@ function DashboardPage() {
           ))}
         </div>
 
-        {/* Upcoming due dates */}
         {upcomingDue.length > 0 && (
           <section className="space-y-3 animate-fade-in-up" style={{ animationDelay: "200ms", animationFillMode: "both" }}>
             <SectionHeader title="Próximos Vencimentos" />
             <div className="bg-[#162235] border border-[#26364D] rounded-2xl overflow-hidden">
               <div className="divide-y divide-[#26364D]/60">
-                {upcomingDue.map((inv, idx) => {
+                {upcomingDue.map((inv) => {
                   const statusInfo = getStatusInfo(inv.status, inv.return_date);
                   return (
                     <div key={inv.id} className="flex items-center justify-between px-4 py-3 hover:bg-[#18263A]/50 transition-colors">
@@ -634,11 +825,8 @@ function DashboardPage() {
           </section>
         )}
 
-        {/* Investments list */}
         <section className="space-y-3">
           <SectionHeader title="Todos os Empréstimos" />
-
-          {/* Search and filters */}
           <div className="space-y-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#718096]" />
@@ -670,7 +858,7 @@ function DashboardPage() {
                   </div>
                   <Skeleton className="h-8 w-40 rounded skeleton-shimmer" />
                   <div className="space-y-1.5">
-                    {[1,2,3,4].map(j => <Skeleton key={j} className="h-3 w-full rounded skeleton-shimmer" />)}
+                    {[1, 2, 3, 4].map((j) => <Skeleton key={j} className="h-3 w-full rounded skeleton-shimmer" />)}
                   </div>
                   <div className="flex gap-2">
                     <Skeleton className="h-8 flex-1 rounded-xl skeleton-shimmer" />
@@ -690,7 +878,6 @@ function DashboardPage() {
                     style={{ animationDelay: `${idx * 60}ms`, animationFillMode: "both" }}
                   >
                     <CardContent className="p-4 sm:p-5 space-y-3">
-                      {/* Header: name + status */}
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
                           <User className="h-4 w-4 text-[#718096] shrink-0" />
@@ -698,11 +885,7 @@ function DashboardPage() {
                         </div>
                         <StatusBadge status={inv.status} returnDate={inv.return_date} />
                       </div>
-
-                      {/* Valor principal */}
                       <p className="text-xl sm:text-2xl font-bold text-[#F3F6FA] leading-none">{formatCurrency(Number(inv.invested_amount))}</p>
-
-                      {/* Grid de info 2 colunas */}
                       <div className="border-t border-[#26364D]/60 pt-3">
                         <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
                           <div className="flex justify-between items-center py-1">
@@ -727,8 +910,6 @@ function DashboardPage() {
                           </div>
                         </div>
                       </div>
-
-                      {/* Ações */}
                       <div className="flex gap-2 pt-2 border-t border-[#26364D]/60">
                         {inv.status === "active" ? (
                           <>
