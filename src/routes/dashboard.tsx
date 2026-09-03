@@ -81,7 +81,7 @@ const STAT_CARDS = [
 ] as const;
 
 const CARD_LABELS: Record<string, { title: string; description: string }> = {
-  totalInvested: { title: "Total Investido", description: "Acumulado" },
+  totalInvested: { title: "Total Emprestado", description: "Acumulado" },
   totalInStreet: { title: "Na Rua", description: "Emprestado" },
   expectedProfit: { title: "Lucro Previsto", description: "Projeção" },
   expectedReturn: { title: "Retorno Total", description: "Valor + lucro" },
@@ -887,7 +887,7 @@ function DashboardPage() {
             <DialogContent className="bg-[#101A2B] border border-[#26364D] text-[#F3F6FA] max-h-[90vh] overflow-y-auto max-w-md animate-scale-in">
               <DialogHeader>
                 <DialogTitle className="text-lg font-bold text-[#F3F6FA]">Novo Empréstimo</DialogTitle>
-                <DialogDescription className="text-[#AAB5C5] text-sm">Cadastre um novo empréstimo ou investimento</DialogDescription>
+                <DialogDescription className="text-[#AAB5C5] text-sm">Cadastre um novo empréstimo</DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmitLoan} className="space-y-5">
                 <PersonSelector
@@ -1195,7 +1195,7 @@ function DashboardPage() {
                     <span className="text-xs font-semibold text-[#F3F6FA]">{finishData.investment.person_name}</span>
                   </div>
                   <div className="flex justify-between items-center py-0.5">
-                    <span className="text-xs text-[#AAB5C5] font-medium">Valor investido</span>
+                    <span className="text-xs text-[#AAB5C5] font-medium">Valor emprestado</span>
                     <span className="text-xs font-semibold text-[#F3F6FA]">{formatCurrency(Number(finishData.investment.invested_amount))}</span>
                   </div>
                   <div className="flex justify-between items-center py-0.5">
