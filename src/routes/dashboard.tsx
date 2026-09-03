@@ -61,7 +61,7 @@ const formatDate = (date: string) => {
 };
 
 const getStatusInfo = (status: string, returnDate: string) => {
-  const today = new Date().toISOString().split("T")[0];
+  const today = new Date().toISOString().slice(0, 10);
   const isLate = status === "active" && returnDate < today;
   if (isLate) return { label: "Atrasado", bg: "bg-red-500/15", text: "text-red-400", icon: AlertCircle };
   if (status === "active") return { label: "Ativo", bg: "bg-emerald-500/15", text: "text-emerald-400", icon: CheckCircle };
@@ -554,7 +554,7 @@ function DashboardPage() {
     person_name: "",
     invested_amount: "",
     profit_percent: "",
-    start_date: new Date().toISOString().split("T")[0],
+    start_date: new Date().toISOString().slice(0, 10),
     return_date: "",
     notes: "",
   };
@@ -733,7 +733,7 @@ function DashboardPage() {
     setFinishData({
       investment,
       actual_received: String(investment.expected_return),
-      finalized_date: new Date().toISOString().split("T")[0],
+      finalized_date: new Date().toISOString().slice(0, 10),
     });
   };
 
@@ -749,7 +749,7 @@ function DashboardPage() {
     return vals[key] || "—";
   };
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = new Date().toISOString().slice(0, 10);
 
   const filteredInvestments = investments?.filter((inv) => {
     const matchesSearch = inv.person_name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -954,12 +954,12 @@ function DashboardPage() {
           {STAT_CARDS.map(({ key, icon, color, iconColor }, index) => (
             <StatCard
               key={key}
-              title={CARD_LABELS[key].title}
+              title={CARD_LABELS[key]!.title}
               value={statValue(key)}
               icon={icon}
               color={color}
               iconColor={iconColor}
-              description={CARD_LABELS[key].description}
+              description={CARD_LABELS[key]!.description}
               index={index}
             />
           ))}
