@@ -1014,13 +1014,15 @@ function DashboardPage() {
                 className="pl-9 bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50 text-xs h-9"
               />
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <Filter className="h-3.5 w-3.5 text-[#718096] shrink-0" />
-              <FilterChip label="Todos" active={filter === "all"} onClick={() => setFilter("all")} />
-              <FilterChip label="Ativos" active={filter === "active"} onClick={() => setFilter("active")} />
-              <FilterChip label="Finalizados" active={filter === "finished"} onClick={() => setFilter("finished")} />
-              <FilterChip label="Atrasados" active={filter === "late"} onClick={() => setFilter("late")} />
-              <FilterChip label="Cancelados" active={filter === "cancelled"} onClick={() => setFilter("cancelled")} />
+            <div className="w-full overflow-x-auto scrollbar-hide">
+              <div className="flex items-center gap-1.5 min-w-max">
+                <Filter className="h-3.5 w-3.5 text-[#718096] shrink-0" />
+                <FilterChip label="Todos" active={filter === "all"} onClick={() => setFilter("all")} />
+                <FilterChip label="Ativos" active={filter === "active"} onClick={() => setFilter("active")} />
+                <FilterChip label="Finalizados" active={filter === "finished"} onClick={() => setFilter("finished")} />
+                <FilterChip label="Atrasados" active={filter === "late"} onClick={() => setFilter("late")} />
+                <FilterChip label="Cancelados" active={filter === "cancelled"} onClick={() => setFilter("cancelled")} />
+              </div>
             </div>
           </div>
 
