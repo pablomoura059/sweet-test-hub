@@ -174,7 +174,7 @@ function PeoplePage() {
     enabled: !!session?.user.id,
   });
 
-  // Retorna caminho relativo (userId/personId.ext) após upload verificado
+    // Retorna caminho relativo (userId/personId.ext) após upload verificado
   const uploadPhoto = async (userId: string, personId: string, file: File): Promise<string | null> => {
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const path = `${userId}/${personId}.${ext}`;
@@ -189,23 +189,29 @@ function PeoplePage() {
       return null;
     }
 
+    toast.info("UPLOAD INICIADO", { className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium !rounded-xl" });
+
     const { data, error } = await supabase.storage.from("person-photos").upload(path, file, { upsert: false });
     if (error) {
-      toast.error("Erro ao fazer upload da foto: " + error.message);
+      toast.error("UPLOAD ERRO: " + error.message, { className: "!bg-red-900/50 !border-red-500/30 !text-red-200 !font-medium !rounded-xl" });
       return null;
     }
 
     if (!data?.path) {
-      toast.error("Upload não retornou confirmação. Tente novamente.");
+      toast.error("UPLOAD ERRO: não retornou path", { className: "!bg-red-900/50 !border-red-500/30 !text-red-200 !font-medium !rounded-xl" });
       return null;
     }
+
+    toast.success("UPLOAD OK: " + data.path, { className: "!bg-[#101A2B] !border-emerald-500/30 !text-emerald-200 !font-medium !rounded-xl" });
 
     // Confirmar que o arquivo específico existe via download()
     const { error: downloadError } = await supabase.storage.from("person-photos").download(data.path);
     if (downloadError) {
-      toast.error("Arquivo enviado mas não pôde ser verificado. Tente novamente.");
+      toast.error("VERIFICAÇÃO ERRO: " + downloadError.message, { className: "!bg-red-900/50 !border-red-500/30 !text-red-200 !font-medium !rounded-xl" });
       return null;
     }
+
+    toast.success("VERIFICAÇÃO OK", { className: "!bg-[#101A2B] !border-emerald-500/30 !text-emerald-200 !font-medium !rounded-xl" });
 
     return path;
   };
