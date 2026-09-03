@@ -326,8 +326,17 @@ function AddPersonDialog({
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Revogar blob URL anterior para evitar vazamento de memória
+    if (photoPreview && photoPreview.startsWith('blob:')) {
+      URL.revokeObjectURL(photoPreview);
+    }
+    // Ler o arquivo como data URL para preview confiável
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setPhotoPreview(ev.target?.result as string);
+    };
+    reader.readAsDataURL(file);
     setPhotoFile(file);
-    setPhotoPreview(URL.createObjectURL(file));
   };
 
   // Retorna caminho relativo (userId/personId.ext) após upload verificado

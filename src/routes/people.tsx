@@ -79,7 +79,10 @@ function PersonAvatar({ photoUrl, name, size = "md" }: {
   photoUrl: string | null | undefined; name: string; size?: "sm" | "md" | "lg" | "xl";
 }) {
   const [imgError, setImgError] = useState(false);
-  const resolvedUrl = getSignedPhotoUrl(photoUrl);
+  // data: URLs são preview local — usar direto sem passar por getSignedPhotoUrl
+  const resolvedUrl = (photoUrl && (photoUrl.startsWith('data:') || photoUrl.startsWith('blob:')))
+    ? photoUrl
+    : getSignedPhotoUrl(photoUrl);
   const initials = name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
 
   const sc = { sm: "w-8 h-8", md: "w-10 h-10", lg: "w-14 h-14", xl: "w-20 h-20" };
@@ -108,7 +111,10 @@ function PersonAvatarSmall({ photoUrl, name }: {
   photoUrl: string | null | undefined; name: string;
 }) {
   const [imgError, setImgError] = useState(false);
-  const resolvedUrl = getSignedPhotoUrl(photoUrl);
+  // data: URLs são preview local — usar direto sem passar por getSignedPhotoUrl
+  const resolvedUrl = (photoUrl && (photoUrl.startsWith('data:') || photoUrl.startsWith('blob:')))
+    ? photoUrl
+    : getSignedPhotoUrl(photoUrl);
 
   return (
     <div className="w-7 h-7 rounded-full overflow-hidden bg-[#1e2d42] border border-[#26364D] flex items-center justify-center shrink-0">
@@ -294,12 +300,17 @@ function PeoplePage() {
     setFormPhone(person.phone || "");
     setFormBirthDate(person.birth_date || "");
     setFormNotes(person.notes || "");
+    // Manter photo_url existente como preview (já é URL pública ou path relativo)
     setPhotoPreview(person.photo_url ? getSignedPhotoUrl(person.photo_url) : null);
     setPhotoFile(null);
     setIsFormOpen(true);
   };
 
   const closeForm = () => {
+    // Revogar blob URL para não vazar memória
+    if (photoPreview && photoPreview.startsWith('blob:')) {
+      URL.revokeObjectURL(photoPreview);
+    }
     setIsFormOpen(false);
     setEditPerson(null);
     setFormName(""); setFormPhone(""); setFormBirthDate(""); setFormNotes("");
@@ -309,8 +320,17 @@ function PeoplePage() {
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Revogar blob URL anterior para evitar vazamento de memória
+    if (photoPreview && photoPreview.startsWith('blob:')) {
+      URL.revokeObjectURL(photoPreview);
+    }
+    // Ler o arquivo como data URL para preview confiável
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setPhotoPreview(ev.target?.result as string);
+    };
+    reader.readAsDataURL(file);
     setPhotoFile(file);
-    setPhotoPreview(URL.createObjectURL(file));
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
