@@ -145,7 +145,7 @@ function PeoplePage() {
   const [formBirthDate, setFormBirthDate] = useState("");
   const [formNotes, setFormNotes] = useState("");
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const photoFileRef = useRef<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: session } = useQuery({
@@ -226,23 +226,24 @@ function PeoplePage() {
 
       if (error) throw error;
 
+      // Validar photoFile
+      if (photoFile && !(photoFile instanceof File)) {
+        console.error("[createMutation] photoFile não é File:", photoFile);
+        throw new Error("Arquivo de foto inválido");
+      }
+
       // Se tem foto, fazer upload e atualizar com o path relativo
       if (photoFile && data) {
-        try {
-          const photoPath = await uploadPhoto(session.user.id, data.id, photoFile);
-          if (photoPath) {
-            await supabase.from("people").update({ photo_url: photoPath }).eq("id", data.id);
-          }
-        } catch (uploadErr) {
-          // upload falhou — continua com photo_url null, pessoa já foi criada
-          console.error("Erro no upload de foto:", uploadErr);
+        const photoPath = await uploadPhoto(session.user.id, data.id, photoFile);
+        if (photoPath) {
+          await supabase.from("people").update({ photo_url: photoPath }).eq("id", data.id);
+          queryClient.invalidateQueries({ queryKey: ["people"] });
         }
       }
     },
     onSuccess: () => {
       toast.success("Pessoa cadastrada com sucesso!", { className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium !rounded-xl" });
       queryClient.invalidateQueries({ queryKey: ["people"] });
-      closeForm();
     },
     onError: (err) => {
       toast.error("Erro ao cadastrar pessoa");
@@ -299,7 +300,7 @@ function PeoplePage() {
   const openCreate = () => {
     setEditPerson(null);
     setFormName(""); setFormPhone(""); setFormBirthDate(""); setFormNotes("");
-    setPhotoPreview(null); setPhotoFile(null);
+    setPhotoPreview(null); photoFileRef.current = null;
     setIsFormOpen(true);
   };
 
@@ -312,7 +313,7 @@ function PeoplePage() {
     // Se tem foto salva, usar getSignedPhotoUrl para exibir; senão null
     const previewUrl = person.photo_url ? getSignedPhotoUrl(person.photo_url) : null;
     setPhotoPreview(previewUrl);
-    setPhotoFile(null);
+    photoFileRef.current = null;
     setIsFormOpen(true);
   };
 
@@ -324,7 +325,7 @@ function PeoplePage() {
     setIsFormOpen(false);
     setEditPerson(null);
     setFormName(""); setFormPhone(""); setFormBirthDate(""); setFormNotes("");
-    setPhotoPreview(null); setPhotoFile(null);
+    setPhotoPreview(null); photoFileRef.current = null;
   };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -340,7 +341,7 @@ function PeoplePage() {
       setPhotoPreview(ev.target?.result as string);
     };
     reader.readAsDataURL(file);
-    setPhotoFile(file);
+    photoFileRef.current = file;
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -350,10 +351,12 @@ function PeoplePage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) { toast.error("Informe o nome da pessoa"); return; }
+    const fileToUpload = photoFileRef.current;
+    console.log("[handleSubmit] photoFileRef.current:", fileToUpload);
     if (editPerson) {
-      updateMutation.mutate({ id: editPerson.id, photoFile });
+      updateMutation.mutate({ id: editPerson.id, photoFile: fileToUpload });
     } else {
-      createMutation.mutate({ photoFile });
+      createMutation.mutate({ photoFile: fileToUpload });
     }
   };
 
