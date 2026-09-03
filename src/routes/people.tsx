@@ -172,8 +172,17 @@ function PeoplePage() {
   const uploadPhoto = async (userId: string, personId: string, file: File): Promise<string | null> => {
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const path = `${userId}/${personId}.${ext}`;
-    const { error } = await supabase.storage.from("person-photos").upload(path, file, { upsert: true });
-    if (error) { toast.error("Erro ao fazer upload da foto"); return null; }
+    const { data, error } = await supabase.storage.from("person-photos").upload(path, file, { upsert: true });
+    if (error) {
+      toast.error("Erro ao fazer upload da foto: " + error.message);
+      return null;
+    }
+    // Confirmar que o arquivo existe no Storage antes de salvar no banco
+    const { data: fileCheck } = await supabase.storage.from("person-photos").list(userId, { searchByExt: ext });
+    if (!fileCheck || fileCheck.length === 0) {
+      toast.error("Upload concluído mas não foi possível confirmar o arquivo. Tente novamente.");
+      return null;
+    }
     // Retornar o PATH RELATIVO — não a URL completa
     return path;
   };
@@ -199,6 +208,8 @@ function PeoplePage() {
         const photoPath = await uploadPhoto(session.user.id, data.id, photoFile);
         if (photoPath) {
           await supabase.from("people").update({ photo_url: photoPath }).eq("id", data.id);
+        } else {
+          // upload falhou — continua com photo_url null
         }
       }
     },
@@ -266,7 +277,7 @@ function PeoplePage() {
     setFormPhone(person.phone || "");
     setFormBirthDate(person.birth_date || "");
     setFormNotes(person.notes || "");
-    setPhotoPreview(person.photo_url);
+    setPhotoPreview(person.photo_url ? getSignedPhotoUrl(person.photo_url) : null);
     setPhotoFile(null);
     setIsFormOpen(true);
   };
@@ -428,7 +439,7 @@ function PeoplePage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex flex-col items-center gap-2">
               <div className="relative">
-                <PersonAvatar photoUrl={photoPreview} name={formName || "Pessoa"} size="xl" />
+                <PersonAvatar photoUrl={photoPreview || formName ? getSignedPhotoUrl(photoPreview) : null} name={formName || "Pessoa"} size="xl" />
                 <button type="button" onClick={() => fileInputRef.current?.click()}
                   className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#2F6FED] border-2 border-[#101A2B] flex items-center justify-center hover:bg-[#3d7ef5] transition-colors">
                   <Camera className="h-3.5 w-3.5 text-white" />

@@ -336,9 +336,18 @@ function AddPersonDialog({
   const uploadPhoto = async (userId: string, personId: string, file: File): Promise<string | null> => {
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const path = `${userId}/${personId}.${ext}`;
-    const { error } = await supabase.storage.from("person-photos").upload(path, file, { upsert: true });
-    if (error) { toast.error("Erro ao fazer upload da foto"); return null; }
-    // Retornar o PATH RELATIVO — o getSignedPhotoUrl do people.tsx monta a URL pública
+    const { data, error } = await supabase.storage.from("person-photos").upload(path, file, { upsert: true });
+    if (error) {
+      toast.error("Erro ao fazer upload da foto: " + error.message);
+      return null;
+    }
+    // Confirmar que o arquivo existe no Storage antes de salvar no banco
+    const { data: fileCheck } = await supabase.storage.from("person-photos").list(userId, { searchByExt: ext });
+    if (!fileCheck || fileCheck.length === 0) {
+      toast.error("Upload concluído mas não foi possível confirmar o arquivo. Tente novamente.");
+      return null;
+    }
+    // Retornar o PATH RELATIVO — não a URL completa
     return path;
   };
 
@@ -373,6 +382,8 @@ function AddPersonDialog({
       if (uploadedUrl) {
         await supabase.from("people").update({ photo_url: uploadedUrl }).eq("id", data.id);
         data.photo_url = uploadedUrl;
+      } else {
+        // upload falhou — continua com photo_url null
       }
     }
 
