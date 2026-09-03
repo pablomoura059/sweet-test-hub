@@ -327,27 +327,42 @@ function AddPersonDialog({
     const file = e.target.files?.[0];
     if (!file) return;
     setPhotoFile(file);
-    const reader = new FileReader();
-    reader.onloadend = () => setPhotoPreview(reader.result as string);
-    reader.readAsDataURL(file);
+    setPhotoPreview(URL.createObjectURL(file));
   };
 
-  // Padronizado: retorna caminho relativo (userId/personId.ext), nunca URL completa
+  // Retorna caminho relativo (userId/personId.ext) após upload verificado
   const uploadPhoto = async (userId: string, personId: string, file: File): Promise<string | null> => {
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const path = `${userId}/${personId}.${ext}`;
-    const { data, error } = await supabase.storage.from("person-photos").upload(path, file, { upsert: true });
+
+    // Validar tamanho (5MB) e tipo
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("A foto deve ter no máximo 5 MB");
+      return null;
+    }
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione um arquivo de imagem válido");
+      return null;
+    }
+
+    const { data, error } = await supabase.storage.from("person-photos").upload(path, file, { upsert: false });
     if (error) {
       toast.error("Erro ao fazer upload da foto: " + error.message);
       return null;
     }
-    // Confirmar que o arquivo existe no Storage antes de salvar no banco
-    const { data: fileCheck } = await supabase.storage.from("person-photos").list(userId, { searchByExt: ext });
-    if (!fileCheck || fileCheck.length === 0) {
-      toast.error("Upload concluído mas não foi possível confirmar o arquivo. Tente novamente.");
+
+    if (!data?.path) {
+      toast.error("Upload não retornou confirmação. Tente novamente.");
       return null;
     }
-    // Retornar o PATH RELATIVO — não a URL completa
+
+    // Confirmar que o arquivo específico existe via download()
+    const { error: downloadError } = await supabase.storage.from("person-photos").download(data.path);
+    if (downloadError) {
+      toast.error("Arquivo enviado mas não pôde ser verificado. Tente novamente.");
+      return null;
+    }
+
     return path;
   };
 

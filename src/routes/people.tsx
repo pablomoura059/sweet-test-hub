@@ -168,22 +168,39 @@ function PeoplePage() {
     enabled: !!session?.user.id,
   });
 
-  // Padronizado: retorna caminho relativo (userId/personId.ext)
+  // Retorna caminho relativo (userId/personId.ext) após upload verificado
   const uploadPhoto = async (userId: string, personId: string, file: File): Promise<string | null> => {
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const path = `${userId}/${personId}.${ext}`;
-    const { data, error } = await supabase.storage.from("person-photos").upload(path, file, { upsert: true });
+
+    // Validar tamanho (5MB) e tipo
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("A foto deve ter no máximo 5 MB");
+      return null;
+    }
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione um arquivo de imagem válido");
+      return null;
+    }
+
+    const { data, error } = await supabase.storage.from("person-photos").upload(path, file, { upsert: false });
     if (error) {
       toast.error("Erro ao fazer upload da foto: " + error.message);
       return null;
     }
-    // Confirmar que o arquivo existe no Storage antes de salvar no banco
-    const { data: fileCheck } = await supabase.storage.from("person-photos").list(userId, { searchByExt: ext });
-    if (!fileCheck || fileCheck.length === 0) {
-      toast.error("Upload concluído mas não foi possível confirmar o arquivo. Tente novamente.");
+
+    if (!data?.path) {
+      toast.error("Upload não retornou confirmação. Tente novamente.");
       return null;
     }
-    // Retornar o PATH RELATIVO — não a URL completa
+
+    // Confirmar que o arquivo específico existe via download()
+    const { error: downloadError } = await supabase.storage.from("person-photos").download(data.path);
+    if (downloadError) {
+      toast.error("Arquivo enviado mas não pôde ser verificado. Tente novamente.");
+      return null;
+    }
+
     return path;
   };
 
@@ -293,9 +310,7 @@ function PeoplePage() {
     const file = e.target.files?.[0];
     if (!file) return;
     setPhotoFile(file);
-    const reader = new FileReader();
-    reader.onloadend = () => setPhotoPreview(reader.result as string);
-    reader.readAsDataURL(file);
+    setPhotoPreview(URL.createObjectURL(file));
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -439,7 +454,7 @@ function PeoplePage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex flex-col items-center gap-2">
               <div className="relative">
-                <PersonAvatar photoUrl={photoPreview || formName ? getSignedPhotoUrl(photoPreview) : null} name={formName || "Pessoa"} size="xl" />
+                <PersonAvatar photoUrl={photoPreview} name={formName || "Pessoa"} size="xl" />
                 <button type="button" onClick={() => fileInputRef.current?.click()}
                   className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#2F6FED] border-2 border-[#101A2B] flex items-center justify-center hover:bg-[#3d7ef5] transition-colors">
                   <Camera className="h-3.5 w-3.5 text-white" />
