@@ -192,6 +192,7 @@ function PeoplePage() {
 
     console.log("[uploadPhoto] UPLOAD_DATA:", JSON.stringify(data));
     console.log("[uploadPhoto] UPLOAD_ERROR:", error ? error.message : null);
+    console.log("[uploadPhoto] UPLOAD_RESULT:", JSON.stringify({ data, error }));
 
     if (error) {
       throw new Error("Erro ao enviar foto: " + error.message);
@@ -216,6 +217,10 @@ function PeoplePage() {
     mutationFn: async ({ photoFile }: { photoFile: File | null }) => {
       if (!session?.user.id) throw new Error("Não autenticado");
 
+      console.log("[createMutation] PHOTO_FILE_EXISTS:", !!photoFile);
+      console.log("[createMutation] PHOTO_FILE_TYPE:", photoFile ? photoFile.constructor.name : 'null');
+      console.log("[createMutation] PHOTO_FILE_SIZE:", photoFile ? photoFile.size : 0);
+
       // Se tem foto, validar que é um File real
       if (photoFile !== null && !(photoFile instanceof File)) {
         console.error("[createMutation] photoFile não é File:", photoFile);
@@ -235,6 +240,8 @@ function PeoplePage() {
       if (error) throw error;
       if (!data) throw new Error("Erro ao criar pessoa — retorno vazio");
 
+      console.log("[createMutation] PESSOA_CRIADA_ID:", data.id);
+
       // 2. Se tem foto, fazer upload e atualizar photo_url
       if (photoFile) {
         const photoPath = await uploadPhoto(session.user.id, data.id, photoFile);
@@ -244,7 +251,12 @@ function PeoplePage() {
           .update({ photo_url: photoPath })
           .eq("id", data.id);
 
-        if (updateError) throw new Error("Erro ao salvar foto: " + updateError.message);
+        if (updateError) {
+          console.error("[createMutation] PHOTO_URL_UPDATE_ERROR:", updateError);
+          throw new Error("Erro ao salvar foto: " + updateError.message);
+        }
+
+        console.log("[createMutation] FOTO_ATUALIZADA_COM_SUCESSO:", photoPath);
       }
 
       return data;
@@ -256,11 +268,12 @@ function PeoplePage() {
       queryClient.invalidateQueries({ queryKey: ["people"] });
     },
     onError: (err: Error) => {
-      // Mostrar o erro real que veio da mutationFn
+      console.error("[createMutation.onError] Erro completo:", err);
+      console.error("[createMutation.onError] message:", err?.message);
+      console.error("[createMutation.onError] stack:", err?.stack);
       toast.error(err?.message || "Erro ao cadastrar pessoa", {
         className: "!bg-red-900/50 !border-red-500/30 !text-red-200 !font-medium !rounded-xl",
       });
-      console.error("Erro createMutation:", err);
     },
   });
 
@@ -268,9 +281,13 @@ function PeoplePage() {
     mutationFn: async ({ id, photoFile }: { id: string; photoFile: File | null }) => {
       if (!session?.user.id) throw new Error("Não autenticado");
 
+      console.log("[updateMutation] PHOTO_FILE_EXISTS:", !!photoFile);
+      console.log("[updateMutation] PHOTO_FILE_TYPE:", photoFile ? photoFile.constructor.name : 'null');
+
       let photoUrl: string | null = editPerson?.photo_url || null;
 
       if (photoFile !== null && !(photoFile instanceof File)) {
+        console.error("[updateMutation] photoFile não é File:", photoFile);
         throw new Error("Arquivo de foto inválido");
       }
 
@@ -287,7 +304,12 @@ function PeoplePage() {
         photo_url: photoUrl,
       }).eq("id", id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("[updateMutation] PHOTO_URL_UPDATE_ERROR:", error);
+        throw new Error("Erro ao salvar foto: " + error.message);
+      }
+
+      console.log("[updateMutation] FOTO_ATUALIZADA_COM_SUCESSO:", photoUrl);
     },
     onSuccess: () => {
       toast.success("Pessoa atualizada com sucesso!", {
@@ -296,10 +318,10 @@ function PeoplePage() {
       queryClient.invalidateQueries({ queryKey: ["people"] });
     },
     onError: (err: Error) => {
+      console.error("[updateMutation.onError] Erro completo:", err);
       toast.error(err?.message || "Erro ao atualizar pessoa", {
         className: "!bg-red-900/50 !border-red-500/30 !text-red-200 !font-medium !rounded-xl",
       });
-      console.error("Erro updateMutation:", err);
     },
   });
 
@@ -371,6 +393,8 @@ function PeoplePage() {
 
     const fileToUpload = photoFileRef.current;
     console.log("[handleSubmit] photoFileRef.current:", fileToUpload);
+    console.log("[handleSubmit] PHOTO_FILE_TYPE:", fileToUpload ? fileToUpload.constructor.name : 'null');
+    console.log("[handleSubmit] PHOTO_FILE_SIZE:", fileToUpload ? fileToUpload.size : 0);
 
     try {
       if (editPerson) {
