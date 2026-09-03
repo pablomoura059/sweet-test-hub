@@ -67,10 +67,10 @@ const formatCurrency = (value: number) =>
 
 const getSignedPhotoUrl = (url: string | null | undefined): string | null => {
   if (!url) return null;
-  // Se já é URL absoluta (outro bucket, CDN, etc), retornar direto
+  // data: URLs, CDN, ou URLs já completas — retornar direto
   if (url.startsWith('data:')) return url;
-  if (url.startsWith('http')) return url;
-  // Se é path relativo, montar URL pública do Supabase Storage
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  // Path relativo — montar URL pública do Supabase Storage
   const cleanPath = url.startsWith('/') ? url.slice(1) : url;
   return `https://ajzcvdbakonpjlvknhpa.supabase.co/storage/v1/object/public/${cleanPath}`;
 };
@@ -168,24 +168,33 @@ function PeoplePage() {
     enabled: !!session?.user.id,
   });
 
+  // Padronizado: retorna caminho relativo (userId/personId.ext)
   const uploadPhoto = async (userId: string, personId: string, file: File): Promise<string | null> => {
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const path = `${userId}/${personId}.${ext}`;
     const { error } = await supabase.storage.from("person-photos").upload(path, file, { upsert: true });
     if (error) { toast.error("Erro ao fazer upload da foto"); return null; }
-    // Retornar path relativo para ser convertido em URL pública
+    // Retornar o PATH RELATIVO — não a URL completa
     return path;
   };
 
   const createMutation = useMutation({
     mutationFn: async () => {
       if (!session?.user.id) throw new Error("Not authenticated");
+
+      // Inserir pessoa sem photo_url
       const { data, error } = await supabase.from("people").insert({
-        user_id: session.user.id, name: formName.trim(),
-        phone: formPhone || null, birth_date: formBirthDate || null,
-        notes: formNotes || null, photo_url: null,
+        user_id: session.user.id,
+        name: formName.trim(),
+        phone: formPhone || null,
+        birth_date: formBirthDate || null,
+        notes: formNotes || null,
+        photo_url: null,
       }).select().single();
+
       if (error) throw error;
+
+      // Se tem foto, fazer upload e atualizar com o path relativo
       if (photoFile && data) {
         const photoPath = await uploadPhoto(session.user.id, data.id, photoFile);
         if (photoPath) {
@@ -204,15 +213,23 @@ function PeoplePage() {
   const updateMutation = useMutation({
     mutationFn: async ({ id }: { id: string }) => {
       if (!session?.user.id) throw new Error("Not authenticated");
+
       let photoUrl: string | null = editPerson?.photo_url || null;
+
+      // Se o usuário selecionou uma nova foto, fazer upload
       if (photoFile) {
         const uploaded = await uploadPhoto(session.user.id, id, photoFile);
         if (uploaded) photoUrl = uploaded;
       }
+
       const { error } = await supabase.from("people").update({
-        name: formName.trim(), phone: formPhone || null,
-        birth_date: formBirthDate || null, notes: formNotes || null, photo_url: photoUrl,
+        name: formName.trim(),
+        phone: formPhone || null,
+        birth_date: formBirthDate || null,
+        notes: formNotes || null,
+        photo_url: photoUrl,
       }).eq("id", id);
+
       if (error) throw error;
     },
     onSuccess: () => {

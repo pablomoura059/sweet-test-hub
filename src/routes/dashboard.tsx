@@ -332,13 +332,14 @@ function AddPersonDialog({
     reader.readAsDataURL(file);
   };
 
+  // Padronizado: retorna caminho relativo (userId/personId.ext), nunca URL completa
   const uploadPhoto = async (userId: string, personId: string, file: File): Promise<string | null> => {
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const path = `${userId}/${personId}.${ext}`;
     const { error } = await supabase.storage.from("person-photos").upload(path, file, { upsert: true });
     if (error) { toast.error("Erro ao fazer upload da foto"); return null; }
-    const { data } = supabase.storage.from("person-photos").getPublicUrl(path);
-    return data.publicUrl;
+    // Retornar o PATH RELATIVO — o getSignedPhotoUrl do people.tsx monta a URL pública
+    return path;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
