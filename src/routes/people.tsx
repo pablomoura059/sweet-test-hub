@@ -69,7 +69,10 @@ const getSignedPhotoUrl = (url: string | null | undefined): string | null => {
   if (!url) return null;
   if (url.startsWith('data:')) return url;
   if (url.startsWith('http://') || url.startsWith('https://')) return url;
-  const cleanPath = url.startsWith('/') ? url.slice(1) : url;
+  // Se já começa com 'person-photos/', usa direto (evita double prefix)
+  const cleanPath = url.startsWith('person-photos/')
+    ? url
+    : (url.startsWith('/') ? url.slice(1) : url);
   return `https://ajzcvdbakonpjlvknhpa.supabase.co/storage/v1/object/public/${cleanPath}`;
 };
 
@@ -210,6 +213,7 @@ function PeoplePage() {
       throw new Error("Arquivo enviado mas não pôde ser verificado. Tente novamente.");
     }
 
+    console.log("[uploadPhoto] VERIFICACAO_OK:", data.path);
     return data.path;
   };
 
