@@ -1,6 +1,6 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import {
   Plus, Search, Pencil, Trash2, ArrowLeft, Users, Check,
   Camera, User, Phone, Calendar, FileText, DollarSign,
@@ -92,7 +92,7 @@ function PersonAvatar({ photoUrl, name, size = "md" }: {
           src={resolvedUrl}
           alt={name}
           className="w-full h-full object-cover"
-          onError={() => setImgError(true)}
+          onError={() => { try { setImgError(true); } catch (_) { /* ignorar */ } }}
         />
       ) : (
         <div className="flex flex-col items-center justify-center">
@@ -117,7 +117,7 @@ function PersonAvatarSmall({ photoUrl, name }: {
           src={resolvedUrl}
           alt={name}
           className="w-full h-full object-cover"
-          onError={() => setImgError(true)}
+          onError={() => { try { setImgError(true); } catch (_) { /* ignorar */ } }}
         />
       ) : (
         <User className="h-3.5 w-3.5 text-[#718096]" />
