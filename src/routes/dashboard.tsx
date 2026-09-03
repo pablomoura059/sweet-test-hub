@@ -192,7 +192,7 @@ function PersonSelector({
                 >
                   <div className="w-7 h-7 rounded-full bg-[#1e2d42] border border-[#26364D] flex items-center justify-center shrink-0 overflow-hidden">
                     {p.photo_url ? (
-                      <img src={p.photo_url} alt={p.name} className="w-full h-full object-cover" />
+                      <img src={getSignedPhotoUrl(p.photo_url)} alt={p.name} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display='none'; }} />
                     ) : (
                       <User className="h-3.5 w-3.5 text-[#718096]" />
                     )}
