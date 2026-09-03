@@ -65,15 +65,20 @@ const formatDateBR = (date: string | null | undefined) => {
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
-const getSignedPhotoUrl = (url: string | null | undefined): string | null => {
-  if (!url) return null;
-  if (url.startsWith('data:')) return url;
-  if (url.startsWith('http://') || url.startsWith('https://')) return url;
-  // Se já começa com 'person-photos/', usa direto (evita double prefix)
-  const cleanPath = url.startsWith('person-photos/')
-    ? url
-    : (url.startsWith('/') ? url.slice(1) : url);
-  return `https://ajzcvdbakonpjlvknhpa.supabase.co/storage/v1/object/public/${cleanPath}`;
+// Usa getPublicUrl do client real do Supabase
+const getPhotoUrl = (photoPath: string | null | undefined): string | null => {
+  if (!photoPath) return null;
+  if (photoPath.startsWith('data:')) return photoPath;
+  if (photoPath.startsWith('blob:')) return photoPath;
+  if (photoPath.startsWith('http://') || photoPath.startsWith('https://')) return photoPath;
+
+  const { data } = supabase.storage
+    .from('person-photos')
+    .getPublicUrl(photoPath);
+
+  console.log("[getPhotoUrl] photoPath:", photoPath, "→ publicUrl:", data.publicUrl);
+
+  return data.publicUrl;
 };
 
 function PersonAvatar({ photoUrl, name, size = "md" }: {
@@ -82,7 +87,7 @@ function PersonAvatar({ photoUrl, name, size = "md" }: {
   const [imgError, setImgError] = useState(false);
   const resolvedUrl = (photoUrl && (photoUrl.startsWith('data:') || photoUrl.startsWith('blob:')))
     ? photoUrl
-    : getSignedPhotoUrl(photoUrl);
+    : getPhotoUrl(photoUrl);
   const initials = name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
 
   const sc = { sm: "w-8 h-8", md: "w-10 h-10", lg: "w-14 h-14", xl: "w-20 h-20" };
@@ -113,7 +118,7 @@ function PersonAvatarSmall({ photoUrl, name }: {
   const [imgError, setImgError] = useState(false);
   const resolvedUrl = (photoUrl && (photoUrl.startsWith('data:') || photoUrl.startsWith('blob:')))
     ? photoUrl
-    : getSignedPhotoUrl(photoUrl);
+    : getPhotoUrl(photoUrl);
 
   return (
     <div className="w-7 h-7 rounded-full overflow-hidden bg-[#1e2d42] border border-[#26364D] flex items-center justify-center shrink-0">
@@ -173,7 +178,6 @@ function PeoplePage() {
     enabled: !!session?.user.id,
   });
 
-  // Lança exceção em vez de retornar null — qualquer falha no upload interrompe o fluxo
   const uploadPhoto = async (userId: string, personId: string, file: File): Promise<string> => {
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const path = `${userId}/${personId}.${ext}`;
@@ -207,7 +211,6 @@ function PeoplePage() {
 
     console.log("[uploadPhoto] UPLOAD_PATH:", data.path);
 
-    // Confirmar que o arquivo existe via download()
     const { error: downloadError } = await supabase.storage.from("person-photos").download(data.path);
     if (downloadError) {
       throw new Error("Arquivo enviado mas não pôde ser verificado. Tente novamente.");
@@ -225,13 +228,11 @@ function PeoplePage() {
       console.log("[createMutation] PHOTO_FILE_TYPE:", photoFile ? photoFile.constructor.name : 'null');
       console.log("[createMutation] PHOTO_FILE_SIZE:", photoFile ? photoFile.size : 0);
 
-      // Se tem foto, validar que é um File real
       if (photoFile !== null && !(photoFile instanceof File)) {
         console.error("[createMutation] photoFile não é File:", photoFile);
         throw new Error("Arquivo de foto inválido");
       }
 
-      // 1. Criar pessoa sem foto
       const { data, error } = await supabase.from("people").insert({
         user_id: session.user.id,
         name: formName.trim(),
@@ -246,7 +247,6 @@ function PeoplePage() {
 
       console.log("[createMutation] PESSOA_CRIADA_ID:", data.id);
 
-      // 2. Se tem foto, fazer upload e atualizar photo_url
       if (photoFile) {
         const photoPath = await uploadPhoto(session.user.id, data.id, photoFile);
 
@@ -322,7 +322,6 @@ function PeoplePage() {
       queryClient.invalidateQueries({ queryKey: ["people"] });
     },
     onError: (err: Error) => {
-      console.error("[updateMutation.onError] Erro completo:", err);
       toast.error(err?.message || "Erro ao atualizar pessoa", {
         className: "!bg-red-900/50 !border-red-500/30 !text-red-200 !font-medium !rounded-xl",
       });
@@ -357,7 +356,7 @@ function PeoplePage() {
     setFormPhone(person.phone || "");
     setFormBirthDate(person.birth_date || "");
     setFormNotes(person.notes || "");
-    const previewUrl = person.photo_url ? getSignedPhotoUrl(person.photo_url) : null;
+    const previewUrl = person.photo_url ? getPhotoUrl(person.photo_url) : null;
     setPhotoPreview(previewUrl);
     photoFileRef.current = null;
     setIsFormOpen(true);
@@ -406,10 +405,9 @@ function PeoplePage() {
       } else {
         await createMutation.mutateAsync({ photoFile: fileToUpload });
       }
-      // Só fecha o formulário após a mutation completar com sucesso
       closeForm();
     } catch {
-      // Erro já mostrado pelo onError da mutation — não fechar formulário
+      // Erro já mostrado pelo onError da mutation
     }
   };
 

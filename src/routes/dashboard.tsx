@@ -89,14 +89,31 @@ const CARD_LABELS: Record<string, { title: string; description: string }> = {
   activeCount: { title: "Empréstimos Ativos", description: "Em andamento" },
 };
 
+// ─── getPhotoUrl ───────────────────────────────────────────────────────────────
+
+const getPhotoUrl = (photoPath: string | null | undefined): string | null => {
+  if (!photoPath) return null;
+  if (photoPath.startsWith('data:')) return photoPath;
+  if (photoPath.startsWith('blob:')) return photoPath;
+  if (photoPath.startsWith('http://') || photoPath.startsWith('https://')) return photoPath;
+
+  const { data } = supabase.storage
+    .from('person-photos')
+    .getPublicUrl(photoPath);
+
+  return data.publicUrl;
+};
+
 // ─── Person Avatar ─────────────────────────────────────────────────────────────
 
 function PersonAvatarSmall({ photoUrl, name }: { photoUrl?: string | null; name: string }) {
   const initials = name.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
+  const resolvedUrl = getPhotoUrl(photoUrl);
+
   return (
     <div className="w-16 h-16 rounded-full overflow-hidden bg-[#1e2d42] border-2 border-[#26364D] flex items-center justify-center shrink-0">
-      {photoUrl ? (
-        <img src={photoUrl} alt={name} className="w-full h-full object-cover" />
+      {resolvedUrl ? (
+        <img src={resolvedUrl} alt={name} className="w-full h-full object-cover" />
       ) : (
         <div className="flex flex-col items-center justify-center">
           <span className="text-sm font-bold text-[#718096]">{initials}</span>
@@ -183,31 +200,34 @@ function PersonSelector({
 
           <div className="overflow-y-auto flex-1">
             {filtered.length > 0 ? (
-              filtered.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => { onSelect(p); setOpen(false); }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-[#18263A] transition-colors text-left"
-                >
-                  <div className="w-7 h-7 rounded-full bg-[#1e2d42] border border-[#26364D] flex items-center justify-center shrink-0 overflow-hidden">
-                    {p.photo_url ? (
-                      <img src={getSignedPhotoUrl(p.photo_url)} alt={p.name} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display='none'; }} />
-                    ) : (
-                      <User className="h-3.5 w-3.5 text-[#718096]" />
+              filtered.map((p) => {
+                const photoUrl = getPhotoUrl(p.photo_url);
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => { onSelect(p); setOpen(false); }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-[#18263A] transition-colors text-left"
+                  >
+                    <div className="w-7 h-7 rounded-full bg-[#1e2d42] border border-[#26364D] flex items-center justify-center shrink-0 overflow-hidden">
+                      {photoUrl ? (
+                        <img src={photoUrl} alt={p.name} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display='none'; }} />
+                      ) : (
+                        <User className="h-3.5 w-3.5 text-[#718096]" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-[#F3F6FA] truncate">{p.name}</p>
+                      {p.phone && (
+                        <p className="text-[10px] text-[#718096] truncate">{p.phone}</p>
+                      )}
+                    </div>
+                    {selectedPerson?.id === p.id && (
+                      <Check className="h-3.5 w-3.5 text-[#2F6FED] ml-auto shrink-0" />
                     )}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-[#F3F6FA] truncate">{p.name}</p>
-                    {p.phone && (
-                      <p className="text-[10px] text-[#718096] truncate">{p.phone}</p>
-                    )}
-                  </div>
-                  {selectedPerson?.id === p.id && (
-                    <Check className="h-3.5 w-3.5 text-[#2F6FED] ml-auto shrink-0" />
-                  )}
-                </button>
-              ))
+                  </button>
+                );
+              })
             ) : (
               <div className="px-3 py-4 text-center">
                 <p className="text-xs text-[#718096]">Nenhuma pessoa encontrada</p>
@@ -326,11 +346,9 @@ function AddPersonDialog({
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // Revogar blob URL anterior para evitar vazamento de memória
     if (photoPreview && photoPreview.startsWith('blob:')) {
       URL.revokeObjectURL(photoPreview);
     }
-    // Ler o arquivo como data URL para preview confiável
     const reader = new FileReader();
     reader.onload = (ev) => {
       setPhotoPreview(ev.target?.result as string);
@@ -339,12 +357,10 @@ function AddPersonDialog({
     setPhotoFile(file);
   };
 
-  // Retorna caminho relativo (userId/personId.ext) após upload verificado
   const uploadPhoto = async (userId: string, personId: string, file: File): Promise<string | null> => {
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const path = `${userId}/${personId}.${ext}`;
 
-    // Validar tamanho (5MB) e tipo
     if (file.size > 5 * 1024 * 1024) {
       toast.error("A foto deve ter no máximo 5 MB");
       return null;
@@ -365,7 +381,6 @@ function AddPersonDialog({
       return null;
     }
 
-    // Confirmar que o arquivo específico existe via download()
     const { error: downloadError } = await supabase.storage.from("person-photos").download(data.path);
     if (downloadError) {
       toast.error("Arquivo enviado mas não pôde ser verificado. Tente novamente.");
@@ -406,8 +421,6 @@ function AddPersonDialog({
       if (uploadedUrl) {
         await supabase.from("people").update({ photo_url: uploadedUrl }).eq("id", data.id);
         data.photo_url = uploadedUrl;
-      } else {
-        // upload falhou — continua com photo_url null
       }
     }
 
@@ -432,7 +445,6 @@ function AddPersonDialog({
           <DialogDescription className="text-[#AAB5C5] text-sm">Cadastre uma nova pessoa para vincular ao empréstimo</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Foto de perfil */}
           <div className="flex flex-col items-center gap-2">
             <div className="relative">
               <div className="w-16 h-16 rounded-full overflow-hidden bg-[#1e2d42] border-2 border-[#26364D] flex items-center justify-center shrink-0">
@@ -457,7 +469,6 @@ function AddPersonDialog({
             <p className="text-[10px] text-[#718096]">Toque para adicionar foto</p>
           </div>
 
-          {/* Nome completo */}
           <div className="space-y-1.5">
             <Label htmlFor="new-person-name" className="text-xs font-semibold text-[#AAB5C5]">Nome completo *</Label>
             <Input
@@ -471,7 +482,6 @@ function AddPersonDialog({
             />
           </div>
 
-          {/* Telefone */}
           <div className="space-y-1.5">
             <Label htmlFor="new-person-phone" className="text-xs font-semibold text-[#AAB5C5]">Telefone</Label>
             <Input
@@ -484,7 +494,6 @@ function AddPersonDialog({
             />
           </div>
 
-          {/* Data de nascimento */}
           <div className="space-y-1.5">
             <Label htmlFor="new-person-birth" className="text-xs font-semibold text-[#AAB5C5]">Data de nascimento</Label>
             <Input
@@ -496,7 +505,6 @@ function AddPersonDialog({
             />
           </div>
 
-          {/* Observações */}
           <div className="space-y-1.5">
             <Label htmlFor="new-person-notes" className="text-xs font-semibold text-[#AAB5C5]">Observações</Label>
             <Textarea
