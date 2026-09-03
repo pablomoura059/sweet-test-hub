@@ -954,12 +954,12 @@ function DashboardPage() {
           {STAT_CARDS.map(({ key, icon, color, iconColor }, index) => (
             <StatCard
               key={key}
-              title={CARD_LABELS[key].title}
+              title={CARD_LABELS[key]!.title}
               value={statValue(key)}
               icon={icon}
               color={color}
               iconColor={iconColor}
-              description={CARD_LABELS[key].description}
+              description={CARD_LABELS[key]!.description}
               index={index}
             />
           ))}
