@@ -68,6 +68,7 @@ const formatCurrency = (value: number) =>
 const getSignedPhotoUrl = (url: string | null | undefined): string | null => {
   if (!url) return null;
   // Se já é URL absoluta (outro bucket, CDN, etc), retornar direto
+  if (url.startsWith('data:')) return url;
   if (url.startsWith('http')) return url;
   // Se é path relativo, montar URL pública do Supabase Storage
   const cleanPath = url.startsWith('/') ? url.slice(1) : url;
