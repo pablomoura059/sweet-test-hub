@@ -548,6 +548,9 @@ function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
   const [isAddPersonOpen, setIsAddPersonOpen] = useState(false);
+  const [period, setPeriod] = useState<"30" | "60" | "custom">("30");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
 
   const emptyForm = {
     person_id: null as string | null,
@@ -671,14 +674,48 @@ function DashboardPage() {
     onError: () => toast.error("Erro ao excluir"),
   });
 
-  const activeInvestments = investments?.filter((i) => i.status === "active") || [];
-  const totalInvested = investments?.reduce((sum, i) => sum + Number(i.invested_amount), 0) || 0;
-  const totalInStreet = activeInvestments.reduce((sum, i) => sum + Number(i.invested_amount), 0);
-  const expectedProfit = activeInvestments.reduce((sum, i) => sum + Number(i.expected_profit || 0), 0);
-  const expectedReturn = activeInvestments.reduce((sum, i) => sum + Number(i.expected_return || 0), 0);
-  const receivedProfit = investments?.filter((i) => i.status === "finished").reduce((sum, i) => sum + Number(i.actual_profit || 0), 0) || 0;
+  const daysAgo = (n: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() - n);
+    return d.toISOString().slice(0, 10);
+  };
+  const todayStr = daysAgo(0);
 
-  const stats = { totalInvested, totalInStreet, expectedProfit, expectedReturn, receivedProfit, activeCount: activeInvestments.length };
+  const dayDiff = (a: string, b: string) =>
+    Math.round((new Date(b + "T00:00:00").getTime() - new Date(a + "T00:00:00").getTime()) / 86400000);
+
+  const handleCustomStart = (v: string) => {
+    setCustomStart(v);
+    if (v && customEnd) {
+      if (customEnd < v || dayDiff(v, customEnd) > 180) setCustomEnd("");
+    }
+  };
+  const handleCustomEnd = (v: string) => {
+    if (v && customStart) {
+      if (v < customStart) { toast.error("A Data Final não pode ser anterior à Data Inicial."); return; }
+      if (dayDiff(customStart, v) > 180) { toast.error("O período personalizado pode ter no máximo 180 dias."); return; }
+    }
+    setCustomEnd(v);
+  };
+
+  const periodInvestments = (investments || []).filter((i) => {
+    if (period === "custom") {
+      if (customStart && i.start_date < customStart) return false;
+      if (customEnd && i.start_date > customEnd) return false;
+      return true;
+    }
+    return i.start_date >= daysAgo(period === "30" ? 30 : 60);
+  });
+
+  const activeInvestments = investments?.filter((i) => i.status === "active") || [];
+  const periodActiveInvestments = periodInvestments.filter((i) => i.status === "active");
+  const totalInvested = periodInvestments.reduce((sum, i) => sum + Number(i.invested_amount), 0);
+  const totalInStreet = periodActiveInvestments.reduce((sum, i) => sum + Number(i.invested_amount), 0);
+  const expectedProfit = periodActiveInvestments.reduce((sum, i) => sum + Number(i.expected_profit || 0), 0);
+  const expectedReturn = periodActiveInvestments.reduce((sum, i) => sum + Number(i.expected_return || 0), 0);
+  const receivedProfit = periodInvestments.filter((i) => i.status === "finished").reduce((sum, i) => sum + Number(i.actual_profit || 0), 0);
+
+  const stats = { totalInvested, totalInStreet, expectedProfit, expectedReturn, receivedProfit, activeCount: periodActiveInvestments.length };
 
   const calcProfit = () => (parseFloat(formData.invested_amount) || 0) * (parseFloat(formData.profit_percent) || 0) / 100;
   const calcReturn = () => (parseFloat(formData.invested_amount) || 0) + calcProfit();
@@ -950,6 +987,57 @@ function DashboardPage() {
 
       {/* ── Main ──────────────────────────────────────────── */}
       <main className="p-4 space-y-6 max-w-5xl mx-auto">
+        {/* ── Filtro de Período ─────────────────────────── */}
+        <div className="bg-[#162235] border border-[#26364D] rounded-2xl p-3 sm:p-4 space-y-3 animate-fade-in-up">
+          <div className="flex flex-wrap items-center gap-2">
+            <Calendar className="h-4 w-4 text-[#2F6FED] shrink-0" />
+            <span className="text-xs font-semibold text-[#AAB5C5] mr-1">Período:</span>
+            {([
+              { value: "30", label: "Últimos 30 dias" },
+              { value: "60", label: "Últimos 60 dias" },
+              { value: "custom", label: "Personalizado" },
+            ] as const).map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setPeriod(opt.value)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
+                  period === opt.value
+                    ? "bg-[#2F6FED] border-[#2F6FED] text-white"
+                    : "bg-[#101A2B] border-[#26364D] text-[#AAB5C5] hover:border-[#2F6FED]/50 hover:text-[#F3F6FA]"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          {period === "custom" && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="period_start" className="text-xs font-semibold text-[#AAB5C5]">Data Inicial</Label>
+                <Input
+                  id="period_start"
+                  type="date"
+                  value={customStart}
+                  onChange={(e) => handleCustomStart(e.target.value)}
+                  className="bg-[#101A2B] border-[#26364D] text-[#F3F6FA] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50 [&::-webkit-calendar-picker-indicator]:invert-50"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="period_end" className="text-xs font-semibold text-[#AAB5C5]">Data Final</Label>
+                <Input
+                  id="period_end"
+                  type="date"
+                  value={customEnd}
+                  min={customStart || undefined}
+                  onChange={(e) => handleCustomEnd(e.target.value)}
+                  className="bg-[#101A2B] border-[#26364D] text-[#F3F6FA] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50 [&::-webkit-calendar-picker-indicator]:invert-50"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {STAT_CARDS.map(({ key, icon, color, iconColor }, index) => (
             <StatCard
