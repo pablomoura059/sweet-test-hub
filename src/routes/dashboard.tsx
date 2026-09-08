@@ -715,7 +715,7 @@ function DashboardPage() {
   const expectedReturn = periodActiveInvestments.reduce((sum, i) => sum + Number(i.expected_return || 0), 0);
   const receivedProfit = periodInvestments.filter((i) => i.status === "finished").reduce((sum, i) => sum + Number(i.actual_profit || 0), 0);
 
-  const stats = { totalInvested, totalInStreet, expectedProfit, expectedReturn, receivedProfit, activeCount: activeInvestments.length };
+  const stats = { totalInvested, totalInStreet, expectedProfit, expectedReturn, receivedProfit, activeCount: periodActiveInvestments.length };
 
   const calcProfit = () => (parseFloat(formData.invested_amount) || 0) * (parseFloat(formData.profit_percent) || 0) / 100;
   const calcReturn = () => (parseFloat(formData.invested_amount) || 0) + calcProfit();
