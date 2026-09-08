@@ -548,6 +548,9 @@ function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
   const [isAddPersonOpen, setIsAddPersonOpen] = useState(false);
+  const [period, setPeriod] = useState<"30" | "60" | "custom">("30");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
 
   const emptyForm = {
     person_id: null as string | null,
@@ -671,12 +674,46 @@ function DashboardPage() {
     onError: () => toast.error("Erro ao excluir"),
   });
 
+  const daysAgo = (n: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() - n);
+    return d.toISOString().slice(0, 10);
+  };
+  const todayStr = daysAgo(0);
+
+  const dayDiff = (a: string, b: string) =>
+    Math.round((new Date(b + "T00:00:00").getTime() - new Date(a + "T00:00:00").getTime()) / 86400000);
+
+  const handleCustomStart = (v: string) => {
+    setCustomStart(v);
+    if (v && customEnd) {
+      if (customEnd < v || dayDiff(v, customEnd) > 180) setCustomEnd("");
+    }
+  };
+  const handleCustomEnd = (v: string) => {
+    if (v && customStart) {
+      if (v < customStart) { toast.error("A Data Final não pode ser anterior à Data Inicial."); return; }
+      if (dayDiff(customStart, v) > 180) { toast.error("O período personalizado pode ter no máximo 180 dias."); return; }
+    }
+    setCustomEnd(v);
+  };
+
+  const periodInvestments = (investments || []).filter((i) => {
+    if (period === "custom") {
+      if (customStart && i.start_date < customStart) return false;
+      if (customEnd && i.start_date > customEnd) return false;
+      return true;
+    }
+    return i.start_date >= daysAgo(period === "30" ? 30 : 60);
+  });
+
   const activeInvestments = investments?.filter((i) => i.status === "active") || [];
-  const totalInvested = investments?.reduce((sum, i) => sum + Number(i.invested_amount), 0) || 0;
-  const totalInStreet = activeInvestments.reduce((sum, i) => sum + Number(i.invested_amount), 0);
-  const expectedProfit = activeInvestments.reduce((sum, i) => sum + Number(i.expected_profit || 0), 0);
-  const expectedReturn = activeInvestments.reduce((sum, i) => sum + Number(i.expected_return || 0), 0);
-  const receivedProfit = investments?.filter((i) => i.status === "finished").reduce((sum, i) => sum + Number(i.actual_profit || 0), 0) || 0;
+  const periodActiveInvestments = periodInvestments.filter((i) => i.status === "active");
+  const totalInvested = periodInvestments.reduce((sum, i) => sum + Number(i.invested_amount), 0);
+  const totalInStreet = periodActiveInvestments.reduce((sum, i) => sum + Number(i.invested_amount), 0);
+  const expectedProfit = periodActiveInvestments.reduce((sum, i) => sum + Number(i.expected_profit || 0), 0);
+  const expectedReturn = periodActiveInvestments.reduce((sum, i) => sum + Number(i.expected_return || 0), 0);
+  const receivedProfit = periodInvestments.filter((i) => i.status === "finished").reduce((sum, i) => sum + Number(i.actual_profit || 0), 0);
 
   const stats = { totalInvested, totalInStreet, expectedProfit, expectedReturn, receivedProfit, activeCount: activeInvestments.length };
 
