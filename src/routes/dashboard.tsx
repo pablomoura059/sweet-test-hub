@@ -799,7 +799,7 @@ function DashboardPage() {
                       <span className="text-base font-bold text-white">$</span>
                     </div>
                     <div>
-                      <div className="text-sm font-bold text-[#F3F6FA] leading-tight">pablo teste</div>
+                      <div className="text-sm font-bold text-[#F3F6FA] leading-tight">(Seu Nome) Emprestimos</div>
                       <div className="text-[11px] text-[#718096] font-normal mt-0.5">Sistema financeiro</div>
                     </div>
                   </div>
@@ -873,7 +873,7 @@ function DashboardPage() {
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2F6FED] to-[#1a4fd4] flex items-center justify-center shadow-lg shadow-blue-600/20">
               <span className="text-sm font-bold text-white">$</span>
             </div>
-            <h1 className="text-sm sm:text-base font-bold text-[#F3F6FA] tracking-tight whitespace-nowrap">pablo teste</h1>
+            <h1 className="text-sm sm:text-base font-bold text-[#F3F6FA] tracking-tight whitespace-nowrap">(Seu Nome) Emprestimos</h1>
           </div>
 
           <Dialog open={isNewLoanOpen} onOpenChange={setIsNewLoanOpen}>
