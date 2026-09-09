@@ -20,6 +20,12 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as GestoresRouteImport } from './routes/gestores'
 import { Route as ContaBloqueadaRouteImport } from './routes/conta-bloqueada'
 
+const GestoresRoute = GestoresRouteImport.update({
+  id: '/gestores',
+  path: '/gestores',
+  getParentRoute: () => rootRouteImport,
+} as any)
+
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/conta-bloqueada': typeof ContaBloqueadaRoute
+  '/gestores': typeof GestoresRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -89,7 +96,7 @@ export interface FileRouteTypes {
   fullPaths: '/' | '/dashboard' | '/login' | '/people' | '/reset-password' | '/signup' | '/conta-bloqueada'
   fileRoutesByTo: FileRoutesByTo
   to: '/' | '/dashboard' | '/login' | '/people' | '/reset-password' | '/signup' | '/conta-bloqueada'
-  id: '__root__' | '/' | '/dashboard' | '/login' | '/people' | '/reset-password' | '/signup' | '/conta-bloqueada'
+  id: '__root__' | '/' | '/dashboard' | '/login' | '/people' | '/reset-password' | '/signup' | '/conta-bloqueada' | '/gestores'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -100,6 +107,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   ContaBloqueadaRoute: typeof ContaBloqueadaRoute
+  GestoresRoute: typeof GestoresRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -153,6 +161,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContaBloqueadaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/gestores': {
+      id: '/gestores'
+      path: '/gestores'
+      fullPath: '/gestores'
+      preLoaderRoute: typeof GestoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -164,6 +179,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   ContaBloqueadaRoute: ContaBloqueadaRoute,
+  GestoresRoute: GestoresRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
