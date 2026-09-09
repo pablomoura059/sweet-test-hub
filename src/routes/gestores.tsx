@@ -1,6 +1,6 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Users, Shield, AlertCircle, CheckCircle, Ban, RotateCcw,
   Search, LogOut, Menu, Check, Loader2,
@@ -112,18 +112,6 @@ function ActionButton({ status, onApprove, onBlock, onReactivate, isPending }: {
 }
 
 export const Route = createFileRoute("/gestores")({
-  beforeLoad: async () => {
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) throw new Error("Unauthorized");
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role, status")
-      .eq("id", user.id)
-      .single();
-    if (!profile) throw new Error("Unauthorized");
-    if (profile.role !== "admin") throw new Error("Forbidden");
-    if (profile.status !== "active") throw new Error("Unauthorized");
-  },
   component: GestoresPage,
 });
 
@@ -135,6 +123,39 @@ function GestoresPage() {
   const [filter, setFilter] = useState<FilterType>("all");
   const [confirmTarget, setConfirmTarget] = useState<{ id: string; name: string } | null>(null);
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
+
+  // Auth check (client-side) — same pattern as dashboard.tsx
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.navigate({ to: "/login" });
+        return;
+      }
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role, status")
+        .eq("id", session.user.id)
+        .single();
+      if (!profile) {
+        await supabase.auth.signOut();
+        router.navigate({ to: "/login" });
+        return;
+      }
+      const canAccess =
+        (profile.role === "admin" && profile.status === "active") ||
+        (profile.role === "manager" && profile.status === "active");
+      if (!canAccess) {
+        router.navigate({ to: "/conta-bloqueada" });
+        return;
+      }
+      // Only admin can access this page
+      if (profile.role !== "admin") {
+        router.navigate({ to: "/dashboard" });
+      }
+    };
+    checkAuth();
+  }, [router]);
 
   const { data: session } = useQuery({
     queryKey: ["auth-session"],
