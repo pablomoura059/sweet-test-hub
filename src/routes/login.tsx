@@ -214,6 +214,19 @@ function LoginPage() {
                 </button>
               </div>
             </form>
+
+            <div className="h-px bg-slate-700 my-4" />
+
+            <p className="text-center text-slate-400 text-sm">
+              Não possui uma conta?{" "}
+              <button
+                type="button"
+                onClick={() => router.navigate({ to: "/signup" })}
+                className="text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+              >
+                Criar conta
+              </button>
+            </p>
           </CardContent>
         </Card>
 
