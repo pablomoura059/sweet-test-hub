@@ -112,6 +112,18 @@ function ActionButton({ status, onApprove, onBlock, onReactivate, isPending }: {
 }
 
 export const Route = createFileRoute("/gestores")({
+  beforeLoad: async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error("Unauthorized");
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, status")
+      .eq("id", session.user.id)
+      .single();
+    if (!profile) throw new Error("Unauthorized");
+    if (profile.role !== "admin") throw new Error("Forbidden");
+    if (profile.status !== "active") throw new Error("Unauthorized");
+  },
   component: GestoresPage,
 });
 

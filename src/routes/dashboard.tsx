@@ -46,6 +46,20 @@ type Person = {
 };
 
 export const Route = createFileRoute("/dashboard")({
+  beforeLoad: async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error("Unauthorized");
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, status")
+      .eq("id", session.user.id)
+      .single();
+    if (!profile) throw new Error("Unauthorized");
+    const canAccess =
+      (profile.role === "admin" && profile.status === "active") ||
+      (profile.role === "manager" && profile.status === "active");
+    if (!canAccess) throw new Error("Unauthorized");
+  },
   component: DashboardPage,
 });
 
