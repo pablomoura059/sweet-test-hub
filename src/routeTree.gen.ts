@@ -17,6 +17,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as PeopleRouteImport } from './routes/people'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as GestoresRouteImport } from './routes/gestores'
 import { Route as ContaBloqueadaRouteImport } from './routes/conta-bloqueada'
 
 const IndexRoute = IndexRouteImport.update({

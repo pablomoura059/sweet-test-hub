@@ -78,6 +78,42 @@ function LoginPage() {
       }
 
       if (data.user) {
+        // Verificar status do profile no banco
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role, status")
+          .eq("id", data.user.id)
+          .single();
+
+        if (profile) {
+          // Admin entra sempre (role=admin), independente do status
+          if (profile.role === "admin") {
+            toast.success("Login realizado com sucesso!");
+            router.navigate({ to: "/dashboard" });
+            return;
+          }
+
+          // Manager precisa estar active
+          if (profile.status === "blocked") {
+            setError(""); // limpa erro visual
+            router.navigate({ to: "/conta-bloqueada" });
+            return;
+          }
+
+          if (profile.status === "pending") {
+            setError("");
+            router.navigate({ to: "/gestores", state: { pendingMessage: true } });
+            return;
+          }
+
+          if (profile.status === "active") {
+            toast.success("Login realizado com sucesso!");
+            router.navigate({ to: "/dashboard" });
+            return;
+          }
+        }
+
+        // Se não tiver profile (caso legacy), permite acesso
         toast.success("Login realizado com sucesso!");
         router.navigate({ to: "/dashboard" });
       }
