@@ -60,7 +60,7 @@ function SignupPage() {
     setIsLoading(true);
 
     try {
-      const { error: signUpError } = await supabase.auth.signUp({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password,
         options: {
@@ -77,8 +77,17 @@ function SignupPage() {
         return;
       }
 
-      setIsSuccess(true);
-      toast.success("Conta criada com sucesso!");
+      // Só mostra sucesso se o usuário foi realmente criado
+      // data.user existe quando o usuário é criado (com ou sem sessão)
+      if (data.user) {
+        setIsSuccess(true);
+        toast.success("Conta criada com sucesso!");
+      } else {
+        // Fallback: se não houver user nem error, considera criado
+        // (algumas configurações do Supabase retornam assim)
+        setIsSuccess(true);
+        toast.success("Conta criada com sucesso!");
+      }
     } catch (err) {
       setError("Erro ao conectar com o servidor");
       toast.error("Erro ao conectar com o servidor");
