@@ -585,6 +585,20 @@ function DashboardPage() {
     },
   });
 
+  const { data: currentProfile } = useQuery({
+    queryKey: ["current-profile", session?.user.id],
+    queryFn: async () => {
+      if (!session?.user.id) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", session.user.id)
+        .single();
+      return data;
+    },
+    enabled: !!session?.user.id,
+  });
+
   const { data: people } = useQuery({
     queryKey: ["people", session?.user.id],
     queryFn: async () => {
@@ -894,11 +908,13 @@ function DashboardPage() {
                   </div>
                   <div className="space-y-0.5">
                     <p className="text-[9px] font-bold text-[#718096] uppercase tracking-widest px-3 mb-2">Sistema</p>
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
-                      onClick={() => { setIsMenuOpen(false); router.navigate({ to: "/gestores" }); }}>
-                      <Users className="h-4 w-4 shrink-0" />
-                      Gestores
-                    </button>
+                    {currentProfile?.role === "admin" && (
+                      <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
+                        onClick={() => { setIsMenuOpen(false); router.navigate({ to: "/gestores" }); }}>
+                        <Users className="h-4 w-4 shrink-0" />
+                        Gestores
+                      </button>
+                    )}
                     <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
                       onClick={() => { setIsMenuOpen(false); toast.info("Configurações em breve!", { className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium !rounded-xl" }); }}>
                       <Settings className="h-4 w-4 shrink-0" />
@@ -918,7 +934,7 @@ function DashboardPage() {
                       <User className="h-3.5 w-3.5 text-[#718096]" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[10px] font-semibold text-[#AAB5C5]">Administrador</p>
+                      <p className="text-[10px] font-semibold text-[#AAB5C5]">{currentProfile?.role === "admin" ? "Administrador" : "Gestor"}</p>
                       <p className="text-[9px] text-[#718096] truncate">{session?.user?.email}</p>
                     </div>
                   </div>

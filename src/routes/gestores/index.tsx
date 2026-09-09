@@ -142,16 +142,17 @@ function GestoresPage() {
         router.navigate({ to: "/login" });
         return;
       }
+      // Only admin can access this page
+      if (profile.role !== "admin") {
+        router.navigate({ to: "/dashboard" });
+        return;
+      }
       const canAccess =
         (profile.role === "admin" && profile.status === "active") ||
         (profile.role === "manager" && profile.status === "active");
       if (!canAccess) {
         router.navigate({ to: "/conta-bloqueada" });
         return;
-      }
-      // Only admin can access this page
-      if (profile.role !== "admin") {
-        router.navigate({ to: "/dashboard" });
       }
     };
     checkAuth();
@@ -273,7 +274,7 @@ function GestoresPage() {
                     Sair
                   </button>
                 </nav>
-                <div className="px-5 py-4 border-t border-[#26364D]/60">
+                      <div className="px-5 py-4 border-t border-[#26364D]/60">
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-lg bg-[#162235] border border-[#26364D] flex items-center justify-center shrink-0">
                       <Shield className="h-3.5 w-3.5 text-[#718096]" />
