@@ -47,12 +47,12 @@ type Person = {
 
 export const Route = createFileRoute("/dashboard")({
   beforeLoad: async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) throw new Error("Unauthorized");
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Unauthorized");
     const { data: profile } = await supabase
       .from("profiles")
       .select("role, status")
-      .eq("id", session.user.id)
+      .eq("id", user.id)
       .single();
     if (!profile) throw new Error("Unauthorized");
     const canAccess =
