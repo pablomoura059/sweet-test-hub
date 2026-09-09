@@ -102,24 +102,24 @@ function SignupPage() {
           </div>
 
           <Card className="bg-slate-800/80 border-slate-700 backdrop-blur shadow-2xl">
-            <CardContent className="p-6">
-              <div className="flex flex-col items-center text-center">
-                <div className="w-16 h-16 rounded-full bg-green-600/20 flex items-center justify-center mb-4">
-                  <CheckCircle className="h-8 w-8 text-green-500" />
+            <CardContent className="p-8">
+              <div className="flex flex-col items-center text-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-blue-600/20 flex items-center justify-center">
+                  <CheckCircle className="h-8 w-8 text-blue-500" />
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-2">Conta criada!</h3>
-                <p className="text-slate-400 text-sm mb-2">
-                  Sua conta foi criada com sucesso.
-                </p>
-                <p className="text-slate-500 text-xs mb-6">
-                  Verifique seu e-mail para confirmar o cadastro antes de fazer login.
-                </p>
+                <div className="space-y-1">
+                  <h3 className="text-lg font-bold text-white">Cadastro realizado!</h3>
+                  <p className="text-sm text-slate-400 leading-relaxed">
+                    Seu cadastro foi enviado para análise.<br />
+                    Aguarde a aprovação do administrador para acessar a plataforma.
+                  </p>
+                </div>
                 <Button
                   onClick={() => router.navigate({ to: "/login" })}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Voltar para Login
+                  Voltar para o login
                 </Button>
               </div>
             </CardContent>
