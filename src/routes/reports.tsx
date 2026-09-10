@@ -57,6 +57,11 @@ function ReportsPage() {
     0
   );
 
+  const totalReceived = (investments || []).reduce(
+    (sum, inv) => sum + Number(inv.actual_received || 0),
+    0
+  );
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#0B1220" }}>
       {/* Header */}
