@@ -80,11 +80,13 @@ function SignupPage() {
       // Só mostra sucesso se o usuário foi realmente criado
       // data.user existe quando o usuário é criado (com ou sem sessão)
       if (data.user) {
+        // Invalidar sessão automática do Supabase para impedir acesso antes da aprovação
+        await supabase.auth.signOut();
         setIsSuccess(true);
         toast.success("Conta criada com sucesso!");
       } else {
-        // Fallback: se não houver user nem error, considera criado
-        // (algumas configurações do Supabase retornam assim)
+        // Fallback: considera criado e faz signOut por segurança
+        await supabase.auth.signOut();
         setIsSuccess(true);
         toast.success("Conta criada com sucesso!");
       }
