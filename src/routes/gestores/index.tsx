@@ -56,6 +56,14 @@ function StatusBadge({ status }: { status: string }) {
       </span>
     );
   }
+  if (status === "denied") {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full font-bold tracking-wide bg-red-500/15 text-red-400">
+        <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+        Negado
+      </span>
+    );
+  }
   return (
     <span className="inline-flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full font-bold tracking-wide bg-red-500/15 text-red-400">
       <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
