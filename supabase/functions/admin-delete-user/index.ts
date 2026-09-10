@@ -28,20 +28,14 @@ Deno.serve(async (req: Request) => {
 
   const token = authHeader.replace('Bearer ', '');
 
-  // Validate calling user is admin
-  const supabaseAdmin = (globalThis as any).DenoSupabase;
-  if (!supabaseAdmin) {
-    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
-    const sb = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-    );
-    (globalThis as any).DenoSupabase = sb;
-  }
+  // Cria cliente admin com SERVICE_ROLE_KEY
+  const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+  const sb = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+  );
 
-  const sb = (globalThis as any).DenoSupabase;
-
-  // Verify caller is admin
+  // Verifica se quem chamou é admin
   const { data: callerClaims } = await sb.auth.getClaims(token).catch(() => ({ data: null }));
   if (!callerClaims?.claims?.sub) {
     return new Response(JSON.stringify({ error: 'Invalid token' }), {
@@ -82,49 +76,40 @@ Deno.serve(async (req: Request) => {
     });
   }
 
+  userId = userId.trim();
+
   try {
-    // First, verify the user exists in auth.users before attempting deletion
+    // Etapa 1: verifica se o usuário existe no Auth
     const { data: authUser, error: getUserError } = await sb.auth.admin.getUserById(userId);
 
     if (getUserError || !authUser?.user) {
-      // User does not exist in auth.users — this can happen if already deleted
-      // Proceed to clean up the profile and related data
-      console.error('User not found in auth.users:', userId, getUserError?.message);
-
-      const { error: profileError } = await sb.from('profiles').delete().eq('id', userId);
-      if (profileError) {
-        console.error('Profile delete error (user already gone from auth):', profileError);
-      }
-
-      // Cascade delete related data
+      // Usuário não existe no Auth — pode já ter sido excluído por cascade
+      // Tenta limpar dados relacionados de forma segura
+      await sb.from('profiles').delete().eq('id', userId).catch(() => {});
       await sb.from('investments').delete().eq('user_id', userId).catch(() => {});
       await sb.from('people').delete().eq('user_id', userId).catch(() => {});
 
-      return new Response(JSON.stringify({ success: true, note: 'User was not found in auth — profile and related data removed' }), {
+      return new Response(JSON.stringify({ success: true, note: 'User not found in auth — data cleaned up' }), {
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       });
     }
 
-    // User exists — proceed with deletion
+    // Etapa 2: exclui o usuário do Supabase Auth
     const { error: authError } = await sb.auth.admin.deleteUser(userId);
     if (authError) {
-      console.error('Auth delete error:', authError);
       return new Response(JSON.stringify({ error: 'Failed to delete auth user: ' + authError.message }), {
         status: 500,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       });
     }
 
-    // Delete profile (RLS bypassed by service role key)
-    const { error: profileError } = await sb.from('profiles').delete().eq('id', userId);
-    if (profileError) {
-      console.error('Profile delete error:', profileError);
-    }
-
-    // Cascade delete related data
+    // Etapa 3: exclusão bem-sucedida — limpa dados relacionados de forma tolerante
+    // O profile pode já ter sido removido por cascade do banco, então ignoramos erros
+    await sb.from('profiles').delete().eq('id', userId).catch(() => {});
     await sb.from('investments').delete().eq('user_id', userId).catch(() => {});
     await sb.from('people').delete().eq('user_id', userId).catch(() => {});
 
+    // Retorna sucesso — exclusão do Auth foi concluída com êxito
     return new Response(JSON.stringify({ success: true }), {
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
