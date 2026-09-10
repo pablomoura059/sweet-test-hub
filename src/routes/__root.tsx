@@ -134,6 +134,31 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
+
+  // Proteção global: verificar profile em cada navegação
+  useEffect(() => {
+    const checkProfile = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role, status")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      if (!profile) return;
+
+      // Se manager pending ou blocked, encerrar sessão e redirecionar
+      if (profile.role === "manager" && (profile.status === "pending" || profile.status === "blocked")) {
+        await supabase.auth.signOut();
+        router.navigate({ to: "/conta-bloqueada" });
+      }
+    };
+
+    checkProfile();
+  }, [router]);
 
   return (
     <QueryClientProvider client={queryClient}>
