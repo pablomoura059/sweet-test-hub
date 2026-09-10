@@ -256,13 +256,15 @@ function GestoresPage() {
   };
 
   const filtered = (profiles || []).filter((p) => {
+    // Lixeira: mostra só denied; lista normal: exclui denied
     if (showTrash && p.status !== "denied") return false;
     if (!showTrash && p.status === "denied") return false;
     const matchesSearch =
       !searchQuery ||
       (p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
       (p.email?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
-    const matchesFilter = filter === "all" || p.status === filter;
+    // Na Lixeira, ignorar o filtro de status (mostrar todos denied)
+    const matchesFilter = showTrash || filter === "all" || p.status === filter;
     return matchesSearch && matchesFilter;
   });
 
