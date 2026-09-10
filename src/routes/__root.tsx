@@ -150,10 +150,18 @@ function RootComponent() {
 
       if (!profile) return;
 
-      // Se manager pending ou blocked, encerrar sessão e redirecionar
-      if (profile.role === "manager" && (profile.status === "pending" || profile.status === "blocked")) {
-        await supabase.auth.signOut();
-        router.navigate({ to: "/conta-bloqueada" });
+      // Se manager pending ou blocked, encerrar sessão e redirecionar com status
+      if (profile.role === "manager") {
+        if (profile.status === "pending") {
+          await supabase.auth.signOut();
+          router.navigate({ to: "/conta-bloqueada", search: { status: "pending" } });
+          return;
+        }
+        if (profile.status === "blocked") {
+          await supabase.auth.signOut();
+          router.navigate({ to: "/conta-bloqueada", search: { status: "blocked" } });
+          return;
+        }
       }
     };
 

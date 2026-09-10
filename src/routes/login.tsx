@@ -85,13 +85,21 @@ function LoginPage() {
             return;
           }
 
-          // Manager pending ou blocked: encerra sessão antes de redirecionar
-          if (profile.role === "manager" && (profile.status === "pending" || profile.status === "blocked")) {
+          // Manager pending: encerra sessão e redireciona com status pending
+          if (profile.role === "manager" && profile.status === "pending") {
             await supabase.auth.signOut();
+            setError("");
+            router.navigate({ to: "/conta-bloqueada", search: { status: "pending" } });
+            return;
           }
-          setError("");
-          router.navigate({ to: "/conta-bloqueada" });
-          return;
+
+          // Manager blocked: encerra sessão e redireciona com status blocked
+          if (profile.role === "manager" && profile.status === "blocked") {
+            await supabase.auth.signOut();
+            setError("");
+            router.navigate({ to: "/conta-bloqueada", search: { status: "blocked" } });
+            return;
+          }
         }
 
         // Se não tiver profile (caso legacy), permite acesso
