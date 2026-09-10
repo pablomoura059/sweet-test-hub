@@ -9,12 +9,23 @@ const Toaster = ({ ...props }: ToasterProps) => {
       toastOptions={{
         classNames: {
           toast:
-            "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
-          description: "group-[.toast]:text-muted-foreground",
-          actionButton: "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
-          cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+            "group toast group-[.toaster]:bg-[#1e3a5f] group-[.toaster]:text-white group-[.toaster]:border group-[.toaster]:border-[#2563eb] group-[.toaster]:shadow-lg group-[.toaster]:rounded-xl",
+          description: "group-[.toast]:text-slate-300",
+          actionButton:
+            "group-[.toast]:bg-[#2563eb] group-[.toast]:text-white",
+          cancelButton:
+            "group-[.toast]:bg-slate-700 group-[.toast]:text-slate-200",
+          success:
+            "group-[.toaster]:border-emerald-500/50",
+          error: "group-[.toaster]:border-red-500/50",
         },
+        unstyled: false,
       }}
+      position="top-center"
+      duration={3000}
+      expand={false}
+      richColors
+      closeButton
       {...props}
     />
   );
