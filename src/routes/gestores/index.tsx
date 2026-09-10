@@ -385,7 +385,7 @@ function GestoresPage() {
               { value: "pending", label: `Pendentes (${countBadge("pending")})` },
               { value: "active", label: `Ativos (${countBadge("active")})` },
               { value: "blocked", label: `Bloqueados (${countBadge("blocked")})` },
-              { value: "denied", label: `Lixeira (${countBadge("denied")})` },
+              { value: "denied", label: `Lixeira (${countBadge("denied")})`, onClick: () => { setShowTrash(true); setSearchQuery(""); setFilter("denied"); } },
             ] as const).map((opt) => (
               <button
                 key={opt.value}
