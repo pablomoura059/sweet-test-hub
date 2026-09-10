@@ -80,37 +80,37 @@ Deno.serve(async (req: Request) => {
 
   try {
     // Etapa 1: verifica se o usuário existe no Auth
+    console.log('admin-delete-user: checking auth user', userId);
     const { data: authUser, error: getUserError } = await sb.auth.admin.getUserById(userId);
+    console.log('admin-delete-user: auth check done', { found: !!authUser?.user, error: getUserError?.message });
 
     if (getUserError || !authUser?.user) {
-      // Usuário não existe no Auth — pode já ter sido excluído por cascade
-      // Tenta limpar dados relacionados de forma segura
-      await sb.from('profiles').delete().eq('id', userId).catch(() => {});
-      await sb.from('investments').delete().eq('user_id', userId).catch(() => {});
-      await sb.from('people').delete().eq('user_id', userId).catch(() => {});
-
-      return new Response(JSON.stringify({ success: true, note: 'User not found in auth — data cleaned up' }), {
+      // Usuário não existe no Auth — já pode ter sido excluído
+      console.log('admin-delete-user: user not found in auth, returning 200 as success');
+      return new Response(JSON.stringify({ success: true, alreadyDeleted: true }), {
+        status: 200,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       });
     }
 
     // Etapa 2: exclui o usuário do Supabase Auth
+    console.log('admin-delete-user: deleting auth user', userId);
     const { error: authError } = await sb.auth.admin.deleteUser(userId);
+    console.log('admin-delete-user: deleteUser result', { error: authError?.message });
+
     if (authError) {
+      console.error('admin-delete-user: deleteUser failed', authError.message);
       return new Response(JSON.stringify({ error: 'Failed to delete auth user: ' + authError.message }), {
         status: 500,
         headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       });
     }
 
-    // Etapa 3: exclusão bem-sucedida — limpa dados relacionados de forma tolerante
-    // O profile pode já ter sido removido por cascade do banco, então ignoramos erros
-    await sb.from('profiles').delete().eq('id', userId).catch(() => {});
-    await sb.from('investments').delete().eq('user_id', userId).catch(() => {});
-    await sb.from('people').delete().eq('user_id', userId).catch(() => {});
-
-    // Retorna sucesso — exclusão do Auth foi concluída com êxito
+    // Etapa 3: exclusão do Auth concluída — retorna 200 imediatamente
+    // A limpeza de profiles/investments/people fica para uma próxima etapa, após validação
+    console.log('admin-delete-user: returning 200 success');
     return new Response(JSON.stringify({ success: true }), {
+      status: 200,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
   } catch (err) {
