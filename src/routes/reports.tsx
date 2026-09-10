@@ -1,14 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useRouter } from "@tanstack/react-router";
+import type { Database } from "@/integrations/supabase/types";
+
+type Investment = Database["public"]["Tables"]["investments"]["Row"];
 
 export const Route = createFileRoute("/reports")({
   component: ReportsPage,
 });
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
 function ReportsPage() {
   const router = useRouter();
@@ -20,6 +27,25 @@ function ReportsPage() {
       return session;
     },
   });
+
+  const { data: investments, isLoading } = useQuery({
+    queryKey: ["investments", session?.user.id],
+    queryFn: async () => {
+      if (!session?.user.id) return [];
+      const { data, error } = await supabase
+        .from("investments")
+        .select("*")
+        .eq("user_id", session.user.id);
+      if (error) throw error;
+      return data as Investment[];
+    },
+    enabled: !!session?.user.id,
+  });
+
+  const totalInvested = (investments || []).reduce(
+    (sum, inv) => sum + Number(inv.invested_amount),
+    0
+  );
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#0B1220" }}>
@@ -44,19 +70,36 @@ function ReportsPage() {
       </header>
 
       {/* Main */}
-      <main className="p-4 max-w-5xl mx-auto">
-        <Card className="bg-[#162235]/60 border-[#26364D]">
-          <CardContent className="p-12 flex flex-col items-center text-center gap-3">
-            <div>
-              <p className="text-[#AAB5C5] font-semibold text-sm">
-                Relatórios em breve
-              </p>
-              <p className="text-[#718096] text-xs mt-1">
-                Novas análises serão adicionadas em breve.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+      <main className="p-4 max-w-5xl mx-auto space-y-6">
+        {/* Total Emprestado Card */}
+        {isLoading ? (
+          <Card className="bg-[#162235] border-[#26364D]">
+            <CardContent className="p-5 flex items-start gap-4">
+              <Skeleton className="h-12 w-12 rounded-xl skeleton-shimmer" />
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-3 w-32 rounded skeleton-shimmer" />
+                <Skeleton className="h-8 w-40 rounded skeleton-shimmer" />
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="bg-[#162235] border-[#26364D] hover:border-blue-500/40 transition-all duration-300">
+            <CardContent className="p-5 flex items-start gap-4">
+              <div className="p-2.5 rounded-xl bg-blue-600/10 border border-[#26364D] shrink-0">
+                <Wallet className="h-5 w-5 text-blue-400" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">Total Emprestado</p>
+                <p className="text-2xl font-bold text-[#F3F6FA] leading-none mt-1">
+                  {formatCurrency(totalInvested)}
+                </p>
+                <p className="text-[10px] text-[#718096] mt-1 font-medium">
+                  {(investments || []).length} empréstimo{(investments || []).length !== 1 ? "s" : ""} cadastrado{(investments || []).length !== 1 ? "s" : ""}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </main>
     </div>
   );
