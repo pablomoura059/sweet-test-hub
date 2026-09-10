@@ -119,11 +119,18 @@ function RootShell({ children }: { children: ReactNode }) {
           position="top-center"
           toastOptions={{
             classNames: {
-              toast: "!bg-[#101A2B] !border !rounded-xl !shadow-xl",
-              success: "!border-emerald-500/30",
-              error: "!border-red-500/30",
-              description: "!text-[#AAB5C5]",
+              toast:
+                "!bg-[#1a3a5c] !text-white !border !border-emerald-500/40 !rounded-xl !shadow-xl !px-4 !py-3",
+              success:
+                "!border-emerald-500/50",
+              error:
+                "!border-red-500/50",
+              description:
+                "!text-slate-200",
+              icon:
+                "![&>svg]:!text-emerald-400",
             },
+            duration: 3000,
           }}
         />
         <Scripts />
