@@ -19,6 +19,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as GestoresRouteImport } from './routes/gestores'
 import { Route as ContaBloqueadaRouteImport } from './routes/conta-bloqueada'
+import { Route as ReportsRouteImport } from './routes/reports'
 
 const GestoresRoute = GestoresRouteImport.update({
   id: '/gestores',
@@ -61,6 +62,11 @@ const ContaBloqueadaRoute = ContaBloqueadaRouteImport.update({
   path: '/conta-bloqueada',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/conta-bloqueada': typeof ContaBloqueadaRoute
   '/gestores': typeof GestoresRoute
+  '/reports': typeof ReportsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/conta-bloqueada': typeof ContaBloqueadaRoute
+  '/reports': typeof ReportsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -90,13 +98,15 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/conta-bloqueada': typeof ContaBloqueadaRoute
+  '/gestores': typeof GestoresRoute
+  '/reports': typeof ReportsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/login' | '/people' | '/reset-password' | '/signup' | '/conta-bloqueada'
+  fullPaths: '/' | '/dashboard' | '/login' | '/people' | '/reset-password' | '/signup' | '/conta-bloqueada' | '/gestores' | '/reports'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/login' | '/people' | '/reset-password' | '/signup' | '/conta-bloqueada'
-  id: '__root__' | '/' | '/dashboard' | '/login' | '/people' | '/reset-password' | '/signup' | '/conta-bloqueada' | '/gestores'
+  to: '/' | '/dashboard' | '/login' | '/people' | '/reset-password' | '/signup' | '/conta-bloqueada' | '/reports'
+  id: '__root__' | '/' | '/dashboard' | '/login' | '/people' | '/reset-password' | '/signup' | '/conta-bloqueada' | '/gestores' | '/reports'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -108,6 +118,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   ContaBloqueadaRoute: typeof ContaBloqueadaRoute
   GestoresRoute: typeof GestoresRoute
+  ReportsRoute: typeof ReportsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -168,6 +179,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GestoresRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -180,6 +198,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   ContaBloqueadaRoute: ContaBloqueadaRoute,
   GestoresRoute: GestoresRoute,
+  ReportsRoute: ReportsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

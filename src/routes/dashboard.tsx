@@ -887,7 +887,7 @@ function DashboardPage() {
                   <div className="space-y-0.5">
                     <p className="text-[9px] font-bold text-[#718096] uppercase tracking-widest px-3 mb-2">Análises</p>
                     <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
-                      onClick={() => { setIsMenuOpen(false); toast.info("Relatórios em breve!", { className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium !rounded-xl" }); }}>
+                      onClick={() => { setIsMenuOpen(false); router.navigate({ to: "/reports" }); }}>
                       <BarChart2 className="h-4 w-4 shrink-0" />
                       Relatórios
                     </button>
