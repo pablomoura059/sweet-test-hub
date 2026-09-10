@@ -129,8 +129,12 @@ function LoginPage() {
 
     setIsRecoveryLoading(true);
     try {
+      const appUrl = window.location.origin.includes('localhost')
+        ? import.meta.env.VITE_APP_URL
+        : window.location.origin;
+
       const { error } = await supabase.auth.resetPasswordForEmail(recoveryEmail, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${appUrl}/reset-password`,
       });
 
       if (error) {
