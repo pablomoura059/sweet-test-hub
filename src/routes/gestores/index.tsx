@@ -145,6 +145,7 @@ function GestoresPage() {
   const [confirmTarget, setConfirmTarget] = useState<{ id: string; name: string } | null>(null);
   const [denyTarget, setDenyTarget] = useState<{ id: string; name: string } | null>(null);
   const [permaDeleteTarget, setPermaDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [permaDeleteBlockedTarget, setPermaDeleteBlockedTarget] = useState<{ id: string; name: string } | null>(null);
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
   const [showTrash, setShowTrash] = useState(false);
 
@@ -303,6 +304,56 @@ function GestoresPage() {
     setFilter(newFilter);
     setSearchQuery("");
   };
+
+  // Ações de gestores bloqueados na desktop table
+  const blockedActionsDesktop = (p: Profile) => (
+    <div className="flex gap-1.5 justify-end">
+      <Button
+        size="sm"
+        onClick={() => updateMutation.mutate({ id: p.id, status: "active" })}
+        disabled={updateMutation.isPending}
+        className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-all active:scale-95"
+      >
+        <RotateCcw className="h-3 w-3" />
+        Desbloquear
+      </Button>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => setPermaDeleteBlockedTarget({ id: p.id, name: p.name || p.email || "este gestor" })}
+        disabled={permaDeleteMutation.isPending}
+        className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50 text-xs font-semibold transition-all active:scale-95"
+      >
+        <Trash2 className="h-3 w-3" />
+        Excluir
+      </Button>
+    </div>
+  );
+
+  // Ações de gestores bloqueados no mobile
+  const blockedActionsMobile = (p: Profile) => (
+    <div className="flex gap-1.5">
+      <Button
+        size="sm"
+        onClick={() => updateMutation.mutate({ id: p.id, status: "active" })}
+        disabled={updateMutation.isPending}
+        className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-all active:scale-95"
+      >
+        <RotateCcw className="h-3 w-3" />
+        Desbloquear
+      </Button>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => setPermaDeleteBlockedTarget({ id: p.id, name: p.name || p.email || "este gestor" })}
+        disabled={permaDeleteMutation.isPending}
+        className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50 text-xs font-semibold transition-all active:scale-95"
+      >
+        <Trash2 className="h-3 w-3" />
+        Excluir
+      </Button>
+    </div>
+  );
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#0B1220" }}>
@@ -523,7 +574,9 @@ function GestoresPage() {
                         <p className="text-xs text-[#718096]">{formatDate(p.created_at)}</p>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        {showTrash ? (
+                        {p.status === "blocked" ? (
+                          blockedActionsDesktop(p)
+                        ) : showTrash ? (
                           <div className="flex gap-1.5 justify-end">
                             <Button
                               size="sm"
@@ -578,7 +631,9 @@ function GestoresPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <p className="text-[10px] text-[#718096]">Cadastrado em {formatDate(p.created_at)}</p>
-                    {showTrash ? (
+                    {p.status === "blocked" ? (
+                      blockedActionsMobile(p)
+                    ) : showTrash ? (
                       <div className="flex gap-1.5">
                         <Button
                           size="sm"
@@ -688,7 +743,7 @@ function GestoresPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Confirmação de Exclusão Permanente */}
+      {/* Confirmação de Exclusão Permanente — Lixeira */}
       <AlertDialog open={!!permaDeleteTarget} onOpenChange={() => setPermaDeleteTarget(null)}>
         <AlertDialogContent className="bg-[#101A2B] border-red-500/50 animate-scale-in">
           <AlertDialogHeader>
@@ -708,6 +763,39 @@ function GestoresPage() {
             <AlertDialogAction
               onClick={() => {
                 if (permaDeleteTarget) permaDeleteMutation.mutate(permaDeleteTarget.id);
+              }}
+              className="bg-red-700 hover:bg-red-800 text-white transition-colors active:scale-95"
+            >
+              {permaDeleteMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Excluir permanentemente"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirmação de Exclusão Permanente — Bloqueados */}
+      <AlertDialog open={!!permaDeleteBlockedTarget} onOpenChange={() => setPermaDeleteBlockedTarget(null)}>
+        <AlertDialogContent className="bg-[#101A2B] border-red-500/50 animate-scale-in">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-400 font-bold flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              Excluir gestor permanentemente?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[#AAB5C5] text-sm">
+              <strong className="text-[#F3F6FA]">{permaDeleteBlockedTarget?.name}</strong> será removido do Supabase Auth e todos os dados associados eliminados.<br />
+              <span className="text-red-400 font-semibold">Esta ação não poderá ser desfeita.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-[#26364D] text-[#AAB5C5] hover:bg-[#162235] hover:text-[#F3F6FA] transition-colors">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (permaDeleteBlockedTarget) permaDeleteMutation.mutate(permaDeleteBlockedTarget.id);
               }}
               className="bg-red-700 hover:bg-red-800 text-white transition-colors active:scale-95"
             >
