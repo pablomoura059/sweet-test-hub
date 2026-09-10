@@ -126,7 +126,7 @@ function LoginPage() {
     if (envUrl) return envUrl;
     // Fallback direto se a var de ambiente não estiver disponível
     console.warn('[resetPassword] VITE_APP_URL não disponível, usando URL publicada como fallback');
-    return 'https://ajzcvdbakonpjlvknhpa.lovable.app';
+    return 'https://warm-fuzzy-creations.lovable.app';
   };
 
   const handleSendRecovery = async (e: React.FormEvent) => {
