@@ -263,22 +263,45 @@ function GestoresPage() {
     router.navigate({ to: "/login" });
   };
 
-  const filtered = (profiles || []).filter((p) => {
-    // Lixeira: mostra só denied; lista normal: exclui denied
-    if (showTrash && p.status !== "denied") return false;
-    if (!showTrash && p.status === "denied") return false;
+  // Lista normal: exclui denied, aplica busca e filtro
+  const normalManagers = (profiles || []).filter((p) => {
+    if (p.status === "denied") return false;
     const matchesSearch =
       !searchQuery ||
       (p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
       (p.email?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
-    // Na Lixeira, ignorar o filtro de status (mostrar todos denied)
-    const matchesFilter = showTrash || filter === "all" || p.status === filter;
+    const matchesFilter = filter === "all" || p.status === filter;
     return matchesSearch && matchesFilter;
   });
+
+  // Lixeira: mostra SOMENTE denied
+  const trashManagers = (profiles || []).filter((p) => {
+    if (p.status !== "denied") return false;
+    const matchesSearch =
+      !searchQuery ||
+      (p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
+      (p.email?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
+    return matchesSearch;
+  });
+
+  // Qual lista renderizar
+  const displayedManagers = showTrash ? trashManagers : normalManagers;
 
   const countBadge = (status: FilterType) => {
     const count = (profiles || []).filter((p) => status === "all" || p.status === status).length;
     return count;
+  };
+
+  const handleTrashClick = () => {
+    setShowTrash(true);
+    setSearchQuery("");
+    setFilter("all");
+  };
+
+  const handleNormalFilterClick = (newFilter: FilterType) => {
+    setShowTrash(false);
+    setFilter(newFilter);
+    setSearchQuery("");
   };
 
   return (
@@ -331,7 +354,7 @@ function GestoresPage() {
                     Sair
                   </button>
                 </nav>
-                      <div className="px-5 py-4 border-t border-[#26364D]/60">
+                <div className="px-5 py-4 border-t border-[#26364D]/60">
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-lg bg-[#162235] border border-[#26364D] flex items-center justify-center shrink-0">
                       <Shield className="h-3.5 w-3.5 text-[#718096]" />
@@ -372,7 +395,7 @@ function GestoresPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#718096]" />
             <Input
               type="text"
-              placeholder="Buscar por nome ou e-mail..."
+              placeholder={showTrash ? "Buscar por nome ou e-mail na lixeira..." : "Buscar por nome ou e-mail..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 bg-[#101A2B] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50 text-xs h-9"
@@ -380,26 +403,61 @@ function GestoresPage() {
           </div>
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-[10px] font-semibold text-[#718096] mr-1">Status:</span>
-            {([
-              { value: "all", label: `Todos (${countBadge("all")})` },
-              { value: "pending", label: `Pendentes (${countBadge("pending")})` },
-              { value: "active", label: `Ativos (${countBadge("active")})` },
-              { value: "blocked", label: `Bloqueados (${countBadge("blocked")})` },
-              { value: "denied", label: `Lixeira (${countBadge("denied")})`, onClick: () => { setShowTrash(true); setSearchQuery(""); setFilter("denied"); } },
-            ] as const).map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setFilter(opt.value)}
-                className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all border ${
-                  filter === opt.value
-                    ? "bg-[#2F6FED] border-[#2F6FED] text-white"
-                    : "bg-[#101A2B] border-[#26364D] text-[#AAB5C5] hover:border-[#2F6FED]/50 hover:text-[#F3F6FA]"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
+            <button
+              type="button"
+              onClick={() => handleNormalFilterClick("all")}
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all border ${
+                !showTrash && filter === "all"
+                  ? "bg-[#2F6FED] border-[#2F6FED] text-white"
+                  : "bg-[#101A2B] border-[#26364D] text-[#AAB5C5] hover:border-[#2F6FED]/50 hover:text-[#F3F6FA]"
+              }`}
+            >
+              Todos ({countBadge("all") - countBadge("denied")})
+            </button>
+            <button
+              type="button"
+              onClick={() => handleNormalFilterClick("pending")}
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all border ${
+                !showTrash && filter === "pending"
+                  ? "bg-[#2F6FED] border-[#2F6FED] text-white"
+                  : "bg-[#101A2B] border-[#26364D] text-[#AAB5C5] hover:border-[#2F6FED]/50 hover:text-[#F3F6FA]"
+              }`}
+            >
+              Pendentes ({countBadge("pending")})
+            </button>
+            <button
+              type="button"
+              onClick={() => handleNormalFilterClick("active")}
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all border ${
+                !showTrash && filter === "active"
+                  ? "bg-[#2F6FED] border-[#2F6FED] text-white"
+                  : "bg-[#101A2B] border-[#26364D] text-[#AAB5C5] hover:border-[#2F6FED]/50 hover:text-[#F3F6FA]"
+              }`}
+            >
+              Ativos ({countBadge("active")})
+            </button>
+            <button
+              type="button"
+              onClick={() => handleNormalFilterClick("blocked")}
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all border ${
+                !showTrash && filter === "blocked"
+                  ? "bg-[#2F6FED] border-[#2F6FED] text-white"
+                  : "bg-[#101A2B] border-[#26364D] text-[#AAB5C5] hover:border-[#2F6FED]/50 hover:text-[#F3F6FA]"
+              }`}
+            >
+              Bloqueados ({countBadge("blocked")})
+            </button>
+            <button
+              type="button"
+              onClick={handleTrashClick}
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all border ${
+                showTrash
+                  ? "bg-red-600 border-red-600 text-white"
+                  : "bg-[#101A2B] border-[#26364D] text-[#AAB5C5] hover:border-red-500/50 hover:text-red-400"
+              }`}
+            >
+              Lixeira ({countBadge("denied")})
+            </button>
           </div>
         </div>
 
@@ -411,7 +469,7 @@ function GestoresPage() {
               <p className="text-sm text-[#718096]">Carregando gestores...</p>
             </div>
           </div>
-        ) : filtered.length === 0 ? (
+        ) : displayedManagers.length === 0 ? (
           <Card className="bg-[#162235]/60 border-[#26364D]">
             <CardContent className="p-12 flex flex-col items-center text-center gap-3">
               <div className="w-14 h-14 rounded-2xl bg-[#18263A]/60 flex items-center justify-center">
@@ -419,12 +477,16 @@ function GestoresPage() {
               </div>
               <div>
                 <p className="text-[#AAB5C5] font-semibold text-sm">
-                  {searchQuery || filter !== "all"
+                  {showTrash
+                    ? "Lixeira vazia"
+                    : searchQuery || filter !== "all"
                     ? "Nenhum gestor encontrado"
                     : "Nenhum gestor cadastrado"}
                 </p>
                 <p className="text-[#718096] text-xs mt-1">
-                  {searchQuery || filter !== "all"
+                  {showTrash
+                    ? "Gestores negados aparecerão aqui"
+                    : searchQuery || filter !== "all"
                     ? "Ajuste os filtros ou a busca"
                     : "Quando um gestor se cadastrar, ele aparecerá aqui"}
                 </p>
@@ -446,7 +508,7 @@ function GestoresPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#26364D]/60">
-                  {filtered.map((p) => (
+                  {displayedManagers.map((p) => (
                     <tr key={p.id} className="hover:bg-[#18263A]/50 transition-colors">
                       <td className="px-4 py-3">
                         <p className="text-xs font-semibold text-[#F3F6FA]">{p.name || "—"}</p>
@@ -461,17 +523,41 @@ function GestoresPage() {
                         <p className="text-xs text-[#718096]">{formatDate(p.created_at)}</p>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <ActionButton
-                          status={p.status}
-                          onApprove={() => updateMutation.mutate({ id: p.id, status: "active" })}
-                          onDeny={() => setDenyTarget({ id: p.id, name: p.name || p.email || "este gestor" })}
-                          onBlock={() => setConfirmTarget({ id: p.id, name: p.name || p.email || "este gestor" })}
-                          onReactivate={() => {
-                            if (p.status === "blocked") updateMutation.mutate({ id: p.id, status: "active" });
-                            if (p.status === "denied") updateMutation.mutate({ id: p.id, status: "pending" });
-                          }}
-                          isPending={updateMutation.isPending}
-                        />
+                        {showTrash ? (
+                          <div className="flex gap-1.5 justify-end">
+                            <Button
+                              size="sm"
+                              onClick={() => updateMutation.mutate({ id: p.id, status: "pending" })}
+                              disabled={updateMutation.isPending}
+                              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-all active:scale-95"
+                            >
+                              <RotateCcw className="h-3 w-3" />
+                              Restaurar
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setPermaDeleteTarget({ id: p.id, name: p.name || p.email || "este gestor" })}
+                              disabled={permaDeleteMutation.isPending}
+                              className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50 text-xs font-semibold transition-all active:scale-95"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                              Excluir
+                            </Button>
+                          </div>
+                        ) : (
+                          <ActionButton
+                            status={p.status}
+                            onApprove={() => updateMutation.mutate({ id: p.id, status: "active" })}
+                            onDeny={() => setDenyTarget({ id: p.id, name: p.name || p.email || "este gestor" })}
+                            onBlock={() => setConfirmTarget({ id: p.id, name: p.name || p.email || "este gestor" })}
+                            onReactivate={() => {
+                              if (p.status === "blocked") updateMutation.mutate({ id: p.id, status: "active" });
+                              if (p.status === "denied") updateMutation.mutate({ id: p.id, status: "pending" });
+                            }}
+                            isPending={updateMutation.isPending}
+                          />
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -481,7 +567,7 @@ function GestoresPage() {
 
             {/* Mobile Cards */}
             <div className="md:hidden divide-y divide-[#26364D]/60">
-              {filtered.map((p) => (
+              {displayedManagers.map((p) => (
                 <div key={p.id} className="p-4 space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
@@ -492,43 +578,41 @@ function GestoresPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <p className="text-[10px] text-[#718096]">Cadastrado em {formatDate(p.created_at)}</p>
-                    <div className="flex gap-2">
-                      {p.status !== "denied" ? (
-                        <ActionButton
-                          status={p.status}
-                          onApprove={() => updateMutation.mutate({ id: p.id, status: "active" })}
-                          onDeny={() => setDenyTarget({ id: p.id, name: p.name || p.email || "este gestor" })}
-                          onBlock={() => setConfirmTarget({ id: p.id, name: p.name || p.email || "este gestor" })}
-                          onReactivate={() => {
-                            if (p.status === "blocked") updateMutation.mutate({ id: p.id, status: "active" });
-                            if (p.status === "denied") updateMutation.mutate({ id: p.id, status: "pending" });
-                          }}
-                          isPending={updateMutation.isPending}
-                        />
-                      ) : (
-                        <div className="flex gap-1.5">
-                          <Button
-                            size="sm"
-                            onClick={() => updateMutation.mutate({ id: p.id, status: "pending" })}
-                            disabled={updateMutation.isPending}
-                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-all active:scale-95"
-                          >
-                            <RotateCcw className="h-3 w-3" />
-                            Restaurar
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setPermaDeleteTarget({ id: p.id, name: p.name || p.email || "este gestor" })}
-                            disabled={permaDeleteMutation.isPending}
-                            className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50 text-xs font-semibold transition-all active:scale-95"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                            Excluir
-                          </Button>
-                        </div>
-                      )}
-                    </div>
+                    {showTrash ? (
+                      <div className="flex gap-1.5">
+                        <Button
+                          size="sm"
+                          onClick={() => updateMutation.mutate({ id: p.id, status: "pending" })}
+                          disabled={updateMutation.isPending}
+                          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-all active:scale-95"
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                          Restaurar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setPermaDeleteTarget({ id: p.id, name: p.name || p.email || "este gestor" })}
+                          disabled={permaDeleteMutation.isPending}
+                          className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50 text-xs font-semibold transition-all active:scale-95"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          Excluir
+                        </Button>
+                      </div>
+                    ) : (
+                      <ActionButton
+                        status={p.status}
+                        onApprove={() => updateMutation.mutate({ id: p.id, status: "active" })}
+                        onDeny={() => setDenyTarget({ id: p.id, name: p.name || p.email || "este gestor" })}
+                        onBlock={() => setConfirmTarget({ id: p.id, name: p.name || p.email || "este gestor" })}
+                        onReactivate={() => {
+                          if (p.status === "blocked") updateMutation.mutate({ id: p.id, status: "active" });
+                          if (p.status === "denied") updateMutation.mutate({ id: p.id, status: "pending" });
+                        }}
+                        isPending={updateMutation.isPending}
+                      />
+                    )}
                   </div>
                 </div>
               ))}
