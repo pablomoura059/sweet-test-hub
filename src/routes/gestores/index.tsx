@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import {
   Users, Shield, AlertCircle, CheckCircle, Ban, RotateCcw,
-  Search, LogOut, Menu, Check, Loader2,
+  Search, LogOut, Menu, Check, Loader2, Trash2, X, AlertTriangle,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -32,7 +32,7 @@ type Profile = {
   created_at: string;
 };
 
-type FilterType = "all" | "pending" | "active" | "blocked";
+type FilterType = "all" | "pending" | "active" | "blocked" | "denied";
 
 const formatDate = (date: string) => {
   const d = new Date(date);
@@ -64,24 +64,37 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function ActionButton({ status, onApprove, onBlock, onReactivate, isPending }: {
+function ActionButton({ status, onApprove, onDeny, onBlock, onReactivate, isPending }: {
   status: string;
   onApprove: () => void;
+  onDeny: () => void;
   onBlock: () => void;
   onReactivate: () => void;
   isPending: boolean;
 }) {
   if (status === "pending") {
     return (
-      <Button
-        size="sm"
-        onClick={onApprove}
-        disabled={isPending}
-        className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-all active:scale-95 shadow-md shadow-emerald-600/20"
-      >
-        {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
-        Aprovar
-      </Button>
+      <div className="flex gap-1.5">
+        <Button
+          size="sm"
+          onClick={onApprove}
+          disabled={isPending}
+          className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-all active:scale-95 shadow-md shadow-emerald-600/20"
+        >
+          {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+          Aprovar
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onDeny}
+          disabled={isPending}
+          className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50 text-xs font-semibold transition-all active:scale-95"
+        >
+          <X className="h-3 w-3" />
+          Negar
+        </Button>
+      </div>
     );
   }
   if (status === "active") {
@@ -122,7 +135,10 @@ function GestoresPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
   const [confirmTarget, setConfirmTarget] = useState<{ id: string; name: string } | null>(null);
+  const [denyTarget, setDenyTarget] = useState<{ id: string; name: string } | null>(null);
+  const [permaDeleteTarget, setPermaDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
+  const [showTrash, setShowTrash] = useState(false);
 
   // Auth check (client-side) — same pattern as dashboard.tsx
   useEffect(() => {
@@ -173,6 +189,7 @@ function GestoresPage() {
         .from("profiles")
         .select("*")
         .eq("role", "manager")
+        .in("status", ["pending", "active", "blocked", "denied"])
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data || []) as Profile[];
@@ -189,19 +206,47 @@ function GestoresPage() {
     },
     onSuccess: (_, vars) => {
       const messages: Record<string, string> = {
-        active: vars.status === "active"
-          ? "Gestor aprovado com sucesso."
-          : "Gestor reativado com sucesso.",
+        active: "Gestor aprovado com sucesso.",
         blocked: "Gestor bloqueado com sucesso.",
+        denied: "Gestor movido para a lixeira.",
       };
       toast.success(messages[vars.status] || "Status atualizado.", {
         className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium !rounded-xl",
       });
       queryClient.invalidateQueries({ queryKey: ["profiles-managers"] });
       setConfirmTarget(null);
+      setDenyTarget(null);
     },
     onError: () => {
       toast.error("Erro ao atualizar status");
+    },
+  });
+
+  const permaDeleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const SUPABASE_URL = "https://ajzcvdbakonpjlvknhpa.supabase.co";
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-delete-user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+        body: JSON.stringify({ userId: id }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Erro ao excluir permanentemente");
+      }
+    },
+    onSuccess: () => {
+      toast.success("Gestor excluído permanentemente.", {
+        className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium !rounded-xl",
+      });
+      queryClient.invalidateQueries({ queryKey: ["profiles-managers"] });
+      setPermaDeleteTarget(null);
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Erro ao excluir permanentemente");
     },
   });
 
@@ -211,6 +256,8 @@ function GestoresPage() {
   };
 
   const filtered = (profiles || []).filter((p) => {
+    if (showTrash && p.status !== "denied") return false;
+    if (!showTrash && p.status === "denied") return false;
     const matchesSearch =
       !searchQuery ||
       (p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
@@ -328,6 +375,7 @@ function GestoresPage() {
               { value: "pending", label: `Pendentes (${countBadge("pending")})` },
               { value: "active", label: `Ativos (${countBadge("active")})` },
               { value: "blocked", label: `Bloqueados (${countBadge("blocked")})` },
+              { value: "denied", label: `Lixeira (${countBadge("denied")})` },
             ] as const).map((opt) => (
               <button
                 key={opt.value}
@@ -406,8 +454,12 @@ function GestoresPage() {
                         <ActionButton
                           status={p.status}
                           onApprove={() => updateMutation.mutate({ id: p.id, status: "active" })}
+                          onDeny={() => setDenyTarget({ id: p.id, name: p.name || p.email || "este gestor" })}
                           onBlock={() => setConfirmTarget({ id: p.id, name: p.name || p.email || "este gestor" })}
-                          onReactivate={() => updateMutation.mutate({ id: p.id, status: "active" })}
+                          onReactivate={() => {
+                            if (p.status === "blocked") updateMutation.mutate({ id: p.id, status: "active" });
+                            if (p.status === "denied") updateMutation.mutate({ id: p.id, status: "pending" });
+                          }}
                           isPending={updateMutation.isPending}
                         />
                       </td>
@@ -430,13 +482,43 @@ function GestoresPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <p className="text-[10px] text-[#718096]">Cadastrado em {formatDate(p.created_at)}</p>
-                    <ActionButton
-                      status={p.status}
-                      onApprove={() => updateMutation.mutate({ id: p.id, status: "active" })}
-                      onBlock={() => setConfirmTarget({ id: p.id, name: p.name || p.email || "este gestor" })}
-                      onReactivate={() => updateMutation.mutate({ id: p.id, status: "active" })}
-                      isPending={updateMutation.isPending}
-                    />
+                    <div className="flex gap-2">
+                      {p.status !== "denied" ? (
+                        <ActionButton
+                          status={p.status}
+                          onApprove={() => updateMutation.mutate({ id: p.id, status: "active" })}
+                          onDeny={() => setDenyTarget({ id: p.id, name: p.name || p.email || "este gestor" })}
+                          onBlock={() => setConfirmTarget({ id: p.id, name: p.name || p.email || "este gestor" })}
+                          onReactivate={() => {
+                            if (p.status === "blocked") updateMutation.mutate({ id: p.id, status: "active" });
+                            if (p.status === "denied") updateMutation.mutate({ id: p.id, status: "pending" });
+                          }}
+                          isPending={updateMutation.isPending}
+                        />
+                      ) : (
+                        <div className="flex gap-1.5">
+                          <Button
+                            size="sm"
+                            onClick={() => updateMutation.mutate({ id: p.id, status: "pending" })}
+                            disabled={updateMutation.isPending}
+                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-all active:scale-95"
+                          >
+                            <RotateCcw className="h-3 w-3" />
+                            Restaurar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setPermaDeleteTarget({ id: p.id, name: p.name || p.email || "este gestor" })}
+                            disabled={permaDeleteMutation.isPending}
+                            className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50 text-xs font-semibold transition-all active:scale-95"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                            Excluir
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -474,6 +556,71 @@ function GestoresPage() {
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 "Bloquear"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirmação de Negar */}
+      <AlertDialog open={!!denyTarget} onOpenChange={() => setDenyTarget(null)}>
+        <AlertDialogContent className="bg-[#101A2B] border-[#26364D] animate-scale-in">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-[#F3F6FA] font-bold flex items-center gap-2">
+              <X className="h-4 w-4 text-red-400" />
+              Negar gestor?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[#AAB5C5] text-sm">
+              O cadastro de <strong className="text-[#F3F6FA]">{denyTarget?.name}</strong> será movido para a lixeira e não poderá acessar a plataforma.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-[#26364D] text-[#AAB5C5] hover:bg-[#162235] hover:text-[#F3F6FA] transition-colors">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (denyTarget) updateMutation.mutate({ id: denyTarget.id, status: "denied" });
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white transition-colors active:scale-95"
+            >
+              {updateMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Negar"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirmação de Exclusão Permanente */}
+      <AlertDialog open={!!permaDeleteTarget} onOpenChange={() => setPermaDeleteTarget(null)}>
+        <AlertDialogContent className="bg-[#101A2B] border-red-500/50 animate-scale-in">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-400 font-bold flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              Excluir permanentemente?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[#AAB5C5] text-sm">
+              <strong className="text-[#F3F6FA]">{permaDeleteTarget?.name}</strong> será removido do Supabase Auth, seu profile excluído e todos os dados associados eliminados.<br />
+              <span className="text-red-400 font-semibold">Esta ação não poderá ser desfeita.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-[#26364D] text-[#AAB5C5] hover:bg-[#162235] hover:text-[#F3F6FA] transition-colors">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (permaDeleteTarget) permaDeleteMutation.mutate(permaDeleteTarget.id);
+              }}
+              className="bg-red-700 hover:bg-red-800 text-white transition-colors active:scale-95"
+            >
+              {permaDeleteMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Excluir permanentemente"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
