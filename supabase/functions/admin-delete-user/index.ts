@@ -63,34 +63,76 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  const { userId } = await req.json();
-  if (!userId) {
-    return new Response(JSON.stringify({ error: 'userId is required' }), {
+  // Parse request body
+  let userId: string | undefined;
+  try {
+    const body = await req.json();
+    userId = body?.userId;
+  } catch {
+    return new Response(JSON.stringify({ error: 'Invalid request body' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
   }
 
-  // Delete from auth.users (service role bypasses RLS)
-  const { error: authError } = await sb.auth.admin.deleteUser(userId);
-  if (authError) {
-    return new Response(JSON.stringify({ error: 'Failed to delete auth user: ' + authError.message }), {
-      status: 500,
+  if (!userId || typeof userId !== 'string' || userId.trim() === '') {
+    return new Response(JSON.stringify({ error: 'userId is required and must be a non-empty string' }), {
+      status: 400,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
   }
 
-  // Delete profile (RLS bypassed by service role key)
-  const { error: profileError } = await sb.from('profiles').delete().eq('id', userId);
-  if (profileError) {
-    console.error('Profile delete error:', profileError);
+  try {
+    // First, verify the user exists in auth.users before attempting deletion
+    const { data: authUser, error: getUserError } = await sb.auth.admin.getUserById(userId);
+
+    if (getUserError || !authUser?.user) {
+      // User does not exist in auth.users — this can happen if already deleted
+      // Proceed to clean up the profile and related data
+      console.error('User not found in auth.users:', userId, getUserError?.message);
+
+      const { error: profileError } = await sb.from('profiles').delete().eq('id', userId);
+      if (profileError) {
+        console.error('Profile delete error (user already gone from auth):', profileError);
+      }
+
+      // Cascade delete related data
+      await sb.from('investments').delete().eq('user_id', userId).catch(() => {});
+      await sb.from('people').delete().eq('user_id', userId).catch(() => {});
+
+      return new Response(JSON.stringify({ success: true, note: 'User was not found in auth — profile and related data removed' }), {
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      });
+    }
+
+    // User exists — proceed with deletion
+    const { error: authError } = await sb.auth.admin.deleteUser(userId);
+    if (authError) {
+      console.error('Auth delete error:', authError);
+      return new Response(JSON.stringify({ error: 'Failed to delete auth user: ' + authError.message }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      });
+    }
+
+    // Delete profile (RLS bypassed by service role key)
+    const { error: profileError } = await sb.from('profiles').delete().eq('id', userId);
+    if (profileError) {
+      console.error('Profile delete error:', profileError);
+    }
+
+    // Cascade delete related data
+    await sb.from('investments').delete().eq('user_id', userId).catch(() => {});
+    await sb.from('people').delete().eq('user_id', userId).catch(() => {});
+
+    return new Response(JSON.stringify({ success: true }), {
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    });
+  } catch (err) {
+    console.error('Unexpected error in admin-delete-user:', err);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    });
   }
-
-  // Cascade delete related data
-  await sb.from('investments').delete().eq('user_id', userId).catch(() => {});
-  await sb.from('people').delete().eq('user_id', userId).catch(() => {});
-
-  return new Response(JSON.stringify({ success: true }), {
-    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-  });
 });
