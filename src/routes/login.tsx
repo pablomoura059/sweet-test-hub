@@ -34,10 +34,7 @@ function LoginPage() {
   const [isRecoveryLoading, setIsRecoveryLoading] = useState(false);
   const [recoverySent, setRecoverySent] = useState(false);
 
-  // Modal de reenvio de confirmação
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [confirmEmail, setConfirmEmail] = useState("");
-  const [isConfirmLoading, setIsConfirmLoading] = useState(false);
+
 
   // Verificar se já está logado
   useEffect(() => {
@@ -61,15 +58,10 @@ function LoginPage() {
       });
 
       if (authError) {
-        // Tratar especificamente e-mail não confirmado
-        if (authError.message.toLowerCase().includes("email not confirmed") ||
-            authError.message.toLowerCase().includes("invalid login credentials") &&
-            email.includes("@")) {
-          setError("Este e-mail ainda não foi confirmado. Verifique sua caixa de entrada.");
-          setConfirmEmail(email);
-          setIsConfirmOpen(true);
-        } else if (authError.message.toLowerCase().includes("invalid login credentials")) {
-          setError("E-mail ou senha incorretos");
+        const isEmailNotConfirmed = authError.message.toLowerCase().includes("email not confirmed");
+        const isInvalidCredentials = authError.message.toLowerCase().includes("invalid login credentials") && email.includes("@");
+        if (isEmailNotConfirmed || isInvalidCredentials) {
+          setError("E-mail ou senha incorretos.");
         } else {
           setError(authError.message);
         }
@@ -79,38 +71,24 @@ function LoginPage() {
 
       if (data.user) {
         // Verificar status do profile no banco
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role, status")
-          .eq("id", data.user.id)
-          .single();
+              const { data: profile } = await supabase
+        .from("profiles")
+        .select("role, status")
+        .eq("id", data.user.id)
+        .maybeSingle();
 
         if (profile) {
-          // Admin entra sempre (role=admin), independente do status
-          if (profile.role === "admin") {
+          // Admin ou manager ativo entra normalmente
+          if ((profile.role === "admin" || profile.role === "manager") && profile.status === "active") {
             toast.success("Login realizado com sucesso!");
             router.navigate({ to: "/dashboard" });
             return;
           }
 
-          // Manager precisa estar active
-          if (profile.status === "blocked") {
-            setError(""); // limpa erro visual
-            router.navigate({ to: "/conta-bloqueada" });
-            return;
-          }
-
-          if (profile.status === "pending") {
-            setError("");
-            router.navigate({ to: "/gestores", state: { pendingMessage: true } });
-            return;
-          }
-
-          if (profile.status === "active") {
-            toast.success("Login realizado com sucesso!");
-            router.navigate({ to: "/dashboard" });
-            return;
-          }
+          // Qualquer outro status vai para conta bloqueada
+          setError("");
+          router.navigate({ to: "/conta-bloqueada" });
+          return;
         }
 
         // Se não tiver profile (caso legacy), permite acesso
@@ -157,27 +135,7 @@ function LoginPage() {
     }
   };
 
-  // Reenviar e-mail de confirmação
-  const handleResendConfirmation = async () => {
-    if (!confirmEmail) return;
-    setIsConfirmLoading(true);
-    try {
-      const { error } = await supabase.auth.resend({
-        type: "signup",
-        email: confirmEmail,
-      });
-      if (error) {
-        toast.error(error.message);
-      } else {
-        toast.success("E-mail de confirmação reenviado! Verifique sua caixa de entrada.");
-        setIsConfirmOpen(false);
-      }
-    } catch {
-      toast.error("Erro ao reenviar e-mail de confirmação");
-    } finally {
-      setIsConfirmLoading(false);
-    }
-  };
+
 
   return (
     <div
@@ -381,50 +339,6 @@ function LoginPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal: E-mail não confirmado */}
-      <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-        <DialogContent className="bg-slate-800 border-slate-700 text-white max-w-sm">
-          <div className="flex flex-col items-center text-center py-2">
-            <div className="w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center mb-4">
-              <Mail className="h-8 w-8 text-yellow-500" />
-            </div>
-            <h3 className="text-lg font-semibold text-white mb-2">E-mail não confirmado</h3>
-            <p className="text-slate-400 text-sm mb-1">
-              Enviamos um link de confirmação para:
-            </p>
-            <p className="text-white font-semibold text-sm mb-2">{confirmEmail}</p>
-            <p className="text-slate-500 text-xs mb-6">
-              Acesse sua caixa de entrada e clique no link para ativar sua conta. Verifique também a pasta de spam.
-            </p>
-            <div className="w-full space-y-2">
-              <Button
-                onClick={handleResendConfirmation}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                disabled={isConfirmLoading}
-              >
-                {isConfirmLoading ? (
-                  <span className="flex items-center gap-2">
-                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Enviando...
-                  </span>
-                ) : (
-                  <><Send className="h-4 w-4 mr-2" />Reenviar e-mail de confirmação</>
-                )}
-              </Button>
-              <Button
-                onClick={() => setIsConfirmOpen(false)}
-                variant="outline"
-                className="w-full border-slate-600 text-slate-300 hover:bg-slate-700"
-              >
-                Fechar
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
