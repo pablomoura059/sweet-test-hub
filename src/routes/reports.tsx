@@ -675,7 +675,7 @@ function ReportsPage() {
                             )}
                             <div>
                               <p className="text-sm font-semibold text-[#F3F6FA]">{inv.person_name || "—"}</p>
-                              <p className="text-[10px] text-[#718096] font-mono">Venc: {formatDate(inv.return_date)}</p>
+                              <p className="text-[10px] text-[#718096] font-mono">Vencimento: {formatDate(inv.return_date)}</p>
                             </div>
                           </div>
                           <span
