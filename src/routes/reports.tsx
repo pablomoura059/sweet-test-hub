@@ -562,6 +562,48 @@ function ReportsPage() {
             </Card>
           )}
         </div>
+
+        {/* Empréstimos do Período */}
+        <div>
+          <h2 className="text-sm font-bold text-[#F3F6FA] mb-3">Empréstimos do Período</h2>
+          <Card className="bg-[#162235] border-[#26364D]">
+            <CardContent className="p-4">
+              {isLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-12 w-full rounded skeleton-shimmer" />
+                  ))}
+                </div>
+              ) : filteredInvestments.length === 0 ? (
+                <p className="text-[#718096] text-sm text-center py-6">Nenhum empréstimo no período selecionado.</p>
+              ) : (
+                <div className="space-y-2">
+                  {filteredInvestments.map((inv) => (
+                    <div
+                      key={inv.id}
+                      className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-[#0B1220]/50 border border-[#26364D]/50"
+                    >
+                      <span className="text-sm font-medium text-[#F3F6FA]">
+                        {inv.person_name || "—"}
+                      </span>
+                      <span className="text-sm font-semibold text-[#F3F6FA] font-mono">
+                        {formatCurrency(Number(inv.invested_amount))}
+                      </span>
+                      <span className="text-xs text-[#718096] font-mono">
+                        {inv.return_date
+                          ? (() => {
+                              const d = new Date(inv.return_date + "T00:00:00");
+                              return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+                            })()
+                          : "—"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </main>
     </div>
   );
