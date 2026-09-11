@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useRouter } from "@tanstack/react-router";
+import { useState } from "react";
 import { ChartContainer, ChartTooltipContent, ChartLegendContent } from "@/components/ui/chart";
 import {
   LineChart,
@@ -28,8 +29,15 @@ export const Route = createFileRoute("/reports")({
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
+const PERIOD_OPTIONS = [
+  { label: "30 dias", days: 30 },
+  { label: "60 dias", days: 60 },
+  { label: "90 dias", days: 90 },
+];
+
 function ReportsPage() {
   const router = useRouter();
+  const [periodDays, setPeriodDays] = useState(30);
 
   const { data: session } = useQuery({
     queryKey: ["auth-session"],
@@ -53,33 +61,44 @@ function ReportsPage() {
     enabled: !!session?.user.id,
   });
 
-  const totalInvested = (investments || []).reduce(
+  // Filtrar investments pelo período selecionado
+  const filteredInvestments = (() => {
+    if (!investments) return [];
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - periodDays);
+    return investments.filter((inv) => {
+      const startDate = new Date(inv.start_date);
+      return startDate >= cutoff;
+    });
+  })();
+
+  const totalInvested = filteredInvestments.reduce(
     (sum, inv) => sum + Number(inv.invested_amount),
     0
   );
 
-  const totalExpectedReturn = (investments || []).reduce(
+  const totalExpectedReturn = filteredInvestments.reduce(
     (sum, inv) => sum + Number(inv.expected_return || 0),
     0
   );
 
-  const totalExpectedProfit = (investments || []).reduce(
+  const totalExpectedProfit = filteredInvestments.reduce(
     (sum, inv) => sum + Number(inv.expected_profit || 0),
     0
   );
 
-  const totalReceived = (investments || []).reduce(
+  const totalReceived = filteredInvestments.reduce(
     (sum, inv) => sum + Number(inv.actual_received || 0),
     0
   );
 
-  const totalActualProfit = (investments || []).reduce(
+  const totalActualProfit = filteredInvestments.reduce(
     (sum, inv) => sum + Number(inv.actual_profit || 0),
     0
   );
 
   const today = new Date().toISOString().slice(0, 10);
-  const overdueCount = (investments || []).filter(
+  const overdueCount = filteredInvestments.filter(
     (inv) => inv.return_date < today && inv.status !== "finished" && inv.status !== "cancelled"
   ).length;
 
@@ -163,6 +182,25 @@ function ReportsPage() {
 
       {/* Main */}
       <main className="p-4 max-w-5xl mx-auto space-y-6">
+        {/* Filtro de período */}
+        <div className="flex items-center gap-2">
+          {PERIOD_OPTIONS.map((option) => (
+            <Button
+              key={option.days}
+              variant={periodDays === option.days ? "default" : "outline"}
+              size="sm"
+              onClick={() => setPeriodDays(option.days)}
+              className={
+                periodDays === option.days
+                  ? "bg-blue-600 hover:bg-blue-700 text-white border-blue-600 font-semibold text-xs"
+                  : "border-[#26364D] text-[#718096] hover:bg-[#162235] hover:text-[#F3F6FA] text-xs"
+              }
+            >
+              {option.label}
+            </Button>
+          ))}
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Total Emprestado Card */}
           {isLoading ? (
@@ -187,7 +225,7 @@ function ReportsPage() {
                     {formatCurrency(totalInvested)}
                   </p>
                   <p className="text-[10px] text-[#718096] mt-1 font-medium">
-                    {(investments || []).length} empréstimo{(investments || []).length !== 1 ? "s" : ""} cadastrado{(investments || []).length !== 1 ? "s" : ""}
+                    {filteredInvestments.length} empréstimo{filteredInvestments.length !== 1 ? "s" : ""} no período
                   </p>
                 </div>
               </CardContent>
