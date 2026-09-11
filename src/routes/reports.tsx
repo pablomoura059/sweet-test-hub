@@ -283,16 +283,16 @@ function ReportsPage() {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4">
           {isLoading ? (
             <>
               {[1,2,3,4,5,6].map(i => (
                 <Card key={i} className="bg-[#162235] border-[#26364D]">
-                  <CardContent className="p-5 flex items-start gap-4">
-                    <Skeleton className="h-12 w-12 rounded-xl skeleton-shimmer" />
+                  <CardContent className="p-2 md:p-5 flex items-start gap-2 md:gap-4">
+                    <Skeleton className="h-8 w-8 md:h-12 md:w-12 rounded-xl skeleton-shimmer" />
                     <div className="space-y-2 flex-1">
                       <Skeleton className="h-3 w-32 rounded skeleton-shimmer" />
-                      <Skeleton className="h-8 w-40 rounded skeleton-shimmer" />
+                      <Skeleton className="h-6 w-40 rounded skeleton-shimmer" />
                     </div>
                   </CardContent>
                 </Card>
@@ -301,16 +301,16 @@ function ReportsPage() {
           ) : (
             <>
               <Card className="bg-[#162235] border-[#26364D] hover:border-blue-500/40 transition-all duration-300">
-                <CardContent className="p-3 md:p-5 flex items-start gap-3 md:gap-4">
-                    <div className="p-2 md:p-2.5 rounded-xl bg-blue-600/10 border border-[#26364D] shrink-0">
-                      <Wallet className="h-4 w-4 md:h-5 md:w-5 text-blue-400" />
+                <CardContent className="p-2 md:p-5 flex items-start gap-2 md:gap-4">
+                    <div className="p-1.5 md:p-2.5 rounded-xl bg-blue-600/10 border border-[#26364D] shrink-0">
+                      <Wallet className="h-3.5 w-3.5 md:h-5 md:w-5 text-blue-400" />
                     </div>
                   <div>
-                    <p className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">Total Emprestado</p>
-                    <p className="text-2xl font-bold text-[#F3F6FA] leading-none mt-1">
+                    <p className="text-[9px] font-semibold text-[#718096] uppercase tracking-wider">Total Emprestado</p>
+                    <p className="text-xl font-bold text-[#F3F6FA] leading-none mt-0.5">
                       {formatCurrency(totalInvested)}
                     </p>
-                    <p className="text-[10px] text-[#718096] mt-1 font-medium">
+                    <p className="text-[9px] text-[#718096] mt-0.5 font-medium">
                       {filteredInvestments.length} empréstimo{filteredInvestments.length !== 1 ? "s" : ""} no período
                     </p>
                   </div>
@@ -318,16 +318,16 @@ function ReportsPage() {
               </Card>
 
               <Card className="bg-[#162235] border-[#26364D] hover:border-emerald-500/40 transition-all duration-300">
-                <CardContent className="p-3 md:p-5 flex items-start gap-3 md:gap-4">
-                  <div className="p-2 md:p-2.5 rounded-xl bg-emerald-500/10 border border-[#26364D] shrink-0">
-                    <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-emerald-400" />
+                <CardContent className="p-2 md:p-5 flex items-start gap-2 md:gap-4">
+                  <div className="p-1.5 md:p-2.5 rounded-xl bg-emerald-500/10 border border-[#26364D] shrink-0">
+                    <TrendingUp className="h-3.5 w-3.5 md:h-5 md:w-5 text-emerald-400" />
                   </div>
                   <div>
-                    <p className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">Retorno Previsto</p>
-                    <p className="text-2xl font-bold text-[#F3F6FA] leading-none mt-1">
+                    <p className="text-[9px] font-semibold text-[#718096] uppercase tracking-wider">Retorno Previsto</p>
+                    <p className="text-xl font-bold text-[#F3F6FA] leading-none mt-0.5">
                       {formatCurrency(totalExpectedReturn)}
                     </p>
-                    <p className="text-[10px] text-[#718096] mt-1 font-medium">
+                    <p className="text-[9px] text-[#718096] mt-0.5 font-medium">
                       Valor total a receber com lucros
                     </p>
                   </div>
@@ -335,16 +335,16 @@ function ReportsPage() {
               </Card>
 
               <Card className="bg-[#162235] border-[#26364D] hover:border-amber-500/40 transition-all duration-300">
-                <CardContent className="p-3 md:p-5 flex items-start gap-3 md:gap-4">
-                  <div className="p-2 md:p-2.5 rounded-xl bg-amber-500/10 border border-[#26364D] shrink-0">
-                    <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-amber-400" />
+                <CardContent className="p-2 md:p-5 flex items-start gap-2 md:gap-4">
+                  <div className="p-1.5 md:p-2.5 rounded-xl bg-amber-500/10 border border-[#26364D] shrink-0">
+                    <TrendingUp className="h-3.5 w-3.5 md:h-5 md:w-5 text-amber-400" />
                   </div>
                   <div>
-                    <p className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">Lucro Previsto</p>
-                    <p className="text-2xl font-bold text-[#F3F6FA] leading-none mt-1">
+                    <p className="text-[9px] font-semibold text-[#718096] uppercase tracking-wider">Lucro Previsto</p>
+                    <p className="text-xl font-bold text-[#F3F6FA] leading-none mt-0.5">
                       {formatCurrency(totalExpectedProfit)}
                     </p>
-                    <p className="text-[10px] text-[#718096] mt-1 font-medium">
+                    <p className="text-[9px] text-[#718096] mt-0.5 font-medium">
                       Lucro esperado dos empréstimos
                     </p>
                   </div>
@@ -352,16 +352,16 @@ function ReportsPage() {
               </Card>
 
               <Card className="bg-[#162235] border-[#26364D] hover:border-violet-500/40 transition-all duration-300">
-                <CardContent className="p-3 md:p-5 flex items-start gap-3 md:gap-4">
-                  <div className="p-2 md:p-2.5 rounded-xl bg-violet-500/10 border border-[#26364D] shrink-0">
-                    <DollarSign className="h-4 w-4 md:h-5 md:w-5 text-violet-400" />
+                <CardContent className="p-2 md:p-5 flex items-start gap-2 md:gap-4">
+                  <div className="p-1.5 md:p-2.5 rounded-xl bg-violet-500/10 border border-[#26364D] shrink-0">
+                    <DollarSign className="h-3.5 w-3.5 md:h-5 md:w-5 text-violet-400" />
                   </div>
                   <div>
-                    <p className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">Total Recebido</p>
-                    <p className="text-2xl font-bold text-[#F3F6FA] leading-none mt-1">
+                    <p className="text-[9px] font-semibold text-[#718096] uppercase tracking-wider">Total Recebido</p>
+                    <p className="text-xl font-bold text-[#F3F6FA] leading-none mt-0.5">
                       {formatCurrency(totalReceived)}
                     </p>
-                    <p className="text-[10px] text-[#718096] mt-1 font-medium">
+                    <p className="text-[9px] text-[#718096] mt-0.5 font-medium">
                       Valor já recebido
                     </p>
                   </div>
@@ -369,16 +369,16 @@ function ReportsPage() {
               </Card>
 
               <Card className="bg-[#162235] border-[#26364D] hover:border-green-500/40 transition-all duration-300">
-                <CardContent className="p-3 md:p-5 flex items-start gap-3 md:gap-4">
-                  <div className="p-2 md:p-2.5 rounded-xl bg-green-500/10 border border-[#26364D] shrink-0">
-                    <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-green-400" />
+                <CardContent className="p-2 md:p-5 flex items-start gap-2 md:gap-4">
+                  <div className="p-1.5 md:p-2.5 rounded-xl bg-green-500/10 border border-[#26364D] shrink-0">
+                    <TrendingUp className="h-3.5 w-3.5 md:h-5 md:w-5 text-green-400" />
                   </div>
                   <div>
-                    <p className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">Lucro Realizado</p>
-                    <p className="text-2xl font-bold text-[#F3F6FA] leading-none mt-1">
+                    <p className="text-[9px] font-semibold text-[#718096] uppercase tracking-wider">Lucro Realizado</p>
+                    <p className="text-xl font-bold text-[#F3F6FA] leading-none mt-0.5">
                       {formatCurrency(totalActualProfit)}
                     </p>
-                    <p className="text-[10px] text-[#718096] mt-1 font-medium">
+                    <p className="text-[9px] text-[#718096] mt-0.5 font-medium">
                       Lucro já realizado
                     </p>
                   </div>
@@ -386,16 +386,16 @@ function ReportsPage() {
               </Card>
 
               <Card className="bg-[#162235] border-[#26364D] hover:border-red-500/40 transition-all duration-300">
-                <CardContent className="p-3 md:p-5 flex items-start gap-3 md:gap-4">
-                  <div className="p-2 md:p-2.5 rounded-xl bg-red-500/10 border border-[#26364D] shrink-0">
-                    <AlertCircle className="h-4 w-4 md:h-5 md:w-5 text-red-400" />
+                <CardContent className="p-2 md:p-5 flex items-start gap-2 md:gap-4">
+                  <div className="p-1.5 md:p-2.5 rounded-xl bg-red-500/10 border border-[#26364D] shrink-0">
+                    <AlertCircle className="h-3.5 w-3.5 md:h-5 md:w-5 text-red-400" />
                   </div>
                   <div>
-                    <p className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">Em Atraso</p>
-                    <p className="text-2xl font-bold text-red-400 leading-none mt-1">
+                    <p className="text-[9px] font-semibold text-[#718096] uppercase tracking-wider">Em Atraso</p>
+                    <p className="text-xl font-bold text-red-400 leading-none mt-0.5">
                       {overdueCount}
                     </p>
-                    <p className="text-[10px] text-[#718096] mt-1 font-medium">
+                    <p className="text-[9px] text-[#718096] mt-0.5 font-medium">
                       {overdueCount} empréstimo{overdueCount !== 1 ? "s" : ""} em atraso
                     </p>
                   </div>
