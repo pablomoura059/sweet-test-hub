@@ -543,62 +543,6 @@ function ReportsPage() {
                           );
                         }}
                       />
-                      <Legend
-                        content={() => (
-                          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 pt-3 pb-1 px-1">
-                            <button
-                              onClick={() => handleCategoryClick(null)}
-                              className="flex items-center gap-1.5 text-xs transition-opacity duration-200 cursor-pointer"
-                              style={{ opacity: selectedCategory === null ? 1 : 0.4 }}
-                            >
-                              <div className="h-2.5 w-2.5 rounded-sm bg-[#94a3b8] shrink-0" />
-                              <span className="text-[#718096] hover:text-[#F3F6FA] transition-colors" style={{ color: selectedCategory === null ? "#F3F6FA" : undefined }}>
-                                Todos
-                              </span>
-                            </button>
-                            <button
-                              onClick={() => handleCategoryClick("Ativos")}
-                              className="flex items-center gap-1.5 text-xs transition-opacity duration-200 cursor-pointer"
-                              style={{ opacity: selectedCategory === null || selectedCategory === "Ativos" ? 1 : 0.4 }}
-                            >
-                              <div className="h-2.5 w-2.5 rounded-sm bg-[#60a5fa] shrink-0" />
-                              <span className="text-[#718096] hover:text-[#F3F6FA] transition-colors" style={{ color: selectedCategory === "Ativos" ? "#60a5fa" : undefined }}>
-                                Ativos
-                              </span>
-                            </button>
-                            <button
-                              onClick={() => handleCategoryClick("Finalizados")}
-                              className="flex items-center gap-1.5 text-xs transition-opacity duration-200 cursor-pointer"
-                              style={{ opacity: selectedCategory === null || selectedCategory === "Finalizados" ? 1 : 0.4 }}
-                            >
-                              <div className="h-2.5 w-2.5 rounded-sm bg-[#34d399] shrink-0" />
-                              <span className="text-[#718096] hover:text-[#F3F6FA] transition-colors" style={{ color: selectedCategory === "Finalizados" ? "#34d399" : undefined }}>
-                                Finalizados
-                              </span>
-                            </button>
-                            <button
-                              onClick={() => handleCategoryClick("Atrasados")}
-                              className="flex items-center gap-1.5 text-xs transition-opacity duration-200 cursor-pointer"
-                              style={{ opacity: selectedCategory === null || selectedCategory === "Atrasados" ? 1 : 0.4 }}
-                            >
-                              <div className="h-2.5 w-2.5 rounded-sm bg-[#f59e0b] shrink-0" />
-                              <span className="text-[#718096] hover:text-[#F3F6FA] transition-colors" style={{ color: selectedCategory === "Atrasados" ? "#f59e0b" : undefined }}>
-                                Atrasados
-                              </span>
-                            </button>
-                            <button
-                              onClick={() => handleCategoryClick("Cancelados")}
-                              className="flex items-center gap-1.5 text-xs transition-opacity duration-200 cursor-pointer"
-                              style={{ opacity: selectedCategory === null || selectedCategory === "Cancelados" ? 1 : 0.4 }}
-                            >
-                              <div className="h-2.5 w-2.5 rounded-sm bg-[#94a3b8] shrink-0" />
-                              <span className="text-[#718096] hover:text-[#F3F6FA] transition-colors" style={{ color: selectedCategory === "Cancelados" ? "#94a3b8" : undefined }}>
-                                Cancelados
-                              </span>
-                            </button>
-                          </div>
-                        )}
-                      />
                       <Bar
                         dataKey="quantidade"
                         radius={[6, 6, 0, 0]}
