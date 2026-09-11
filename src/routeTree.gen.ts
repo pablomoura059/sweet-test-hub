@@ -20,6 +20,13 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as GestoresRouteImport } from './routes/gestores'
 import { Route as ContaBloqueadaRouteImport } from './routes/conta-bloqueada'
 import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as MinhaContaRouteImport } from './routes/minha-conta'
+
+const MinhaContaRoute = MinhaContaRouteImport.update({
+  id: '/minha-conta',
+  path: '/minha-conta',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 const GestoresRoute = GestoresRouteImport.update({
   id: '/gestores',
@@ -78,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/conta-bloqueada': typeof ContaBloqueadaRoute
   '/gestores': typeof GestoresRoute
   '/reports': typeof ReportsRoute
+  '/minha-conta': typeof MinhaContaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -88,6 +96,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/conta-bloqueada': typeof ContaBloqueadaRoute
   '/reports': typeof ReportsRoute
+  '/minha-conta': typeof MinhaContaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -106,7 +115,7 @@ export interface FileRouteTypes {
   fullPaths: '/' | '/dashboard' | '/login' | '/people' | '/reset-password' | '/signup' | '/conta-bloqueada' | '/gestores' | '/reports'
   fileRoutesByTo: FileRoutesByTo
   to: '/' | '/dashboard' | '/login' | '/people' | '/reset-password' | '/signup' | '/conta-bloqueada' | '/reports'
-  id: '__root__' | '/' | '/dashboard' | '/login' | '/people' | '/reset-password' | '/signup' | '/conta-bloqueada' | '/gestores' | '/reports'
+  id: '__root__' | '/' | '/dashboard' | '/login' | '/people' | '/reset-password' | '/signup' | '/conta-bloqueada' | '/gestores' | '/reports' | '/minha-conta'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,6 +128,7 @@ export interface RootRouteChildren {
   ContaBloqueadaRoute: typeof ContaBloqueadaRoute
   GestoresRoute: typeof GestoresRoute
   ReportsRoute: typeof ReportsRoute
+  MinhaContaRoute: typeof MinhaContaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -186,6 +196,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/minha-conta': {
+      id: '/minha-conta'
+      path: '/minha-conta'
+      fullPath: '/minha-conta'
+      preLoaderRoute: typeof MinhaContaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -199,6 +216,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContaBloqueadaRoute: ContaBloqueadaRoute,
   GestoresRoute: GestoresRoute,
   ReportsRoute: ReportsRoute,
+  MinhaContaRoute: MinhaContaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
