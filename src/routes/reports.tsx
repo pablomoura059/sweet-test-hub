@@ -89,7 +89,7 @@ function ReportsPage() {
 
     const sorted = [...investments].sort(
       (a, b) =>
-        new Date(a.return_date).getTime() - new Date(b.return_date).getTime()
+        new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
     );
 
     let acumuladoEmprestado = 0;
@@ -101,11 +101,11 @@ function ReportsPage() {
       acumuladoRetorno += Number(inv.expected_return || 0);
       acumuladoLucro += Number(inv.expected_profit || 0);
 
-      const dateLabel = new Date(inv.return_date).toLocaleDateString("pt-BR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "2-digit",
-      });
+      const dateObj = new Date(inv.start_date);
+      const day = String(dateObj.getUTCDate()).padStart(2, "0");
+      const month = String(dateObj.getUTCMonth() + 1).padStart(2, "0");
+      const year = dateObj.getUTCFullYear();
+      const dateLabel = `${day}/${month}/${year}`;
 
       return {
         data: dateLabel,
