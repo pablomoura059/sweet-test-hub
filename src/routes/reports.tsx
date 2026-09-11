@@ -1,13 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft, Wallet, TrendingUp, DollarSign, AlertCircle } from "lucide-react";
+import { ArrowLeft, Wallet, TrendingUp, DollarSign, AlertCircle, Clock, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useRouter } from "@tanstack/react-router";
 import { useState } from "react";
-import { ChartContainer, ChartTooltipContent, ChartLegendContent } from "@/components/ui/chart";
+import { ChartContainer } from "@/components/ui/chart";
 import {
   LineChart,
   Line,
@@ -64,7 +65,6 @@ function ReportsPage() {
     enabled: !!session?.user.id,
   });
 
-  // Filtrar investments pelo período selecionado
   const filteredInvestments = (() => {
     if (!investments) return [];
     const cutoff = new Date();
@@ -105,7 +105,6 @@ function ReportsPage() {
     (inv) => inv.return_date < today && inv.status !== "finished" && inv.status !== "cancelled"
   ).length;
 
-  // Distribuição por status
   const statusCounts = {
     ativos: investments?.filter((inv) => inv.status === "active").length ?? 0,
     finalizados: investments?.filter((inv) => inv.status === "finished").length ?? 0,
@@ -127,7 +126,6 @@ function ReportsPage() {
     Cancelados: { label: "Cancelados", color: "#94a3b8" },
   };
 
-  // Dados para o gráfico — acumulativo por data (respeita filtro de período)
   const chartData = (() => {
     if (!filteredInvestments || filteredInvestments.length === 0) return [];
 
@@ -183,9 +181,36 @@ function ReportsPage() {
     );
   };
 
+  const getDisplayStatus = (inv: Investment) => {
+    if (inv.return_date < today && inv.status !== "finished" && inv.status !== "cancelled") {
+      return "atrasado";
+    }
+    return inv.status;
+  };
+
+  const getStatusConfig = (status: string) => {
+    switch (status) {
+      case "active":
+        return { label: "Ativo", color: "#3b82f6", bg: "rgba(59,130,246,0.12)", border: "rgba(59,130,246,0.3)", icon: Clock };
+      case "finished":
+        return { label: "Finalizado", color: "#34d399", bg: "rgba(52,211,153,0.12)", border: "rgba(52,211,153,0.3)", icon: CheckCircle2 };
+      case "cancelled":
+        return { label: "Cancelado", color: "#94a3b8", bg: "rgba(148,163,184,0.12)", border: "rgba(148,163,184,0.3)", icon: XCircle };
+      case "atrasado":
+        return { label: "Atrasado", color: "#f59e0b", bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.3)", icon: AlertTriangle };
+      default:
+        return { label: status, color: "#94a3b8", bg: "rgba(148,163,184,0.12)", border: "rgba(148,163,184,0.3)", icon: AlertCircle };
+    }
+  };
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "—";
+    const d = new Date(dateStr + "T00:00:00");
+    return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+  };
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#0B1220" }}>
-      {/* Header */}
       <header className="sticky top-0 z-40 bg-[#101A2B]/95 backdrop-blur-xl border-b border-[#26364D]/60">
         <div className="flex items-center justify-between px-4 py-3 max-w-5xl mx-auto">
           <div className="flex items-center gap-3">
@@ -205,9 +230,7 @@ function ReportsPage() {
         </div>
       </header>
 
-      {/* Main */}
       <main className="p-4 max-w-5xl mx-auto space-y-6">
-        {/* Filtro de período */}
         <div className="flex items-center gap-2">
           {PERIOD_OPTIONS.map((option) => (
             <Button
@@ -227,184 +250,124 @@ function ReportsPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Total Emprestado Card */}
           {isLoading ? (
-            <Card className="bg-[#162235] border-[#26364D]">
-              <CardContent className="p-5 flex items-start gap-4">
-                <Skeleton className="h-12 w-12 rounded-xl skeleton-shimmer" />
-                <div className="space-y-2 flex-1">
-                  <Skeleton className="h-3 w-32 rounded skeleton-shimmer" />
-                  <Skeleton className="h-8 w-40 rounded skeleton-shimmer" />
-                </div>
-              </CardContent>
-            </Card>
+            <>
+              {[1,2,3,4,5,6].map(i => (
+                <Card key={i} className="bg-[#162235] border-[#26364D]">
+                  <CardContent className="p-5 flex items-start gap-4">
+                    <Skeleton className="h-12 w-12 rounded-xl skeleton-shimmer" />
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-3 w-32 rounded skeleton-shimmer" />
+                      <Skeleton className="h-8 w-40 rounded skeleton-shimmer" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </>
           ) : (
-            <Card className="bg-[#162235] border-[#26364D] hover:border-blue-500/40 transition-all duration-300">
-              <CardContent className="p-5 flex items-start gap-4">
-                <div className="p-2.5 rounded-xl bg-blue-600/10 border border-[#26364D] shrink-0">
-                  <Wallet className="h-5 w-5 text-blue-400" />
-                </div>
-                <div>
-                  <p className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">Total Emprestado</p>
-                  <p className="text-2xl font-bold text-[#F3F6FA] leading-none mt-1">
-                    {formatCurrency(totalInvested)}
-                  </p>
-                  <p className="text-[10px] text-[#718096] mt-1 font-medium">
-                    {filteredInvestments.length} empréstimo{filteredInvestments.length !== 1 ? "s" : ""} no período
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+            <>
+              <Card className="bg-[#162235] border-[#26364D] hover:border-blue-500/40 transition-all duration-300">
+                <CardContent className="p-5 flex items-start gap-4">
+                  <div className="p-2.5 rounded-xl bg-blue-600/10 border border-[#26364D] shrink-0">
+                    <Wallet className="h-5 w-5 text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">Total Emprestado</p>
+                    <p className="text-2xl font-bold text-[#F3F6FA] leading-none mt-1">
+                      {formatCurrency(totalInvested)}
+                    </p>
+                    <p className="text-[10px] text-[#718096] mt-1 font-medium">
+                      {filteredInvestments.length} empréstimo{filteredInvestments.length !== 1 ? "s" : ""} no período
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
 
-          {/* Retorno Previsto Card */}
-          {isLoading ? (
-            <Card className="bg-[#162235] border-[#26364D]">
-              <CardContent className="p-5 flex items-start gap-4">
-                <Skeleton className="h-12 w-12 rounded-xl skeleton-shimmer" />
-                <div className="space-y-2 flex-1">
-                  <Skeleton className="h-3 w-32 rounded skeleton-shimmer" />
-                  <Skeleton className="h-8 w-40 rounded skeleton-shimmer" />
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="bg-[#162235] border-[#26364D] hover:border-emerald-500/40 transition-all duration-300">
-              <CardContent className="p-5 flex items-start gap-4">
-                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-[#26364D] shrink-0">
-                  <TrendingUp className="h-5 w-5 text-emerald-400" />
-                </div>
-                <div>
-                  <p className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">Retorno Previsto</p>
-                  <p className="text-2xl font-bold text-[#F3F6FA] leading-none mt-1">
-                    {formatCurrency(totalExpectedReturn)}
-                  </p>
-                  <p className="text-[10px] text-[#718096] mt-1 font-medium">
-                    Valor total a receber com lucros
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+              <Card className="bg-[#162235] border-[#26364D] hover:border-emerald-500/40 transition-all duration-300">
+                <CardContent className="p-5 flex items-start gap-4">
+                  <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-[#26364D] shrink-0">
+                    <TrendingUp className="h-5 w-5 text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">Retorno Previsto</p>
+                    <p className="text-2xl font-bold text-[#F3F6FA] leading-none mt-1">
+                      {formatCurrency(totalExpectedReturn)}
+                    </p>
+                    <p className="text-[10px] text-[#718096] mt-1 font-medium">
+                      Valor total a receber com lucros
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
 
-          {/* Lucro Previsto Card */}
-          {isLoading ? (
-            <Card className="bg-[#162235] border-[#26364D]">
-              <CardContent className="p-5 flex items-start gap-4">
-                <Skeleton className="h-12 w-12 rounded-xl skeleton-shimmer" />
-                <div className="space-y-2 flex-1">
-                  <Skeleton className="h-3 w-32 rounded skeleton-shimmer" />
-                  <Skeleton className="h-8 w-40 rounded skeleton-shimmer" />
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="bg-[#162235] border-[#26364D] hover:border-amber-500/40 transition-all duration-300">
-              <CardContent className="p-5 flex items-start gap-4">
-                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-[#26364D] shrink-0">
-                  <TrendingUp className="h-5 w-5 text-amber-400" />
-                </div>
-                <div>
-                  <p className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">Lucro Previsto</p>
-                  <p className="text-2xl font-bold text-[#F3F6FA] leading-none mt-1">
-                    {formatCurrency(totalExpectedProfit)}
-                  </p>
-                  <p className="text-[10px] text-[#718096] mt-1 font-medium">
-                    Lucro esperado dos empréstimos
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+              <Card className="bg-[#162235] border-[#26364D] hover:border-amber-500/40 transition-all duration-300">
+                <CardContent className="p-5 flex items-start gap-4">
+                  <div className="p-2.5 rounded-xl bg-amber-500/10 border border-[#26364D] shrink-0">
+                    <TrendingUp className="h-5 w-5 text-amber-400" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">Lucro Previsto</p>
+                    <p className="text-2xl font-bold text-[#F3F6FA] leading-none mt-1">
+                      {formatCurrency(totalExpectedProfit)}
+                    </p>
+                    <p className="text-[10px] text-[#718096] mt-1 font-medium">
+                      Lucro esperado dos empréstimos
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
 
-          {/* Total Recebido Card */}
-          {isLoading ? (
-            <Card className="bg-[#162235] border-[#26364D]">
-              <CardContent className="p-5 flex items-start gap-4">
-                <Skeleton className="h-12 w-12 rounded-xl skeleton-shimmer" />
-                <div className="space-y-2 flex-1">
-                  <Skeleton className="h-3 w-32 rounded skeleton-shimmer" />
-                  <Skeleton className="h-8 w-40 rounded skeleton-shimmer" />
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="bg-[#162235] border-[#26364D] hover:border-violet-500/40 transition-all duration-300">
-              <CardContent className="p-5 flex items-start gap-4">
-                <div className="p-2.5 rounded-xl bg-violet-500/10 border border-[#26364D] shrink-0">
-                  <DollarSign className="h-5 w-5 text-violet-400" />
-                </div>
-                <div>
-                  <p className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">Total Recebido</p>
-                  <p className="text-2xl font-bold text-[#F3F6FA] leading-none mt-1">
-                    {formatCurrency(totalReceived)}
-                  </p>
-                  <p className="text-[10px] text-[#718096] mt-1 font-medium">
-                    Valor já recebido
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+              <Card className="bg-[#162235] border-[#26364D] hover:border-violet-500/40 transition-all duration-300">
+                <CardContent className="p-5 flex items-start gap-4">
+                  <div className="p-2.5 rounded-xl bg-violet-500/10 border border-[#26364D] shrink-0">
+                    <DollarSign className="h-5 w-5 text-violet-400" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">Total Recebido</p>
+                    <p className="text-2xl font-bold text-[#F3F6FA] leading-none mt-1">
+                      {formatCurrency(totalReceived)}
+                    </p>
+                    <p className="text-[10px] text-[#718096] mt-1 font-medium">
+                      Valor já recebido
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
 
-          {/* Lucro Realizado Card */}
-          {isLoading ? (
-            <Card className="bg-[#162235] border-[#26364D]">
-              <CardContent className="p-5 flex items-start gap-4">
-                <Skeleton className="h-12 w-12 rounded-xl skeleton-shimmer" />
-                <div className="space-y-2 flex-1">
-                  <Skeleton className="h-3 w-32 rounded skeleton-shimmer" />
-                  <Skeleton className="h-8 w-40 rounded skeleton-shimmer" />
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="bg-[#162235] border-[#26364D] hover:border-green-500/40 transition-all duration-300">
-              <CardContent className="p-5 flex items-start gap-4">
-                <div className="p-2.5 rounded-xl bg-green-500/10 border border-[#26364D] shrink-0">
-                  <TrendingUp className="h-5 w-5 text-green-400" />
-                </div>
-                <div>
-                  <p className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">Lucro Realizado</p>
-                  <p className="text-2xl font-bold text-[#F3F6FA] leading-none mt-1">
-                    {formatCurrency(totalActualProfit)}
-                  </p>
-                  <p className="text-[10px] text-[#718096] mt-1 font-medium">
-                    Lucro já realizado
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+              <Card className="bg-[#162235] border-[#26364D] hover:border-green-500/40 transition-all duration-300">
+                <CardContent className="p-5 flex items-start gap-4">
+                  <div className="p-2.5 rounded-xl bg-green-500/10 border border-[#26364D] shrink-0">
+                    <TrendingUp className="h-5 w-5 text-green-400" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">Lucro Realizado</p>
+                    <p className="text-2xl font-bold text-[#F3F6FA] leading-none mt-1">
+                      {formatCurrency(totalActualProfit)}
+                    </p>
+                    <p className="text-[10px] text-[#718096] mt-1 font-medium">
+                      Lucro já realizado
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
 
-          {/* Em Atraso Card */}
-          {isLoading ? (
-            <Card className="bg-[#162235] border-[#26364D]">
-              <CardContent className="p-5 flex items-start gap-4">
-                <Skeleton className="h-12 w-12 rounded-xl skeleton-shimmer" />
-                <div className="space-y-2 flex-1">
-                  <Skeleton className="h-3 w-32 rounded skeleton-shimmer" />
-                  <Skeleton className="h-8 w-40 rounded skeleton-shimmer" />
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="bg-[#162235] border-[#26364D] hover:border-red-500/40 transition-all duration-300">
-              <CardContent className="p-5 flex items-start gap-4">
-                <div className="p-2.5 rounded-xl bg-red-500/10 border border-[#26364D] shrink-0">
-                  <AlertCircle className="h-5 w-5 text-red-400" />
-                </div>
-                <div>
-                  <p className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">Em Atraso</p>
-                  <p className="text-2xl font-bold text-red-400 leading-none mt-1">
-                    {overdueCount}
-                  </p>
-                  <p className="text-[10px] text-[#718096] mt-1 font-medium">
-                    {overdueCount} empréstimo{overdueCount !== 1 ? "s" : ""} em atraso
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+              <Card className="bg-[#162235] border-[#26364D] hover:border-red-500/40 transition-all duration-300">
+                <CardContent className="p-5 flex items-start gap-4">
+                  <div className="p-2.5 rounded-xl bg-red-500/10 border border-[#26364D] shrink-0">
+                    <AlertCircle className="h-5 w-5 text-red-400" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">Em Atraso</p>
+                    <p className="text-2xl font-bold text-red-400 leading-none mt-1">
+                      {overdueCount}
+                    </p>
+                    <p className="text-[10px] text-[#718096] mt-1 font-medium">
+                      {overdueCount} empréstimo{overdueCount !== 1 ? "s" : ""} em atraso
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
           )}
         </div>
 
@@ -468,30 +431,9 @@ function ReportsPage() {
                           </div>
                         )}
                       />
-                      <Line
-                        type="monotone"
-                        dataKey="emprestado"
-                        stroke="#60a5fa"
-                        strokeWidth={2}
-                        dot={{ fill: "#60a5fa", r: 3 }}
-                        activeDot={{ r: 5 }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="retorno"
-                        stroke="#34d399"
-                        strokeWidth={2}
-                        dot={{ fill: "#34d399", r: 3 }}
-                        activeDot={{ r: 5 }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="lucro"
-                        stroke="#f59e0b"
-                        strokeWidth={2}
-                        dot={{ fill: "#f59e0b", r: 3 }}
-                        activeDot={{ r: 5 }}
-                      />
+                      <Line type="monotone" dataKey="emprestado" stroke="#60a5fa" strokeWidth={2} dot={{ fill: "#60a5fa", r: 3 }} activeDot={{ r: 5 }} />
+                      <Line type="monotone" dataKey="retorno" stroke="#34d399" strokeWidth={2} dot={{ fill: "#34d399", r: 3 }} activeDot={{ r: 5 }} />
+                      <Line type="monotone" dataKey="lucro" stroke="#f59e0b" strokeWidth={2} dot={{ fill: "#f59e0b", r: 3 }} activeDot={{ r: 5 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </ChartContainer>
@@ -566,42 +508,154 @@ function ReportsPage() {
         {/* Empréstimos do Período */}
         <div>
           <h2 className="text-sm font-bold text-[#F3F6FA] mb-3">Empréstimos do Período</h2>
-          <Card className="bg-[#162235] border-[#26364D]">
-            <CardContent className="p-4">
-              {isLoading ? (
+          <Card className="bg-[#162235] border-[#26364D] overflow-hidden">
+            {isLoading ? (
+              <CardContent className="p-4">
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} className="h-12 w-full rounded skeleton-shimmer" />
+                    <Skeleton key={i} className="h-14 w-full rounded-lg skeleton-shimmer" />
                   ))}
                 </div>
-              ) : filteredInvestments.length === 0 ? (
-                <p className="text-[#718096] text-sm text-center py-6">Nenhum empréstimo no período selecionado.</p>
-              ) : (
-                <div className="space-y-2">
-                  {filteredInvestments.map((inv) => (
-                    <div
-                      key={inv.id}
-                      className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-[#0B1220]/50 border border-[#26364D]/50"
-                    >
-                      <span className="text-sm font-medium text-[#F3F6FA]">
-                        {inv.person_name || "—"}
-                      </span>
-                      <span className="text-sm font-semibold text-[#F3F6FA] font-mono">
-                        {formatCurrency(Number(inv.invested_amount))}
-                      </span>
-                      <span className="text-xs text-[#718096] font-mono">
-                        {inv.return_date
-                          ? (() => {
-                              const d = new Date(inv.return_date + "T00:00:00");
-                              return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
-                            })()
-                          : "—"}
-                      </span>
-                    </div>
-                  ))}
+              </CardContent>
+            ) : filteredInvestments.length === 0 ? (
+              <CardContent className="p-8 flex items-center justify-center">
+                <p className="text-[#718096] text-sm">Nenhum empréstimo no período selecionado.</p>
+              </CardContent>
+            ) : (
+              <>
+                {/* Desktop table */}
+                <div className="hidden md:block overflow-hidden">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-[#26364D]/60">
+                        <th className="text-left text-[10px] font-semibold text-[#718096] uppercase tracking-wider px-4 py-3">Pessoa</th>
+                        <th className="text-right text-[10px] font-semibold text-[#718096] uppercase tracking-wider px-3 py-3">Emprestado</th>
+                        <th className="text-right text-[10px] font-semibold text-[#718096] uppercase tracking-wider px-3 py-3">Retorno</th>
+                        <th className="text-right text-[10px] font-semibold text-[#718096] uppercase tracking-wider px-3 py-3">Lucro</th>
+                        <th className="text-right text-[10px] font-semibold text-[#718096] uppercase tracking-wider px-3 py-3">Vencimento</th>
+                        <th className="text-center text-[10px] font-semibold text-[#718096] uppercase tracking-wider px-3 py-3">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredInvestments.map((inv, idx) => {
+                        const displayStatus = getDisplayStatus(inv);
+                        const statusCfg = getStatusConfig(displayStatus);
+                        const StatusIcon = statusCfg.icon;
+                        const initials = (inv.person_name || "?").split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
+                        return (
+                          <tr
+                            key={inv.id}
+                            className={`border-b border-[#26364D]/30 last:border-0 hover:bg-[#0B1220]/40 transition-colors ${
+                              idx % 2 === 0 ? "bg-[#162235]/30" : ""
+                            }`}
+                          >
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2.5">
+                                <div
+                                  className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+                                  style={{ background: `linear-gradient(135deg, ${statusCfg.color}cc, ${statusCfg.color}66)` }}
+                                >
+                                  {initials}
+                                </div>
+                                <span className="text-sm font-medium text-[#F3F6FA] truncate max-w-[140px]">
+                                  {inv.person_name || "—"}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="text-right px-3 py-3">
+                              <span className="text-sm font-semibold text-[#F3F6FA] font-mono">
+                                {formatCurrency(Number(inv.invested_amount))}
+                              </span>
+                            </td>
+                            <td className="text-right px-3 py-3">
+                              <span className="text-sm font-semibold text-[#F3F6FA] font-mono">
+                                {formatCurrency(Number(inv.expected_return || 0))}
+                              </span>
+                            </td>
+                            <td className="text-right px-3 py-3">
+                              <span className="text-sm font-semibold text-[#34d399] font-mono">
+                                {formatCurrency(Number(inv.expected_profit || 0))}
+                              </span>
+                            </td>
+                            <td className="text-right px-3 py-3">
+                              <span className="text-xs text-[#718096] font-mono">
+                                {formatDate(inv.return_date)}
+                              </span>
+                            </td>
+                            <td className="text-center px-3 py-3">
+                              <span
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border"
+                                style={{
+                                  color: statusCfg.color,
+                                  backgroundColor: statusCfg.bg,
+                                  borderColor: statusCfg.border,
+                                }}
+                              >
+                                <StatusIcon className="h-2.5 w-2.5" />
+                                {statusCfg.label}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
-              )}
-            </CardContent>
+
+                {/* Mobile cards */}
+                <div className="md:hidden divide-y divide-[#26364D]/30">
+                  {filteredInvestments.map((inv) => {
+                    const displayStatus = getDisplayStatus(inv);
+                    const statusCfg = getStatusConfig(displayStatus);
+                    const StatusIcon = statusCfg.icon;
+                    const initials = (inv.person_name || "?").split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
+                    return (
+                      <div key={inv.id} className="p-4 space-y-3 last:border-0">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <div
+                              className="h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
+                              style={{ background: `linear-gradient(135deg, ${statusCfg.color}cc, ${statusCfg.color}66)` }}
+                            >
+                              {initials}
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-[#F3F6FA]">{inv.person_name || "—"}</p>
+                              <p className="text-[10px] text-[#718096] font-mono">Venc: {formatDate(inv.return_date)}</p>
+                            </div>
+                          </div>
+                          <span
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold border"
+                            style={{
+                              color: statusCfg.color,
+                              backgroundColor: statusCfg.bg,
+                              borderColor: statusCfg.border,
+                            }}
+                          >
+                            <StatusIcon className="h-3 w-3" />
+                            {statusCfg.label}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="bg-[#0B1220]/50 rounded-lg p-2">
+                            <p className="text-[9px] text-[#718096] uppercase tracking-wider mb-0.5">Emprestado</p>
+                            <p className="text-xs font-semibold text-[#F3F6FA] font-mono leading-tight">{formatCurrency(Number(inv.invested_amount))}</p>
+                          </div>
+                          <div className="bg-[#0B1220]/50 rounded-lg p-2">
+                            <p className="text-[9px] text-[#718096] uppercase tracking-wider mb-0.5">Retorno</p>
+                            <p className="text-xs font-semibold text-[#F3F6FA] font-mono leading-tight">{formatCurrency(Number(inv.expected_return || 0))}</p>
+                          </div>
+                          <div className="bg-[#0B1220]/50 rounded-lg p-2">
+                            <p className="text-[9px] text-[#718096] uppercase tracking-wider mb-0.5">Lucro</p>
+                            <p className="text-xs font-semibold text-[#34d399] font-mono leading-tight">{formatCurrency(Number(inv.expected_profit || 0))}</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </Card>
         </div>
       </main>
