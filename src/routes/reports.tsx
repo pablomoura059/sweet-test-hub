@@ -44,7 +44,7 @@ function ReportsPage() {
   const [periodDays, setPeriodDays] = useState(30);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const handleCategoryClick = (category: string) => {
+  const handleCategoryClick = (category: string | null) => {
     setSelectedCategory((prev) => (prev === category ? null : category));
   };
 
@@ -158,7 +158,7 @@ function ReportsPage() {
     { name: "Cancelados", quantidade: statusCounts.cancelados, fill: "#94a3b8" },
   ].map((d) => ({
     ...d,
-    opacity: selectedCategory === null || selectedCategory === d.name ? 1 : 0.3,
+    opacity: selectedCategory === null || selectedCategory === d.name ? 1 : 0.35,
     isSelected: selectedCategory === d.name,
   }));
 
@@ -488,26 +488,6 @@ function ReportsPage() {
         {/* Gráfico: Distribuição da Carteira */}
         <div>
           <h2 className="text-sm font-bold text-[#F3F6FA] mb-3">Distribuição da Carteira</h2>
-          <div className="flex items-center justify-center gap-1.5 mb-4 flex-wrap">
-            {["Todos", "Ativos", "Finalizados", "Atrasados", "Cancelados"].map((cat) => {
-              const isActive = selectedCategory === (cat === "Todos" ? null : cat);
-              const catColor = cat === "Todos" ? "#60a5fa" : distributionData.find((d) => d.name === cat)?.fill || "#718096";
-              return (
-                <button
-                  key={cat}
-                  onClick={() => handleCategoryClick(cat === "Todos" ? null : cat)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-200 ${
-                    isActive
-                      ? "border-opacity-60 shadow-sm"
-                      : "border-[#26364D] text-[#718096] hover:bg-[#162235]/60"
-                  }`}
-                  style={isActive ? { borderColor: catColor, backgroundColor: `${catColor}18`, color: catColor } : {}}
-                >
-                  {cat}
-                </button>
-              );
-            })}
-          </div>
           {chartData.length === 0 && !isLoading ? (
             <Card className="bg-[#162235] border-[#26364D]">
               <CardContent className="p-8 flex items-center justify-center">
@@ -563,6 +543,62 @@ function ReportsPage() {
                           );
                         }}
                       />
+                      <Legend
+                        content={() => (
+                          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 pt-3 pb-1 px-1">
+                            <button
+                              onClick={() => handleCategoryClick(null)}
+                              className="flex items-center gap-1.5 text-xs transition-opacity duration-200 cursor-pointer"
+                              style={{ opacity: selectedCategory === null ? 1 : 0.4 }}
+                            >
+                              <div className="h-2.5 w-2.5 rounded-sm bg-[#94a3b8] shrink-0" />
+                              <span className="text-[#718096] hover:text-[#F3F6FA] transition-colors" style={{ color: selectedCategory === null ? "#F3F6FA" : undefined }}>
+                                Todos
+                              </span>
+                            </button>
+                            <button
+                              onClick={() => handleCategoryClick("Ativos")}
+                              className="flex items-center gap-1.5 text-xs transition-opacity duration-200 cursor-pointer"
+                              style={{ opacity: selectedCategory === null || selectedCategory === "Ativos" ? 1 : 0.4 }}
+                            >
+                              <div className="h-2.5 w-2.5 rounded-sm bg-[#60a5fa] shrink-0" />
+                              <span className="text-[#718096] hover:text-[#F3F6FA] transition-colors" style={{ color: selectedCategory === "Ativos" ? "#60a5fa" : undefined }}>
+                                Ativos
+                              </span>
+                            </button>
+                            <button
+                              onClick={() => handleCategoryClick("Finalizados")}
+                              className="flex items-center gap-1.5 text-xs transition-opacity duration-200 cursor-pointer"
+                              style={{ opacity: selectedCategory === null || selectedCategory === "Finalizados" ? 1 : 0.4 }}
+                            >
+                              <div className="h-2.5 w-2.5 rounded-sm bg-[#34d399] shrink-0" />
+                              <span className="text-[#718096] hover:text-[#F3F6FA] transition-colors" style={{ color: selectedCategory === "Finalizados" ? "#34d399" : undefined }}>
+                                Finalizados
+                              </span>
+                            </button>
+                            <button
+                              onClick={() => handleCategoryClick("Atrasados")}
+                              className="flex items-center gap-1.5 text-xs transition-opacity duration-200 cursor-pointer"
+                              style={{ opacity: selectedCategory === null || selectedCategory === "Atrasados" ? 1 : 0.4 }}
+                            >
+                              <div className="h-2.5 w-2.5 rounded-sm bg-[#f59e0b] shrink-0" />
+                              <span className="text-[#718096] hover:text-[#F3F6FA] transition-colors" style={{ color: selectedCategory === "Atrasados" ? "#f59e0b" : undefined }}>
+                                Atrasados
+                              </span>
+                            </button>
+                            <button
+                              onClick={() => handleCategoryClick("Cancelados")}
+                              className="flex items-center gap-1.5 text-xs transition-opacity duration-200 cursor-pointer"
+                              style={{ opacity: selectedCategory === null || selectedCategory === "Cancelados" ? 1 : 0.4 }}
+                            >
+                              <div className="h-2.5 w-2.5 rounded-sm bg-[#94a3b8] shrink-0" />
+                              <span className="text-[#718096] hover:text-[#F3F6FA] transition-colors" style={{ color: selectedCategory === "Cancelados" ? "#94a3b8" : undefined }}>
+                                Cancelados
+                              </span>
+                            </button>
+                          </div>
+                        )}
+                      />
                       <Bar
                         dataKey="quantidade"
                         radius={[6, 6, 0, 0]}
@@ -593,7 +629,6 @@ function ReportsPage() {
           <Card className="bg-[#162235] border-[#26364D]">
             <CardContent className="p-4">
               <div className="grid grid-cols-2 md:grid-cols-4 divide-x-0 md:divide-x divide-[#26364D]/40">
-                {/* Total de Empréstimos */}
                 <div className="flex flex-col items-center px-3 py-4 first:pl-0 last:pr-0 md:px-4">
                   <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-600/20 mb-2">
                     <Wallet className="h-4 w-4 text-blue-400" />
@@ -605,7 +640,6 @@ function ReportsPage() {
                   <p className="text-[10px] text-[#718096] mt-1">empréstimos</p>
                 </div>
 
-                {/* Empréstimos Ativos */}
                 <div className="flex flex-col items-center px-3 py-4 first:pl-0 last:pr-0 md:px-4">
                   <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-600/20 mb-2">
                     <Clock className="h-4 w-4 text-blue-400" />
@@ -617,21 +651,17 @@ function ReportsPage() {
                   <p className="text-[10px] text-[#718096] mt-1">em andamento</p>
                 </div>
 
-                {/* Em Atraso */}
                 <div className="flex flex-col items-center px-3 py-4 first:pl-0 last:pr-0 md:px-4">
-                  <div className={`flex items-center justify-center w-8 h-8 rounded-lg border mb-2 ${
-                    overdueCount > 0 ? "bg-red-500/10 border-red-500/30" : "bg-[#0B1220]/50 border-[#26364D]"
-                  }`}>
-                    <AlertCircle className={`h-4 w-4 ${overdueCount > 0 ? "text-red-400" : "text-[#718096]"}`} />
+                  <div className={"flex items-center justify-center w-8 h-8 rounded-lg border mb-2 " + (overdueCount > 0 ? "bg-red-500/10 border-red-500/30" : "bg-[#0B1220]/50 border-[#26364D]")}>
+                    <AlertCircle className={"h-4 w-4 " + (overdueCount > 0 ? "text-red-400" : "text-[#718096]")} />
                   </div>
                   <p className="text-xs font-semibold text-[#718096] uppercase tracking-wider text-center mb-1">Em Atraso</p>
-                  <p className={`text-xl font-bold leading-none ${overdueCount > 0 ? "text-red-400" : "text-[#F3F6FA]"}`}>
+                  <p className={"text-xl font-bold leading-none " + (overdueCount > 0 ? "text-red-400" : "text-[#F3F6FA]")}>
                     {overdueCount}
                   </p>
                   <p className="text-[10px] text-[#718096] mt-1">vencidos</p>
                 </div>
 
-                {/* Taxa de Retorno */}
                 <div className="flex flex-col items-center px-3 py-4 first:pl-0 last:pr-0 md:px-4">
                   <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 mb-2">
                     <TrendingUp className="h-4 w-4 text-emerald-400" />
@@ -667,7 +697,6 @@ function ReportsPage() {
               </CardContent>
             ) : (
               <>
-                {/* Desktop table */}
                 <div className="hidden md:block overflow-hidden">
                   <table className="w-full">
                     <thead>
@@ -690,9 +719,7 @@ function ReportsPage() {
                         return (
                           <tr
                             key={inv.id}
-                            className={`border-b border-[#26364D]/30 last:border-0 hover:bg-[#0B1220]/40 transition-colors ${
-                              idx % 2 === 0 ? "bg-[#162235]/30" : ""
-                            }`}
+                            className={"border-b border-[#26364D]/30 last:border-0 hover:bg-[#0B1220]/40 transition-colors " + (idx % 2 === 0 ? "bg-[#162235]/30" : "")}
                           >
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2.5">
@@ -756,7 +783,6 @@ function ReportsPage() {
                   </table>
                 </div>
 
-                {/* Mobile cards */}
                 <div className="md:hidden divide-y divide-[#26364D]/30">
                   {filteredInvestments.map((inv) => {
                     const displayStatus = getDisplayStatus(inv);
