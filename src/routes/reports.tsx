@@ -539,6 +539,38 @@ function ReportsPage() {
           )}
         </div>
 
+        {/* Resumo da Carteira */}
+        <div>
+          <h2 className="text-sm font-bold text-[#F3F6FA] mb-3">Resumo da Carteira</h2>
+          <Card className="bg-[#162235] border-[#26364D]">
+            <CardContent className="p-5 flex items-start gap-4">
+              <div className="p-2.5 rounded-xl bg-blue-600/10 border border-[#26364D] shrink-0">
+                <TrendingUp className="h-5 w-5 text-blue-400" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm text-[#AAB5C5] leading-relaxed">
+                  {(() => {
+                    const total = filteredInvestments.length;
+                    const ativos = filteredInvestments.filter((inv) => inv.status === "active").length;
+                    const atrasados = filteredInvestments.filter((inv) => inv.return_date < today && inv.status !== "finished" && inv.status !== "cancelled").length;
+                    if (total === 0) {
+                      return "Nenhum empréstimo registrado no período selecionado.";
+                    }
+                    const verbAtrasado = atrasados === 1 ? "em atraso" : "em atraso";
+                    const textAtrasado = atrasados > 0
+                      ? <span className="text-red-400 font-semibold"> e <span className="font-bold">{atrasados}</span> {verbAtrasado}</span>
+                      : " sem atrasos";
+                    const textAtivos = ativos === 1 ? "ativo" : "ativos";
+                    return (
+                      <>Neste período, você possui <span className="font-semibold text-[#F3F6FA]">{total}</span> empréstimo{total !== 1 ? "s" : ""}, sendo <span className="font-semibold text-[#F3F6FA]">{ativos}</span> {textAtivos}{textAtrasado}. Foram emprestados <span className="font-semibold text-[#F3F6FA]">{formatCurrency(totalInvested)}</span>, com retorno previsto de <span className="font-semibold text-[#34d399]">{formatCurrency(totalExpectedReturn)}</span> e lucro potencial de <span className="font-semibold text-[#f59e0b]">{formatCurrency(totalExpectedProfit)}</span>.</>
+                    );
+                  })()}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Empréstimos do Período */}
         <div>
           <h2 className="text-sm font-bold text-[#F3F6FA] mb-3">Empréstimos do Período</h2>
