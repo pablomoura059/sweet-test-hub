@@ -535,16 +535,13 @@ function ReportsPage() {
                   })}
                 </div>
 
-                <ChartContainer config={distributionConfig} className="w-full h-44 md:h-56">
-                  <ResponsiveContainer width="100%" height={160}>
-                    <BarChart data={filteredDistributionData} margin={{ top: 5, right: 10, left: 0, bottom: 4 }}>
+                <ChartContainer config={distributionConfig} className="w-full h-28 md:h-56">
+                  <ResponsiveContainer width="100%" height={112}>
+                    <BarChart data={filteredDistributionData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#26364D" vertical={false} />
                       <XAxis
                         dataKey="name"
-                        tickLine={false}
-                        axisLine={{ stroke: "#26364D" }}
-                        tick={{}}
-                        interval={0}
+                        hide
                       />
                       <YAxis
                         tick={{ fill: "#718096", fontSize: 11 }}
@@ -572,6 +569,7 @@ function ReportsPage() {
                         radius={[6, 6, 0, 0]}
                         cursor="pointer"
                         onClick={(data) => handleCategoryClick(data.name)}
+                        style={{ opacity: selectedCategory && filteredDistributionData.length > 1 ? (filteredDistributionData.length === 1 ? 1 : 0.2) : 1 }}
                       >
                         {filteredDistributionData.map((entry) => (
                           <Cell
