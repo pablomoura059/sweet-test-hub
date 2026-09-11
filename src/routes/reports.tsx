@@ -541,31 +541,62 @@ function ReportsPage() {
 
         {/* Resumo da Carteira */}
         <div>
-          <h2 className="text-sm font-bold text-[#F3F6FA] mb-3">Resumo da Carteira</h2>
+          <h2 className="text-sm font-bold text-[#F3F6FA] mb-1">Resumo da Carteira</h2>
+          <p className="text-xs text-[#718096] mb-3">Visão consolidada do desempenho dos seus empréstimos</p>
           <Card className="bg-[#162235] border-[#26364D]">
-            <CardContent className="p-5 flex items-start gap-4">
-              <div className="p-2.5 rounded-xl bg-blue-600/10 border border-[#26364D] shrink-0">
-                <TrendingUp className="h-5 w-5 text-blue-400" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-[#AAB5C5] leading-relaxed">
-                  {(() => {
-                    const total = filteredInvestments.length;
-                    const ativos = filteredInvestments.filter((inv) => inv.status === "active").length;
-                    const atrasados = filteredInvestments.filter((inv) => inv.return_date < today && inv.status !== "finished" && inv.status !== "cancelled").length;
-                    if (total === 0) {
-                      return "Nenhum empréstimo registrado no período selecionado.";
-                    }
-                    const verbAtrasado = atrasados === 1 ? "em atraso" : "em atraso";
-                    const textAtrasado = atrasados > 0
-                      ? <span className="text-red-400 font-semibold"> e <span className="font-bold">{atrasados}</span> {verbAtrasado}</span>
-                      : " sem atrasos";
-                    const textAtivos = ativos === 1 ? "ativo" : "ativos";
-                    return (
-                      <>Neste período, você possui <span className="font-semibold text-[#F3F6FA]">{total}</span> empréstimo{total !== 1 ? "s" : ""}, sendo <span className="font-semibold text-[#F3F6FA]">{ativos}</span> {textAtivos}{textAtrasado}. Foram emprestados <span className="font-semibold text-[#F3F6FA]">{formatCurrency(totalInvested)}</span>, com retorno previsto de <span className="font-semibold text-[#34d399]">{formatCurrency(totalExpectedReturn)}</span> e lucro potencial de <span className="font-semibold text-[#f59e0b]">{formatCurrency(totalExpectedProfit)}</span>.</>
-                    );
-                  })()}
-                </p>
+            <CardContent className="p-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 divide-x-0 md:divide-x divide-[#26364D]/40">
+                {/* Total de Empréstimos */}
+                <div className="flex flex-col items-center px-3 py-4 first:pl-0 last:pr-0 md:px-4">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-600/20 mb-2">
+                    <Wallet className="h-4 w-4 text-blue-400" />
+                  </div>
+                  <p className="text-xs font-semibold text-[#718096] uppercase tracking-wider text-center mb-1">Total</p>
+                  <p className="text-xl font-bold text-[#F3F6FA] leading-none">
+                    {filteredInvestments.length}
+                  </p>
+                  <p className="text-[10px] text-[#718096] mt-1">empréstimos</p>
+                </div>
+
+                {/* Empréstimos Ativos */}
+                <div className="flex flex-col items-center px-3 py-4 first:pl-0 last:pr-0 md:px-4">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-600/20 mb-2">
+                    <Clock className="h-4 w-4 text-blue-400" />
+                  </div>
+                  <p className="text-xs font-semibold text-[#718096] uppercase tracking-wider text-center mb-1">Ativos</p>
+                  <p className="text-xl font-bold text-[#F3F6FA] leading-none">
+                    {filteredInvestments.filter((inv) => inv.status === "active").length}
+                  </p>
+                  <p className="text-[10px] text-[#718096] mt-1">em andamento</p>
+                </div>
+
+                {/* Em Atraso */}
+                <div className="flex flex-col items-center px-3 py-4 first:pl-0 last:pr-0 md:px-4">
+                  <div className={`flex items-center justify-center w-8 h-8 rounded-lg border mb-2 ${
+                    overdueCount > 0 ? "bg-red-500/10 border-red-500/30" : "bg-[#0B1220]/50 border-[#26364D]"
+                  }`}>
+                    <AlertCircle className={`h-4 w-4 ${overdueCount > 0 ? "text-red-400" : "text-[#718096]"}`} />
+                  </div>
+                  <p className="text-xs font-semibold text-[#718096] uppercase tracking-wider text-center mb-1">Em Atraso</p>
+                  <p className={`text-xl font-bold leading-none ${overdueCount > 0 ? "text-red-400" : "text-[#F3F6FA]"}`}>
+                    {overdueCount}
+                  </p>
+                  <p className="text-[10px] text-[#718096] mt-1">vencidos</p>
+                </div>
+
+                {/* Taxa de Retorno */}
+                <div className="flex flex-col items-center px-3 py-4 first:pl-0 last:pr-0 md:px-4">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 mb-2">
+                    <TrendingUp className="h-4 w-4 text-emerald-400" />
+                  </div>
+                  <p className="text-xs font-semibold text-[#718096] uppercase tracking-wider text-center mb-1">Taxa Retorno</p>
+                  <p className="text-xl font-bold text-emerald-400 leading-none">
+                    {totalInvested > 0
+                      ? `${((totalExpectedProfit / totalInvested) * 100).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`
+                      : "0,0%"}
+                  </p>
+                  <p className="text-[10px] text-[#718096] mt-1">lucro/valor</p>
+                </div>
               </div>
             </CardContent>
           </Card>
