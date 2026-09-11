@@ -109,12 +109,13 @@ export interface FileRoutesById {
   '/conta-bloqueada': typeof ContaBloqueadaRoute
   '/gestores': typeof GestoresRoute
   '/reports': typeof ReportsRoute
+  '/minha-conta': typeof MinhaContaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths: '/' | '/dashboard' | '/login' | '/people' | '/reset-password' | '/signup' | '/conta-bloqueada' | '/gestores' | '/reports'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/login' | '/people' | '/reset-password' | '/signup' | '/conta-bloqueada' | '/reports'
+  to: '/' | '/dashboard' | '/login' | '/people' | '/reset-password' | '/signup' | '/conta-bloqueada' | '/reports' | '/minha-conta'
   id: '__root__' | '/' | '/dashboard' | '/login' | '/people' | '/reset-password' | '/signup' | '/conta-bloqueada' | '/gestores' | '/reports' | '/minha-conta'
   fileRoutesById: FileRoutesById
 }
