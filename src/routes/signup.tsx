@@ -1,6 +1,6 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
-import { Eye, EyeOff, Mail, Lock, User, AlertCircle, CheckCircle, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User as UserIcon, AlertCircle, CheckCircle, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,8 @@ export const Route = createFileRoute("/signup")({
 
 function SignupPage() {
   const router = useRouter();
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -32,8 +33,13 @@ function SignupPage() {
     e.preventDefault();
     setError("");
 
-    if (!name.trim()) {
-      setError("Informe seu nome completo");
+    if (!firstName.trim()) {
+      setError("Informe seu nome");
+      return;
+    }
+
+    if (!lastName.trim()) {
+      setError("Informe seu sobrenome");
       return;
     }
 
@@ -65,7 +71,9 @@ function SignupPage() {
         password,
         options: {
           data: {
-            full_name: name.trim(),
+            full_name: `${firstName.trim()} ${lastName.trim()}`,
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
           },
         },
       });
@@ -170,21 +178,34 @@ function SignupPage() {
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-slate-300">
-                  Nome completo
-                </Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName" className="text-slate-300">Nome</Label>
+                  <div className="relative">
+                    <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                    <Input
+                      id="firstName"
+                      type="text"
+                      placeholder="Nome"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      className="pl-10 bg-slate-900/50 border-slate-600 text-white placeholder:text-slate-500 focus:border-blue-500 focus:ring-blue-500"
+                      required
+                      autoComplete="given-name"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName" className="text-slate-300">Sobrenome</Label>
                   <Input
-                    id="name"
+                    id="lastName"
                     type="text"
-                    placeholder="Seu nome completo"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="pl-10 bg-slate-900/50 border-slate-600 text-white placeholder:text-slate-500 focus:border-blue-500 focus:ring-blue-500"
+                    placeholder="Sobrenome"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="bg-slate-900/50 border-slate-600 text-white placeholder:text-slate-500 focus:border-blue-500 focus:ring-blue-500"
                     required
-                    autoComplete="name"
+                    autoComplete="family-name"
                   />
                 </div>
               </div>
