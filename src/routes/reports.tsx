@@ -6,6 +6,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useRouter } from "@tanstack/react-router";
+import { ChartContainer, ChartTooltipContent, ChartLegendContent } from "@/components/ui/chart";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 import type { Database } from "@/integrations/supabase/types";
 
 type Investment = Database["public"]["Tables"]["investments"]["Row"];
@@ -71,6 +82,62 @@ function ReportsPage() {
   const overdueCount = (investments || []).filter(
     (inv) => inv.return_date < today && inv.status !== "finished" && inv.status !== "cancelled"
   ).length;
+
+  // Dados para o gráfico — acumulativo por data
+  const chartData = (() => {
+    if (!investments || investments.length === 0) return [];
+
+    const sorted = [...investments].sort(
+      (a, b) =>
+        new Date(a.return_date).getTime() - new Date(b.return_date).getTime()
+    );
+
+    let acumuladoEmprestado = 0;
+    let acumuladoRetorno = 0;
+    let acumuladoLucro = 0;
+
+    return sorted.map((inv) => {
+      acumuladoEmprestado += Number(inv.invested_amount);
+      acumuladoRetorno += Number(inv.expected_return || 0);
+      acumuladoLucro += Number(inv.expected_profit || 0);
+
+      const dateLabel = new Date(inv.return_date).toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "2-digit",
+      });
+
+      return {
+        data: dateLabel,
+        emprestado: acumuladoEmprestado,
+        retorno: acumuladoRetorno,
+        lucro: acumuladoLucro,
+      };
+    });
+  })();
+
+  const chartConfig = {
+    emprestado: { label: "Total Emprestado", color: "#60a5fa" },
+    retorno: { label: "Retorno Previsto", color: "#34d399" },
+    lucro: { label: "Lucro Previsto", color: "#f59e0b" },
+  };
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload?.length) return null;
+    return (
+      <div className="rounded-lg border border-[#26364D] bg-[#162235] px-3 py-2 text-xs shadow-xl">
+        <p className="mb-2 font-semibold text-[#F3F6FA]">{label}</p>
+        {payload.map((item: any) => (
+          <div key={item.dataKey} className="flex items-center justify-between gap-4">
+            <span style={{ color: item.color }}>{chartConfig[item.dataKey]?.label}</span>
+            <span className="font-mono font-medium text-[#F3F6FA]">
+              {formatCurrency(item.value)}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#0B1220" }}>
@@ -273,6 +340,98 @@ function ReportsPage() {
                     {overdueCount} empréstimo{overdueCount !== 1 ? "s" : ""} em atraso
                   </p>
                 </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Gráfico: Evolução da Carteira */}
+        <div>
+          <h2 className="text-sm font-bold text-[#F3F6FA] mb-3">Evolução da Carteira</h2>
+          {chartData.length === 0 && !isLoading ? (
+            <Card className="bg-[#162235] border-[#26364D]">
+              <CardContent className="p-8 flex items-center justify-center">
+                <p className="text-[#718096] text-sm">Nenhum empréstimo cadastrado para exibir o gráfico.</p>
+              </CardContent>
+            </Card>
+          ) : isLoading ? (
+            <Card className="bg-[#162235] border-[#26364D]">
+              <CardContent className="p-4">
+                <Skeleton className="h-64 w-full rounded skeleton-shimmer" />
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="bg-[#162235] border-[#26364D]">
+              <CardContent className="p-4">
+                <ChartContainer config={chartConfig} className="w-full h-64">
+                  <ResponsiveContainer width="100%" height={256}>
+                    <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#26364D" vertical={false} />
+                      <XAxis
+                        dataKey="data"
+                        tick={{ fill: "#718096", fontSize: 11 }}
+                        tickLine={false}
+                        axisLine={{ stroke: "#26364D" }}
+                      />
+                      <YAxis
+                        tick={{ fill: "#718096", fontSize: 11 }}
+                        tickLine={false}
+                        axisLine={false}
+                        tickFormatter={(v) =>
+                          new Intl.NumberFormat("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                            notation: "compact",
+                            maximumFractionDigits: 1,
+                          }).format(v)
+                        }
+                      />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend
+                        content={() => (
+                          <div className="flex items-center justify-center gap-4 pt-2 pb-1">
+                            <div className="flex items-center gap-1.5">
+                              <div className="h-2 w-2 rounded-[2px] bg-[#60a5fa]" />
+                              <span className="text-xs text-[#718096]">Total Emprestado</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <div className="h-2 w-2 rounded-[2px] bg-[#34d399]" />
+                              <span className="text-xs text-[#718096]">Retorno Previsto</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <div className="h-2 w-2 rounded-[2px] bg-[#f59e0b]" />
+                              <span className="text-xs text-[#718096]">Lucro Previsto</span>
+                            </div>
+                          </div>
+                        )}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="emprestado"
+                        stroke="#60a5fa"
+                        strokeWidth={2}
+                        dot={{ fill: "#60a5fa", r: 3 }}
+                        activeDot={{ r: 5 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="retorno"
+                        stroke="#34d399"
+                        strokeWidth={2}
+                        dot={{ fill: "#34d399", r: 3 }}
+                        activeDot={{ r: 5 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="lucro"
+                        stroke="#f59e0b"
+                        strokeWidth={2}
+                        dot={{ fill: "#f59e0b", r: 3 }}
+                        activeDot={{ r: 5 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
               </CardContent>
             </Card>
           )}
