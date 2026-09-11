@@ -535,24 +535,16 @@ function ReportsPage() {
                   })}
                 </div>
 
-                <ChartContainer config={distributionConfig} className="w-full h-56 md:h-72">
-                  <ResponsiveContainer width="100%" height={224}>
-                    <BarChart data={filteredDistributionData} margin={{ top: 5, right: 10, left: 0, bottom: 28 }}>
+                <ChartContainer config={distributionConfig} className="w-full h-44 md:h-56">
+                  <ResponsiveContainer width="100%" height={160}>
+                    <BarChart data={filteredDistributionData} margin={{ top: 5, right: 10, left: 0, bottom: 4 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#26364D" vertical={false} />
                       <XAxis
                         dataKey="name"
                         tickLine={false}
                         axisLine={{ stroke: "#26364D" }}
-                        tick={{
-                          fill: "#718096",
-                          fontSize: 11,
-                          fontWeight: 500,
-                        }}
-                        angle={0}
-                        textAnchor="middle"
+                        tick={{}}
                         interval={0}
-                        tickMargin={8}
-                        height={28}
                       />
                       <YAxis
                         tick={{ fill: "#718096", fontSize: 11 }}
