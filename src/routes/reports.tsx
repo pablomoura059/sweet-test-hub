@@ -503,9 +503,40 @@ function ReportsPage() {
           ) : (
             <Card className="bg-[#162235] border-[#26364D]">
               <CardContent className="p-4">
-                <ChartContainer config={distributionConfig} className="w-full h-72">
-                  <ResponsiveContainer width="100%" height={288}>
-                    <BarChart data={distributionData} margin={{ top: 5, right: 10, left: 0, bottom: 55 }}>
+                {/* Controles interativos */}
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {[
+                    { key: null, label: "Todos", color: "#718096" },
+                    { key: "Ativos", label: "Ativos", color: "#60a5fa" },
+                    { key: "Finalizados", label: "Finalizados", color: "#34d399" },
+                    { key: "Atrasados", label: "Atrasados", color: "#f59e0b" },
+                    { key: "Cancelados", label: "Cancelados", color: "#94a3b8" },
+                  ].map((opt) => {
+                    const isActive = selectedCategory === opt.key;
+                    return (
+                      <button
+                        key={opt.label}
+                        onClick={() => handleCategoryClick(opt.key)}
+                        className={
+                          "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-200 cursor-pointer " +
+                          (isActive
+                            ? "bg-blue-600 border-blue-600 text-white shadow-sm"
+                            : "border-[#26364D] text-[#718096] hover:border-[#60a5fa]/50 hover:text-[#F3F6FA]")
+                        }
+                      >
+                        <div
+                          className="h-2 w-2 rounded-[2px]"
+                          style={{ backgroundColor: isActive ? "white" : opt.color }}
+                        />
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <ChartContainer config={distributionConfig} className="w-full h-56 md:h-72">
+                  <ResponsiveContainer width="100%" height={224}>
+                    <BarChart data={distributionData} margin={{ top: 5, right: 10, left: 0, bottom: 28 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#26364D" vertical={false} />
                       <XAxis
                         dataKey="name"
@@ -519,8 +550,8 @@ function ReportsPage() {
                         angle={0}
                         textAnchor="middle"
                         interval={0}
-                        tickMargin={12}
-                        height={40}
+                        tickMargin={8}
+                        height={28}
                       />
                       <YAxis
                         tick={{ fill: "#718096", fontSize: 11 }}
