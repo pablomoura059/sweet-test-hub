@@ -106,7 +106,6 @@ function ReportsPage() {
   ).length;
 
   // Distribuição por status
-  const today = new Date().toISOString().slice(0, 10);
   const statusCounts = {
     ativos: investments?.filter((inv) => inv.status === "active").length ?? 0,
     finalizados: investments?.filter((inv) => inv.status === "finished").length ?? 0,
