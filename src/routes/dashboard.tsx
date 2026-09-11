@@ -908,9 +908,9 @@ function DashboardPage() {
                       </button>
                     )}
                     <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
-                      onClick={() => { setIsMenuOpen(false); toast.info("Configurações em breve!", { className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium !rounded-xl" }); }}>
+                      onClick={() => { setIsMenuOpen(false); router.navigate({ to: "/minha-conta" }); }}>
                       <Settings className="h-4 w-4 shrink-0" />
-                      Configurações
+                      Minha Conta
                     </button>
                   </div>
                   <div className="h-px bg-[#26364D]/60 mx-1" />
