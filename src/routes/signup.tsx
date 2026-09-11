@@ -71,9 +71,9 @@ function SignupPage() {
         password,
         options: {
           data: {
-            full_name: `${firstName.trim()} ${lastName.trim()}`,
             first_name: firstName.trim(),
             last_name: lastName.trim(),
+            name: `${firstName.trim()} ${lastName.trim()}`,
           },
         },
       });
