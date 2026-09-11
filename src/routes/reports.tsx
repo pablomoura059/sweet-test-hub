@@ -151,16 +151,17 @@ function ReportsPage() {
     cancelados: investments?.filter((inv) => inv.status === "cancelled").length ?? 0,
   };
 
-  const distributionData = [
+  const allDistributionData = [
     { name: "Ativos", quantidade: statusCounts.ativos, fill: "#60a5fa" },
     { name: "Finalizados", quantidade: statusCounts.finalizados, fill: "#34d399" },
     { name: "Atrasados", quantidade: statusCounts.atrasados, fill: "#f59e0b" },
     { name: "Cancelados", quantidade: statusCounts.cancelados, fill: "#94a3b8" },
-  ].map((d) => ({
-    ...d,
-    opacity: selectedCategory === null || selectedCategory === d.name ? 1 : 0.35,
-    isSelected: selectedCategory === d.name,
-  }));
+  ];
+
+  // Only show bars for selected category (or all if null)
+  const filteredDistributionData = selectedCategory
+    ? allDistributionData.filter((d) => d.name === selectedCategory)
+    : allDistributionData;
 
   const distributionConfig = {
     Ativos: { label: "Ativos", color: "#60a5fa" },
@@ -536,7 +537,7 @@ function ReportsPage() {
 
                 <ChartContainer config={distributionConfig} className="w-full h-56 md:h-72">
                   <ResponsiveContainer width="100%" height={224}>
-                    <BarChart data={distributionData} margin={{ top: 5, right: 10, left: 0, bottom: 28 }}>
+                    <BarChart data={filteredDistributionData} margin={{ top: 5, right: 10, left: 0, bottom: 28 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#26364D" vertical={false} />
                       <XAxis
                         dataKey="name"
@@ -580,12 +581,10 @@ function ReportsPage() {
                         cursor="pointer"
                         onClick={(data) => handleCategoryClick(data.name)}
                       >
-                        {distributionData.map((entry) => (
+                        {filteredDistributionData.map((entry) => (
                           <Cell
                             key={entry.name}
                             fill={entry.fill}
-                            opacity={entry.opacity}
-                            style={{ transition: "opacity 0.3s ease" }}
                           />
                         ))}
                       </Bar>
