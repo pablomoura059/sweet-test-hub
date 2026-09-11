@@ -42,6 +42,11 @@ const PERIOD_OPTIONS = [
 function ReportsPage() {
   const router = useRouter();
   const [periodDays, setPeriodDays] = useState(30);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  const handleCategoryClick = (category: string) => {
+    setSelectedCategory((prev) => (prev === category ? null : category));
+  };
 
   const { data: session } = useQuery({
     queryKey: ["auth-session"],
@@ -151,7 +156,11 @@ function ReportsPage() {
     { name: "Finalizados", quantidade: statusCounts.finalizados, fill: "#34d399" },
     { name: "Atrasados", quantidade: statusCounts.atrasados, fill: "#f59e0b" },
     { name: "Cancelados", quantidade: statusCounts.cancelados, fill: "#94a3b8" },
-  ];
+  ].map((d) => ({
+    ...d,
+    opacity: selectedCategory === null || selectedCategory === d.name ? 1 : 0.3,
+    isSelected: selectedCategory === d.name,
+  }));
 
   const distributionConfig = {
     Ativos: { label: "Ativos", color: "#60a5fa" },
@@ -500,13 +509,29 @@ function ReportsPage() {
                       <CartesianGrid strokeDasharray="3 3" stroke="#26364D" vertical={false} />
                       <XAxis
                         dataKey="name"
-                        tick={{ fill: "#718096", fontSize: 12 }}
                         tickLine={false}
                         axisLine={{ stroke: "#26364D" }}
                         angle={-20}
                         textAnchor="end"
                         interval={0}
                         height={50}
+                        tick={({ x, y, payload }) => {
+                          const entry = distributionData.find((d) => d.name === payload.value);
+                          const isActive = selectedCategory === null || selectedCategory === payload.value;
+                          return (
+                            <text
+                              x={x}
+                              y={y}
+                              fill={entry?.fill || "#718096"}
+                              fontSize={12}
+                              textAnchor="end"
+                              style={{ cursor: "pointer", transition: "opacity 0.3s ease", opacity: isActive ? 1 : 0.3 }}
+                              onClick={() => handleCategoryClick(payload.value)}
+                            >
+                              {payload.value}
+                            </text>
+                          );
+                        }}
                       />
                       <YAxis
                         tick={{ fill: "#718096", fontSize: 11 }}
@@ -517,18 +542,31 @@ function ReportsPage() {
                       <Tooltip
                         content={({ active, payload }) => {
                           if (!active || !payload?.length) return null;
+                          const d = payload[0].payload;
                           return (
                             <div className="rounded-lg border border-[#26364D] bg-[#162235] px-3 py-2 text-xs shadow-xl">
-                              <p className="font-semibold text-[#F3F6FA]">
-                                {payload[0].payload.name}: <span className="font-mono font-medium">{payload[0].value}</span>
+                              <p className="font-semibold text-[#F3F6FA]">{d.name}</p>
+                              <p className="mt-1">
+                                <span className="text-[#718096]">Quantidade: </span>
+                                <span className="font-mono font-medium text-[#F3F6FA]">{d.quantidade}</span>
                               </p>
                             </div>
                           );
                         }}
                       />
-                      <Bar dataKey="quantidade" radius={[6, 6, 0, 0]}>
+                      <Bar
+                        dataKey="quantidade"
+                        radius={[6, 6, 0, 0]}
+                        cursor="pointer"
+                        onClick={(data) => handleCategoryClick(data.name)}
+                      >
                         {distributionData.map((entry) => (
-                          <Cell key={entry.name} fill={entry.fill} />
+                          <Cell
+                            key={entry.name}
+                            fill={entry.fill}
+                            opacity={entry.opacity}
+                            style={{ transition: "opacity 0.3s ease" }}
+                          />
                         ))}
                       </Bar>
                     </BarChart>
