@@ -301,10 +301,10 @@ function ReportsPage() {
           ) : (
             <>
               <Card className="bg-[#162235] border-[#26364D] hover:border-blue-500/40 transition-all duration-300">
-                <CardContent className="p-5 flex items-start gap-4">
-                  <div className="p-2.5 rounded-xl bg-blue-600/10 border border-[#26364D] shrink-0">
-                    <Wallet className="h-5 w-5 text-blue-400" />
-                  </div>
+                <CardContent className="p-3 md:p-5 flex items-start gap-3 md:gap-4">
+                    <div className="p-2 md:p-2.5 rounded-xl bg-blue-600/10 border border-[#26364D] shrink-0">
+                      <Wallet className="h-4 w-4 md:h-5 md:w-5 text-blue-400" />
+                    </div>
                   <div>
                     <p className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">Total Emprestado</p>
                     <p className="text-2xl font-bold text-[#F3F6FA] leading-none mt-1">
@@ -318,9 +318,9 @@ function ReportsPage() {
               </Card>
 
               <Card className="bg-[#162235] border-[#26364D] hover:border-emerald-500/40 transition-all duration-300">
-                <CardContent className="p-5 flex items-start gap-4">
-                  <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-[#26364D] shrink-0">
-                    <TrendingUp className="h-5 w-5 text-emerald-400" />
+                <CardContent className="p-3 md:p-5 flex items-start gap-3 md:gap-4">
+                  <div className="p-2 md:p-2.5 rounded-xl bg-emerald-500/10 border border-[#26364D] shrink-0">
+                    <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-emerald-400" />
                   </div>
                   <div>
                     <p className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">Retorno Previsto</p>
@@ -335,9 +335,9 @@ function ReportsPage() {
               </Card>
 
               <Card className="bg-[#162235] border-[#26364D] hover:border-amber-500/40 transition-all duration-300">
-                <CardContent className="p-5 flex items-start gap-4">
-                  <div className="p-2.5 rounded-xl bg-amber-500/10 border border-[#26364D] shrink-0">
-                    <TrendingUp className="h-5 w-5 text-amber-400" />
+                <CardContent className="p-3 md:p-5 flex items-start gap-3 md:gap-4">
+                  <div className="p-2 md:p-2.5 rounded-xl bg-amber-500/10 border border-[#26364D] shrink-0">
+                    <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-amber-400" />
                   </div>
                   <div>
                     <p className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">Lucro Previsto</p>
@@ -352,9 +352,9 @@ function ReportsPage() {
               </Card>
 
               <Card className="bg-[#162235] border-[#26364D] hover:border-violet-500/40 transition-all duration-300">
-                <CardContent className="p-5 flex items-start gap-4">
-                  <div className="p-2.5 rounded-xl bg-violet-500/10 border border-[#26364D] shrink-0">
-                    <DollarSign className="h-5 w-5 text-violet-400" />
+                <CardContent className="p-3 md:p-5 flex items-start gap-3 md:gap-4">
+                  <div className="p-2 md:p-2.5 rounded-xl bg-violet-500/10 border border-[#26364D] shrink-0">
+                    <DollarSign className="h-4 w-4 md:h-5 md:w-5 text-violet-400" />
                   </div>
                   <div>
                     <p className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">Total Recebido</p>
@@ -369,9 +369,9 @@ function ReportsPage() {
               </Card>
 
               <Card className="bg-[#162235] border-[#26364D] hover:border-green-500/40 transition-all duration-300">
-                <CardContent className="p-5 flex items-start gap-4">
-                  <div className="p-2.5 rounded-xl bg-green-500/10 border border-[#26364D] shrink-0">
-                    <TrendingUp className="h-5 w-5 text-green-400" />
+                <CardContent className="p-3 md:p-5 flex items-start gap-3 md:gap-4">
+                  <div className="p-2 md:p-2.5 rounded-xl bg-green-500/10 border border-[#26364D] shrink-0">
+                    <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-green-400" />
                   </div>
                   <div>
                     <p className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">Lucro Realizado</p>
@@ -386,9 +386,9 @@ function ReportsPage() {
               </Card>
 
               <Card className="bg-[#162235] border-[#26364D] hover:border-red-500/40 transition-all duration-300">
-                <CardContent className="p-5 flex items-start gap-4">
-                  <div className="p-2.5 rounded-xl bg-red-500/10 border border-[#26364D] shrink-0">
-                    <AlertCircle className="h-5 w-5 text-red-400" />
+                <CardContent className="p-3 md:p-5 flex items-start gap-3 md:gap-4">
+                  <div className="p-2 md:p-2.5 rounded-xl bg-red-500/10 border border-[#26364D] shrink-0">
+                    <AlertCircle className="h-4 w-4 md:h-5 md:w-5 text-red-400" />
                   </div>
                   <div>
                     <p className="text-[11px] font-semibold text-[#718096] uppercase tracking-wider">Em Atraso</p>
