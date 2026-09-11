@@ -17,6 +17,9 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  BarChart,
+  Bar,
+  Cell,
 } from "recharts";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -101,6 +104,29 @@ function ReportsPage() {
   const overdueCount = filteredInvestments.filter(
     (inv) => inv.return_date < today && inv.status !== "finished" && inv.status !== "cancelled"
   ).length;
+
+  // Distribuição por status
+  const today = new Date().toISOString().slice(0, 10);
+  const statusCounts = {
+    ativos: investments?.filter((inv) => inv.status === "active").length ?? 0,
+    finalizados: investments?.filter((inv) => inv.status === "finished").length ?? 0,
+    atrasados: investments?.filter((inv) => inv.return_date < today && inv.status !== "finished" && inv.status !== "cancelled").length ?? 0,
+    cancelados: investments?.filter((inv) => inv.status === "cancelled").length ?? 0,
+  };
+
+  const distributionData = [
+    { name: "Ativos", quantidade: statusCounts.ativos, fill: "#60a5fa" },
+    { name: "Finalizados", quantidade: statusCounts.finalizados, fill: "#34d399" },
+    { name: "Atrasados", quantidade: statusCounts.atrasados, fill: "#f59e0b" },
+    { name: "Cancelados", quantidade: statusCounts.cancelados, fill: "#94a3b8" },
+  ];
+
+  const distributionConfig = {
+    Ativos: { label: "Ativos", color: "#60a5fa" },
+    Finalizados: { label: "Finalizados", color: "#34d399" },
+    Atrasados: { label: "Atrasados", color: "#f59e0b" },
+    Cancelados: { label: "Cancelados", color: "#94a3b8" },
+  };
 
   // Dados para o gráfico — acumulativo por data
   const chartData = (() => {
@@ -468,6 +494,65 @@ function ReportsPage() {
                         activeDot={{ r: 5 }}
                       />
                     </LineChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Gráfico: Distribuição da Carteira */}
+        <div>
+          <h2 className="text-sm font-bold text-[#F3F6FA] mb-3">Distribuição da Carteira</h2>
+          {chartData.length === 0 && !isLoading ? (
+            <Card className="bg-[#162235] border-[#26364D]">
+              <CardContent className="p-8 flex items-center justify-center">
+                <p className="text-[#718096] text-sm">Nenhum empréstimo cadastrado para exibir o gráfico.</p>
+              </CardContent>
+            </Card>
+          ) : isLoading ? (
+            <Card className="bg-[#162235] border-[#26364D]">
+              <CardContent className="p-4">
+                <Skeleton className="h-64 w-full rounded skeleton-shimmer" />
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="bg-[#162235] border-[#26364D]">
+              <CardContent className="p-4">
+                <ChartContainer config={distributionConfig} className="w-full h-64">
+                  <ResponsiveContainer width="100%" height={256}>
+                    <BarChart data={distributionData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#26364D" vertical={false} />
+                      <XAxis
+                        dataKey="name"
+                        tick={{ fill: "#718096", fontSize: 11 }}
+                        tickLine={false}
+                        axisLine={{ stroke: "#26364D" }}
+                      />
+                      <YAxis
+                        tick={{ fill: "#718096", fontSize: 11 }}
+                        tickLine={false}
+                        axisLine={false}
+                        allowDecimals={false}
+                      />
+                      <Tooltip
+                        content={({ active, payload }) => {
+                          if (!active || !payload?.length) return null;
+                          return (
+                            <div className="rounded-lg border border-[#26364D] bg-[#162235] px-3 py-2 text-xs shadow-xl">
+                              <p className="font-semibold text-[#F3F6FA]">
+                                {payload[0].payload.name}: <span className="font-mono font-medium">{payload[0].value}</span>
+                              </p>
+                            </div>
+                          );
+                        }}
+                      />
+                      <Bar dataKey="quantidade" radius={[6, 6, 0, 0]}>
+                        {distributionData.map((entry) => (
+                          <Cell key={entry.name} fill={entry.fill} />
+                        ))}
+                      </Bar>
+                    </BarChart>
                   </ResponsiveContainer>
                 </ChartContainer>
               </CardContent>
