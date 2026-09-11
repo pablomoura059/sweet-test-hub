@@ -1,9 +1,14 @@
-import { useState } from "react"
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+
+export const Route = createFileRoute("/minha-conta")({
+  component: MinhaContaPage,
+});
 
 export default function MinhaContaPage() {
-  const [firstName, setFirstName] = useState("Pablo")
-  const [lastName, setLastName] = useState("Moreira")
-  const [email] = useState("pablo@email.com")
+  const [firstName, setFirstName] = useState("Pablo");
+  const [lastName, setLastName] = useState("Moreira");
+  const [email] = useState("pablo@email.com");
 
   return (
     <div className="min-h-screen bg-slate-50 px-4 pb-10 sm:px-6 lg:px-8">
@@ -114,5 +119,5 @@ export default function MinhaContaPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
