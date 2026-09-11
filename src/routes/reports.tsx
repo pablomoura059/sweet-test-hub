@@ -127,11 +127,11 @@ function ReportsPage() {
     Cancelados: { label: "Cancelados", color: "#94a3b8" },
   };
 
-  // Dados para o gráfico — acumulativo por data
+  // Dados para o gráfico — acumulativo por data (respeita filtro de período)
   const chartData = (() => {
-    if (!investments || investments.length === 0) return [];
+    if (!filteredInvestments || filteredInvestments.length === 0) return [];
 
-    const sorted = [...investments].sort(
+    const sorted = [...filteredInvestments].sort(
       (a, b) =>
         new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
     );
