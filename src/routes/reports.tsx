@@ -488,6 +488,26 @@ function ReportsPage() {
         {/* Gráfico: Distribuição da Carteira */}
         <div>
           <h2 className="text-sm font-bold text-[#F3F6FA] mb-3">Distribuição da Carteira</h2>
+          <div className="flex items-center justify-center gap-1.5 mb-4 flex-wrap">
+            {["Todos", "Ativos", "Finalizados", "Atrasados", "Cancelados"].map((cat) => {
+              const isActive = selectedCategory === (cat === "Todos" ? null : cat);
+              const catColor = cat === "Todos" ? "#60a5fa" : distributionData.find((d) => d.name === cat)?.fill || "#718096";
+              return (
+                <button
+                  key={cat}
+                  onClick={() => handleCategoryClick(cat === "Todos" ? null : cat)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-200 ${
+                    isActive
+                      ? "border-opacity-60 shadow-sm"
+                      : "border-[#26364D] text-[#718096] hover:bg-[#162235]/60"
+                  }`}
+                  style={isActive ? { borderColor: catColor, backgroundColor: `${catColor}18`, color: catColor } : {}}
+                >
+                  {cat}
+                </button>
+              );
+            })}
+          </div>
           {chartData.length === 0 && !isLoading ? (
             <Card className="bg-[#162235] border-[#26364D]">
               <CardContent className="p-8 flex items-center justify-center">
@@ -505,33 +525,22 @@ function ReportsPage() {
               <CardContent className="p-4">
                 <ChartContainer config={distributionConfig} className="w-full h-72">
                   <ResponsiveContainer width="100%" height={288}>
-                    <BarChart data={distributionData} margin={{ top: 5, right: 10, left: 0, bottom: 45 }}>
+                    <BarChart data={distributionData} margin={{ top: 5, right: 10, left: 0, bottom: 55 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#26364D" vertical={false} />
                       <XAxis
                         dataKey="name"
                         tickLine={false}
                         axisLine={{ stroke: "#26364D" }}
-                        angle={-20}
-                        textAnchor="end"
-                        interval={0}
-                        height={50}
-                        tick={({ x, y, payload }) => {
-                          const entry = distributionData.find((d) => d.name === payload.value);
-                          const isActive = selectedCategory === null || selectedCategory === payload.value;
-                          return (
-                            <text
-                              x={x}
-                              y={y}
-                              fill={entry?.fill || "#718096"}
-                              fontSize={12}
-                              textAnchor="end"
-                              style={{ cursor: "pointer", transition: "opacity 0.3s ease", opacity: isActive ? 1 : 0.3 }}
-                              onClick={() => handleCategoryClick(payload.value)}
-                            >
-                              {payload.value}
-                            </text>
-                          );
+                        tick={{
+                          fill: "#718096",
+                          fontSize: 11,
+                          fontWeight: 500,
                         }}
+                        angle={0}
+                        textAnchor="middle"
+                        interval={0}
+                        tickMargin={12}
+                        height={40}
                       />
                       <YAxis
                         tick={{ fill: "#718096", fontSize: 11 }}
