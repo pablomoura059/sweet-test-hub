@@ -163,6 +163,28 @@ function ReportsPage() {
     ? allDistributionData.filter((d) => d.name === selectedCategory)
     : allDistributionData;
 
+  // Filter list by selected category
+  const getFilteredByCategory = () => {
+    if (!selectedCategory) return filteredInvestments;
+    switch (selectedCategory) {
+      case "Ativos":
+        return filteredInvestments.filter(
+          (inv) => inv.status === "active" && !(inv.return_date < today && inv.status !== "finished" && inv.status !== "cancelled")
+        );
+      case "Finalizados":
+        return filteredInvestments.filter((inv) => inv.status === "finished");
+      case "Atrasados":
+        return filteredInvestments.filter(
+          (inv) => inv.return_date < today && inv.status !== "finished" && inv.status !== "cancelled"
+        );
+      case "Cancelados":
+        return filteredInvestments.filter((inv) => inv.status === "cancelled");
+      default:
+        return filteredInvestments;
+    }
+  };
+  const filteredByCategory = getFilteredByCategory();
+
   const distributionConfig = {
     Ativos: { label: "Ativos", color: "#60a5fa" },
     Finalizados: { label: "Finalizados", color: "#34d399" },
@@ -655,9 +677,9 @@ function ReportsPage() {
                   ))}
                 </div>
               </CardContent>
-            ) : filteredInvestments.length === 0 ? (
+            ) : filteredByCategory.length === 0 ? (
               <CardContent className="p-8 flex items-center justify-center">
-                <p className="text-[#718096] text-sm">Nenhum empréstimo no período selecionado.</p>
+                <p className="text-[#718096] text-sm">{selectedCategory ? `Nenhum empréstimo ${selectedCategory.toLowerCase()} no período.` : "Nenhum empréstimo no período selecionado."}</p>
               </CardContent>
             ) : (
               <>
@@ -674,7 +696,7 @@ function ReportsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredInvestments.map((inv, idx) => {
+                      {filteredByCategory.map((inv, idx) => {
                         const displayStatus = getDisplayStatus(inv);
                         const statusCfg = getStatusConfig(displayStatus);
                         const StatusIcon = statusCfg.icon;
@@ -748,7 +770,7 @@ function ReportsPage() {
                 </div>
 
                 <div className="md:hidden divide-y divide-[#26364D]/30">
-                  {filteredInvestments.map((inv) => {
+                  {filteredByCategory.map((inv) => {
                     const displayStatus = getDisplayStatus(inv);
                     const statusCfg = getStatusConfig(displayStatus);
                     const StatusIcon = statusCfg.icon;
