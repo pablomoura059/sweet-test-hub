@@ -65,6 +65,40 @@ function ReportsPage() {
     enabled: !!session?.user.id,
   });
 
+  const { data: peoplePhotos } = useQuery({
+    queryKey: ["people-photos", session?.user.id],
+    queryFn: async () => {
+      if (!session?.user.id) return [];
+      const { data, error } = await supabase
+        .from("people")
+        .select("id, photo_url")
+        .eq("user_id", session.user.id);
+      if (error) throw error;
+      return data as { id: string; photo_url: string | null }[];
+    },
+    enabled: !!session?.user.id,
+  });
+
+  const personPhotoMap = (() => {
+    if (!peoplePhotos) return new Map<string, string | null>();
+    return new Map(peoplePhotos.map((p) => [p.id, p.photo_url]));
+  })();
+
+  const getPersonPhotoUrl = (personId: string | null): string | null => {
+    if (!personId) return null;
+    const photoPath = personPhotoMap.get(personId);
+    if (!photoPath) return null;
+    if (
+      photoPath.startsWith("data:") ||
+      photoPath.startsWith("blob:") ||
+      photoPath.startsWith("http://") ||
+      photoPath.startsWith("https://")
+    )
+      return photoPath;
+    const { data } = supabase.storage.from("person-photos").getPublicUrl(photoPath);
+    return data.publicUrl;
+  };
+
   const filteredInvestments = (() => {
     if (!investments) return [];
     const cutoff = new Date();
@@ -542,6 +576,7 @@ function ReportsPage() {
                         const statusCfg = getStatusConfig(displayStatus);
                         const StatusIcon = statusCfg.icon;
                         const initials = (inv.person_name || "?").split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
+                        const photoUrl = getPersonPhotoUrl(inv.person_id);
                         return (
                           <tr
                             key={inv.id}
@@ -551,12 +586,21 @@ function ReportsPage() {
                           >
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2.5">
-                                <div
-                                  className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-                                  style={{ background: `linear-gradient(135deg, ${statusCfg.color}cc, ${statusCfg.color}66)` }}
-                                >
-                                  {initials}
-                                </div>
+                                {photoUrl ? (
+                                  <img
+                                    src={photoUrl}
+                                    alt={inv.person_name || "Pessoa"}
+                                    className="h-8 w-8 rounded-full object-cover border-2 border-[#26364D] shrink-0"
+                                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                                  />
+                                ) : (
+                                  <div
+                                    className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+                                    style={{ background: `linear-gradient(135deg, ${statusCfg.color}cc, ${statusCfg.color}66)` }}
+                                  >
+                                    {initials}
+                                  </div>
+                                )}
                                 <span className="text-sm font-medium text-[#F3F6FA] truncate max-w-[140px]">
                                   {inv.person_name || "—"}
                                 </span>
@@ -609,16 +653,26 @@ function ReportsPage() {
                     const statusCfg = getStatusConfig(displayStatus);
                     const StatusIcon = statusCfg.icon;
                     const initials = (inv.person_name || "?").split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
+                    const photoUrl = getPersonPhotoUrl(inv.person_id);
                     return (
                       <div key={inv.id} className="p-4 space-y-3 last:border-0">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2.5">
-                            <div
-                              className="h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
-                              style={{ background: `linear-gradient(135deg, ${statusCfg.color}cc, ${statusCfg.color}66)` }}
-                            >
-                              {initials}
-                            </div>
+                            {photoUrl ? (
+                              <img
+                                src={photoUrl}
+                                alt={inv.person_name || "Pessoa"}
+                                className="h-10 w-10 rounded-full object-cover border-2 border-[#26364D] shrink-0"
+                                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                              />
+                            ) : (
+                              <div
+                                className="h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
+                                style={{ background: `linear-gradient(135deg, ${statusCfg.color}cc, ${statusCfg.color}66)` }}
+                              >
+                                {initials}
+                              </div>
+                            )}
                             <div>
                               <p className="text-sm font-semibold text-[#F3F6FA]">{inv.person_name || "—"}</p>
                               <p className="text-[10px] text-[#718096] font-mono">Venc: {formatDate(inv.return_date)}</p>
