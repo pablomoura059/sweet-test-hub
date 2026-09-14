@@ -189,6 +189,22 @@ function GestoresPage() {
     },
   });
 
+  const { data: userSettings } = useQuery({
+    queryKey: ["user-settings", session?.user.id],
+    queryFn: async () => {
+      if (!session?.user.id) return null;
+      const { data } = await supabase
+        .from("user_settings")
+        .select("system_name, system_subtitle")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!session?.user.id,
+  });
+
+  const systemName = userSettings?.system_name || session?.user.user_metadata?.name || "Empréstimos";
+
   const { data: profiles, isLoading } = useQuery({
     queryKey: ["profiles-managers"],
     queryFn: async () => {
@@ -366,7 +382,7 @@ function GestoresPage() {
                       <span className="text-base font-bold text-white">$</span>
                     </div>
                     <div>
-                      <div className="text-sm font-bold text-[#F3F6FA] leading-tight">{currentSettings?.system_name || 'Empréstimos'}</div>
+                      <div className="text-sm font-bold text-[#F3F6FA] leading-tight">{systemName}</div>
                       <div className="text-[11px] text-[#718096] font-normal mt-0.5">{currentSettings?.system_subtitle || 'Sistema financeiro'}</div>
                     </div>
                   </div>
@@ -414,7 +430,7 @@ function GestoresPage() {
             <div className="w-9 h-9 rounded-xl bg-[var(--color-primary)] flex items-center justify-center shadow-lg shadow-[var(--color-primary)]/20">
               <span className="text-sm font-bold text-white">$</span>
             </div>
-            <h1 className="text-sm sm:text-base font-bold text-[#F3F6FA] tracking-tight">Gestores</h1>
+            <h1 className="text-sm sm:text-base font-bold text-[#F3F6FA] tracking-tight">{systemName}</h1>
           </div>
         </div>
       </header>
