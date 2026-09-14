@@ -131,30 +131,7 @@ export default function MinhaContaPage() {
     }).catch(console.error);
   }, [session?.user.id, userSettings, queryClient]);
 
-  // Mutation para salvar perfil (first_name e last_name)
-  const updateProfileMutation = useMutation({
-    mutationFn: async () => {
-      if (!session?.user.id) throw new Error("Usuário não autenticado");
-      const { error } = await supabase
-        .from("profiles")
-        .upsert(
-          {
-            id: session.user.id,
-            first_name: firstName,
-            last_name: lastName,
-          },
-          { onConflict: "id" }
-        );
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Perfil atualizado com sucesso!");
-      queryClient.invalidateQueries({ queryKey: ["current-profile", session?.user.id] });
-    },
-    onError: () => {
-      toast.error("Não foi possível atualizar o perfil.");
-    },
-  });
+
 
   // Mutation para salvar configurações
   const saveSettingsMutation = useMutation({
@@ -192,7 +169,6 @@ export default function MinhaContaPage() {
   };
 
   const handleSave = () => {
-    updateProfileMutation.mutate();
     saveSettingsMutation.mutate();
   };
 
@@ -383,25 +359,25 @@ export default function MinhaContaPage() {
             <div className="grid gap-5 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-[#AAB5C5]">Nome</label>
-                <input
-                  type="text"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-colors placeholder:text-[#718096] focus:outline-none focus:ring-2"
-                  style={{ backgroundColor: "#101A2B", borderColor: "#26364D", color: "#F3F6FA" }}
-                  placeholder="Seu nome"
-                />
+                                  <input
+                    type="text"
+                    value={firstName}
+                    readOnly
+                    className="w-full cursor-not-allowed rounded-lg border px-3.5 py-2.5 text-sm shadow-sm"
+                    style={{ backgroundColor: "#0B1220", borderColor: "#26364D", color: "#718096" }}
+                    placeholder="Seu nome"
+                  />
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-[#AAB5C5]">Sobrenome</label>
-                <input
-                  type="text"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  className="w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-colors placeholder:text-[#718096] focus:outline-none focus:ring-2"
-                  style={{ backgroundColor: "#101A2B", borderColor: "#26364D", color: "#F3F6FA" }}
-                  placeholder="Seu sobrenome"
-                />
+                                  <input
+                    type="text"
+                    value={lastName}
+                    readOnly
+                    className="w-full cursor-not-allowed rounded-lg border px-3.5 py-2.5 text-sm shadow-sm"
+                    style={{ backgroundColor: "#0B1220", borderColor: "#26364D", color: "#718096" }}
+                    placeholder="Seu sobrenome"
+                  />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <label className="text-sm font-medium text-[#AAB5C5]">E-mail</label>
@@ -607,14 +583,14 @@ export default function MinhaContaPage() {
         <div className="flex justify-end">
           <button
             onClick={handleSave}
-            disabled={updateProfileMutation.isPending || saveSettingsMutation.isPending || settingsLoading}
+            disabled={saveSettingsMutation.isPending || settingsLoading}
             className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors active:scale-95 disabled:opacity-50"
             style={{
               background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}99)`,
               boxShadow: `0 4px 14px ${primaryColor}40`,
             }}
           >
-            {(updateProfileMutation.isPending || saveSettingsMutation.isPending) ? (
+            {saveSettingsMutation.isPending ? (
               <span className="flex items-center gap-2">
                 <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
