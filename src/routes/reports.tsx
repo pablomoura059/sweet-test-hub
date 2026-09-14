@@ -306,7 +306,7 @@ function ReportsPage() {
               onClick={() => setPeriodDays(option.days)}
               className={
                 periodDays === option.days
-                  ? "bg-blue-600 hover:bg-blue-700 text-white border-blue-600 font-semibold text-xs"
+                  ? "bg-[var(--color-primary)] hover:bg-[var(--color-primary)] text-white border-[var(--color-primary)] font-semibold text-xs"
                   : "border-[#26364D] text-[#718096] hover:bg-[#162235] hover:text-[#F3F6FA] text-xs"
               }
             >
@@ -332,10 +332,10 @@ function ReportsPage() {
             </>
           ) : (
             <>
-              <Card className="bg-[#162235] border-[#26364D] hover:border-blue-500/40 transition-all duration-300">
+              <Card className="bg-[#162235] border-[#26364D] hover:border-[var(--color-primary)]/40 transition-all duration-300">
                 <CardContent className="p-2 md:p-5 flex items-start gap-2 md:gap-4">
-                    <div className="p-1.5 md:p-2.5 rounded-xl bg-blue-600/10 border border-[#26364D] shrink-0">
-                      <Wallet className="h-3.5 w-3.5 md:h-5 md:w-5 text-blue-400" />
+                    <div className="p-1.5 md:p-2.5 rounded-xl shrink-0" style={{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 10%, transparent)', border: '1px solid #26364D' }}>
+                      <Wallet className="h-3.5 w-3.5 md:h-5 md:w-5" style={{ color: 'var(--color-primary)' }} />
                     </div>
                   <div>
                     <p className="text-[9px] font-semibold text-[#718096] uppercase tracking-wider">Total Emprestado</p>
