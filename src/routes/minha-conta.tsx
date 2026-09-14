@@ -21,7 +21,11 @@ export default function MinhaContaPage() {
   const queryClient = useQueryClient();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Estados dos campos
+  // Estados dos campos de perfil
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+
+  // Estados dos campos de configuração
   const [systemName, setSystemName] = useState("");
   const [systemSubtitle, setSystemSubtitle] = useState("Sistema financeiro");
   const [theme, setTheme] = useState<string>("dark");
@@ -49,6 +53,14 @@ export default function MinhaContaPage() {
     enabled: !!session?.user.id,
   });
 
+  // Inicializar campos de perfil a partir do banco
+  useEffect(() => {
+    if (currentProfile) {
+      setFirstName(currentProfile.first_name || "");
+      setLastName(currentProfile.last_name || "");
+    }
+  }, [currentProfile]);
+
   // Buscar configurações do usuário
   const { data: userSettings, isLoading: settingsLoading } = useQuery({
     queryKey: ["user-settings", session?.user.id],
@@ -64,7 +76,7 @@ export default function MinhaContaPage() {
     enabled: !!session?.user.id,
   });
 
-  // Carregar campos do banco quando userSettings for carregado
+  // Carregar campos de configuração quando userSettings for carregado
   useEffect(() => {
     if (userSettings) {
       setSystemName(userSettings.system_name || "");
@@ -128,8 +140,8 @@ export default function MinhaContaPage() {
         .upsert(
           {
             id: session.user.id,
-            first_name: currentProfile?.first_name || "",
-            last_name: currentProfile?.last_name || "",
+            first_name: firstName,
+            last_name: lastName,
           },
           { onConflict: "id" }
         );
@@ -184,12 +196,10 @@ export default function MinhaContaPage() {
     saveSettingsMutation.mutate();
   };
 
-  const fullName = [currentProfile?.first_name, currentProfile?.last_name]
-    .filter(Boolean)
-    .join(" ");
-  const defaultSystemName = fullName
-    ? `${fullName} Empréstimos`
-    : "Empréstimos";
+  const fullName = [firstName, lastName].filter(Boolean).join(" ") ||
+    [currentProfile?.first_name, currentProfile?.last_name].filter(Boolean).join(" ") ||
+    "";
+  const defaultSystemName = fullName ? `${fullName} Empréstimos` : "Empréstimos";
   const displaySystemName = systemName || defaultSystemName;
 
   const themeOptions = [
@@ -219,7 +229,8 @@ export default function MinhaContaPage() {
   }
 
   const avatarInitials = fullName
-    ? `${currentProfile?.first_name?.[0] || ""}${currentProfile?.last_name?.[0] || ""}`.toUpperCase()
+    ? `${firstName?.[0] || ""}${lastName?.[0] || ""}`.toUpperCase() ||
+      `${currentProfile?.first_name?.[0] || ""}${currentProfile?.last_name?.[0] || ""}`.toUpperCase()
     : "??";
 
   return (
@@ -374,20 +385,22 @@ export default function MinhaContaPage() {
                 <label className="text-sm font-medium text-[#AAB5C5]">Nome</label>
                 <input
                   type="text"
-                  value={currentProfile?.first_name || ""}
-                  readOnly
-                  className="w-full cursor-not-allowed rounded-lg border px-3.5 py-2.5 text-sm shadow-sm"
-                  style={{ backgroundColor: "#0B1220", borderColor: "#26364D", color: "#718096" }}
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-colors placeholder:text-[#718096] focus:outline-none focus:ring-2"
+                  style={{ backgroundColor: "#101A2B", borderColor: "#26364D", color: "#F3F6FA" }}
+                  placeholder="Seu nome"
                 />
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-[#AAB5C5]">Sobrenome</label>
                 <input
                   type="text"
-                  value={currentProfile?.last_name || ""}
-                  readOnly
-                  className="w-full cursor-not-allowed rounded-lg border px-3.5 py-2.5 text-sm shadow-sm"
-                  style={{ backgroundColor: "#0B1220", borderColor: "#26364D", color: "#718096" }}
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-colors placeholder:text-[#718096] focus:outline-none focus:ring-2"
+                  style={{ backgroundColor: "#101A2B", borderColor: "#26364D", color: "#F3F6FA" }}
+                  placeholder="Seu sobrenome"
                 />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
