@@ -124,7 +124,7 @@ function ActionButton({ status, onApprove, onDeny, onBlock, onReactivate, isPend
       size="sm"
       onClick={onReactivate}
       disabled={isPending}
-      className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-all active:scale-95 shadow-md shadow-blue-600/20"
+      className="bg-[var(--color-primary)] hover:opacity-90 text-white text-xs font-semibold transition-all active:scale-95 shadow-md shadow-[var(--color-primary)]/20"
     >
       <RotateCcw className="h-3 w-3" />
       Reativar
@@ -149,7 +149,6 @@ function GestoresPage() {
   const [pendingMessage, setPendingMessage] = useState<string | null>(null);
   const [showTrash, setShowTrash] = useState(false);
 
-  // Auth check (client-side) — same pattern as dashboard.tsx
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -167,7 +166,6 @@ function GestoresPage() {
         router.navigate({ to: "/login" });
         return;
       }
-      // Only admin can access this page
       if (profile.role !== "admin") {
         router.navigate({ to: "/dashboard" });
         return;
@@ -220,7 +218,7 @@ function GestoresPage() {
         denied: "Gestor movido para a lixeira.",
       };
       toast.success(messages[vars.status] || "Status atualizado.", {
-        className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium !rounded-xl",
+        className: "!bg-[#101A2B] !border-[var(--color-primary)]/30 !text-[#F3F6FA] !font-medium !rounded-xl",
       });
       queryClient.invalidateQueries({ queryKey: ["profiles-managers"] });
       setConfirmTarget(null);
@@ -249,7 +247,7 @@ function GestoresPage() {
     },
     onSuccess: () => {
       toast.success("Gestor excluído permanentemente.", {
-        className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium !rounded-xl",
+        className: "!bg-[#101A2B] !border-[var(--color-primary)]/30 !text-[#F3F6FA] !font-medium !rounded-xl",
       });
       queryClient.invalidateQueries({ queryKey: ["profiles-managers"] });
       setPermaDeleteTarget(null);
@@ -264,7 +262,6 @@ function GestoresPage() {
     router.navigate({ to: "/login" });
   };
 
-  // Lista normal: exclui denied, aplica busca e filtro
   const normalManagers = (profiles || []).filter((p) => {
     if (p.status === "denied") return false;
     const matchesSearch =
@@ -275,7 +272,6 @@ function GestoresPage() {
     return matchesSearch && matchesFilter;
   });
 
-  // Lixeira: mostra SOMENTE denied
   const trashManagers = (profiles || []).filter((p) => {
     if (p.status !== "denied") return false;
     const matchesSearch =
@@ -285,7 +281,6 @@ function GestoresPage() {
     return matchesSearch;
   });
 
-  // Qual lista renderizar
   const displayedManagers = showTrash ? trashManagers : normalManagers;
 
   const countBadge = (status: FilterType) => {
@@ -305,14 +300,13 @@ function GestoresPage() {
     setSearchQuery("");
   };
 
-  // Ações de gestores bloqueados na desktop table
   const blockedActionsDesktop = (p: Profile) => (
     <div className="flex gap-1.5 justify-end">
       <Button
         size="sm"
         onClick={() => updateMutation.mutate({ id: p.id, status: "active" })}
         disabled={updateMutation.isPending}
-        className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-all active:scale-95"
+        className="bg-[var(--color-primary)] hover:opacity-90 text-white text-xs font-semibold transition-all active:scale-95"
       >
         <RotateCcw className="h-3 w-3" />
         Desbloquear
@@ -330,14 +324,13 @@ function GestoresPage() {
     </div>
   );
 
-  // Ações de gestores bloqueados no mobile
   const blockedActionsMobile = (p: Profile) => (
     <div className="flex gap-1.5">
       <Button
         size="sm"
         onClick={() => updateMutation.mutate({ id: p.id, status: "active" })}
         disabled={updateMutation.isPending}
-        className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-all active:scale-95"
+        className="bg-[var(--color-primary)] hover:opacity-90 text-white text-xs font-semibold transition-all active:scale-95"
       >
         <RotateCcw className="h-3 w-3" />
         Desbloquear
@@ -357,7 +350,6 @@ function GestoresPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#0B1220" }}>
-      {/* Header */}
       <header className="sticky top-0 z-40 bg-[#101A2B]/95 backdrop-blur-xl border-b border-[#26364D]/60">
         <div className="flex items-center justify-between px-4 py-3 max-w-5xl mx-auto">
           <div className="flex items-center gap-3">
@@ -370,7 +362,7 @@ function GestoresPage() {
               <SheetContent side="left" className="bg-[#101A2B] border-[#26364D] w-[300px] p-0 flex flex-col">
                 <div className="px-5 pt-6 pb-5 border-b border-[#26364D]/60">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2F6FED] to-[#1a4fd4] flex items-center justify-center shadow-lg shadow-blue-600/20 shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-[var(--color-primary)] flex items-center justify-center shadow-lg shadow-[var(--color-primary)]/20 shrink-0">
                       <span className="text-base font-bold text-white">$</span>
                     </div>
                     <div>
@@ -391,7 +383,7 @@ function GestoresPage() {
                   </div>
                   <div className="space-y-0.5">
                     <p className="text-[9px] font-bold text-[#718096] uppercase tracking-widest px-3 mb-2">Sistema</p>
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#2F6FED]/10 border border-[#2F6FED]/30 text-[#2F6FED] text-sm font-semibold cursor-default">
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 text-[var(--color-primary)] text-sm font-semibold cursor-default">
                       <Users className="h-4 w-4 shrink-0" />
                       Gestores
                     </button>
@@ -419,7 +411,7 @@ function GestoresPage() {
               </SheetContent>
             </Sheet>
 
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2F6FED] to-[#1a4fd4] flex items-center justify-center shadow-lg shadow-blue-600/20">
+            <div className="w-9 h-9 rounded-xl bg-[var(--color-primary)] flex items-center justify-center shadow-lg shadow-[var(--color-primary)]/20">
               <span className="text-sm font-bold text-white">$</span>
             </div>
             <h1 className="text-sm sm:text-base font-bold text-[#F3F6FA] tracking-tight">Gestores</h1>
@@ -427,12 +419,10 @@ function GestoresPage() {
         </div>
       </header>
 
-      {/* Main */}
       <main className="p-4 space-y-5 max-w-5xl mx-auto">
-        {/* Título */}
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-[#2F6FED]/10 border border-[#2F6FED]/30">
-            <Users className="h-5 w-5 text-[#2F6FED]" />
+          <div className="p-2 rounded-xl bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30">
+            <Users className="h-5 w-5 text-[var(--color-primary)]" />
           </div>
           <div>
             <h2 className="text-base font-bold text-[#F3F6FA]">Gestores da Plataforma</h2>
@@ -440,7 +430,6 @@ function GestoresPage() {
           </div>
         </div>
 
-        {/* Filtros e Busca */}
         <div className="bg-[#162235] border border-[#26364D] rounded-2xl p-4 space-y-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#718096]" />
@@ -449,7 +438,7 @@ function GestoresPage() {
               placeholder={showTrash ? "Buscar por nome ou e-mail na lixeira..." : "Buscar por nome ou e-mail..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 bg-[#101A2B] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50 text-xs h-9"
+              className="pl-9 bg-[#101A2B] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/50 text-xs h-9"
             />
           </div>
           <div className="flex items-center gap-1.5 flex-wrap">
@@ -459,8 +448,8 @@ function GestoresPage() {
               onClick={() => handleNormalFilterClick("all")}
               className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all border ${
                 !showTrash && filter === "all"
-                  ? "bg-[#2F6FED] border-[#2F6FED] text-white"
-                  : "bg-[#101A2B] border-[#26364D] text-[#AAB5C5] hover:border-[#2F6FED]/50 hover:text-[#F3F6FA]"
+                  ? "bg-[var(--color-primary)] border-[var(--color-primary)] text-white"
+                  : "bg-[#101A2B] border-[#26364D] text-[#AAB5C5] hover:border-[var(--color-primary)]/50 hover:text-[#F3F6FA]"
               }`}
             >
               Todos ({countBadge("all") - countBadge("denied")})
@@ -470,8 +459,8 @@ function GestoresPage() {
               onClick={() => handleNormalFilterClick("pending")}
               className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all border ${
                 !showTrash && filter === "pending"
-                  ? "bg-[#2F6FED] border-[#2F6FED] text-white"
-                  : "bg-[#101A2B] border-[#26364D] text-[#AAB5C5] hover:border-[#2F6FED]/50 hover:text-[#F3F6FA]"
+                  ? "bg-[var(--color-primary)] border-[var(--color-primary)] text-white"
+                  : "bg-[#101A2B] border-[#26364D] text-[#AAB5C5] hover:border-[var(--color-primary)]/50 hover:text-[#F3F6FA]"
               }`}
             >
               Pendentes ({countBadge("pending")})
@@ -481,8 +470,8 @@ function GestoresPage() {
               onClick={() => handleNormalFilterClick("active")}
               className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all border ${
                 !showTrash && filter === "active"
-                  ? "bg-[#2F6FED] border-[#2F6FED] text-white"
-                  : "bg-[#101A2B] border-[#26364D] text-[#AAB5C5] hover:border-[#2F6FED]/50 hover:text-[#F3F6FA]"
+                  ? "bg-[var(--color-primary)] border-[var(--color-primary)] text-white"
+                  : "bg-[#101A2B] border-[#26364D] text-[#AAB5C5] hover:border-[var(--color-primary)]/50 hover:text-[#F3F6FA]"
               }`}
             >
               Ativos ({countBadge("active")})
@@ -492,8 +481,8 @@ function GestoresPage() {
               onClick={() => handleNormalFilterClick("blocked")}
               className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all border ${
                 !showTrash && filter === "blocked"
-                  ? "bg-[#2F6FED] border-[#2F6FED] text-white"
-                  : "bg-[#101A2B] border-[#26364D] text-[#AAB5C5] hover:border-[#2F6FED]/50 hover:text-[#F3F6FA]"
+                  ? "bg-[var(--color-primary)] border-[var(--color-primary)] text-white"
+                  : "bg-[#101A2B] border-[#26364D] text-[#AAB5C5] hover:border-[var(--color-primary)]/50 hover:text-[#F3F6FA]"
               }`}
             >
               Bloqueados ({countBadge("blocked")})
@@ -512,11 +501,10 @@ function GestoresPage() {
           </div>
         </div>
 
-        {/* Loading */}
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
             <div className="flex flex-col items-center gap-3">
-              <div className="w-10 h-10 rounded-full border-2 border-[#2F6FED] border-t-transparent animate-spin" />
+              <div className="w-10 h-10 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin" />
               <p className="text-sm text-[#718096]">Carregando gestores...</p>
             </div>
           </div>
@@ -546,7 +534,6 @@ function GestoresPage() {
           </Card>
         ) : (
           <div className="bg-[#162235] border border-[#26364D] rounded-2xl overflow-hidden">
-            {/* Desktop Table */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -582,7 +569,7 @@ function GestoresPage() {
                               size="sm"
                               onClick={() => updateMutation.mutate({ id: p.id, status: "pending" })}
                               disabled={updateMutation.isPending}
-                              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-all active:scale-95"
+                              className="bg-[var(--color-primary)] hover:opacity-90 text-white text-xs font-semibold transition-all active:scale-95"
                             >
                               <RotateCcw className="h-3 w-3" />
                               Restaurar
@@ -618,7 +605,6 @@ function GestoresPage() {
               </table>
             </div>
 
-            {/* Mobile Cards */}
             <div className="md:hidden divide-y divide-[#26364D]/60">
               {displayedManagers.map((p) => (
                 <div key={p.id} className="p-4 space-y-3">
@@ -639,7 +625,7 @@ function GestoresPage() {
                           size="sm"
                           onClick={() => updateMutation.mutate({ id: p.id, status: "pending" })}
                           disabled={updateMutation.isPending}
-                          className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-all active:scale-95"
+                          className="bg-[var(--color-primary)] hover:opacity-90 text-white text-xs font-semibold transition-all active:scale-95"
                         >
                           <RotateCcw className="h-3 w-3" />
                           Restaurar
@@ -676,7 +662,6 @@ function GestoresPage() {
         )}
       </main>
 
-      {/* Confirmação de Bloqueio */}
       <AlertDialog open={!!confirmTarget} onOpenChange={() => setConfirmTarget(null)}>
         <AlertDialogContent className="bg-[#101A2B] border-[#26364D] animate-scale-in">
           <AlertDialogHeader>
@@ -711,7 +696,6 @@ function GestoresPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Confirmação de Negar */}
       <AlertDialog open={!!denyTarget} onOpenChange={() => setDenyTarget(null)}>
         <AlertDialogContent className="bg-[#101A2B] border-[#26364D] animate-scale-in">
           <AlertDialogHeader>
@@ -743,7 +727,6 @@ function GestoresPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Confirmação de Exclusão Permanente — Lixeira */}
       <AlertDialog open={!!permaDeleteTarget} onOpenChange={() => setPermaDeleteTarget(null)}>
         <AlertDialogContent className="bg-[#101A2B] border-red-500/50 animate-scale-in">
           <AlertDialogHeader>
@@ -776,7 +759,6 @@ function GestoresPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Confirmação de Exclusão Permanente — Bloqueados */}
       <AlertDialog open={!!permaDeleteBlockedTarget} onOpenChange={() => setPermaDeleteBlockedTarget(null)}>
         <AlertDialogContent className="bg-[#101A2B] border-red-500/50 animate-scale-in">
           <AlertDialogHeader>
@@ -809,7 +791,6 @@ function GestoresPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Mensagem de Pendente */}
       <Dialog open={!!pendingMessage} onOpenChange={() => setPendingMessage(null)}>
         <DialogContent className="bg-[#101A2B] border-[#26364D] text-[#F3F6FA] max-w-sm">
           <div className="flex flex-col items-center text-center py-4 gap-4">
@@ -824,7 +805,7 @@ function GestoresPage() {
             </div>
             <Button
               onClick={() => router.navigate({ to: "/login" })}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              className="w-full bg-[var(--color-primary)] hover:opacity-90 text-white"
             >
               Voltar para o login
             </Button>
