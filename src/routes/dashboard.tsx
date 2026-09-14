@@ -955,8 +955,10 @@ function DashboardPage() {
               <span className="text-sm font-bold text-white">$</span>
             </div>
             <h1 className="text-sm sm:text-base font-bold text-[#F3F6FA] tracking-tight whitespace-nowrap">
-              {`${currentProfile?.first_name ?? ""} ${currentProfile?.last_name ?? ""}`.trim() || "Empréstimos"}
-            </h1>
+                {userSettings?.system_name ||
+                  `${currentProfile?.first_name ?? ""} ${currentProfile?.last_name ?? ""}`.trim() ||
+                  "Empréstimos"}
+              </h1>
           </div>
 
           <Dialog open={isNewLoanOpen} onOpenChange={setIsNewLoanOpen}>
