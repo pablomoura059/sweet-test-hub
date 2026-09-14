@@ -56,10 +56,14 @@ export default function MinhaContaPage() {
   // Inicializar campos de perfil a partir do banco
   useEffect(() => {
     if (currentProfile) {
-      setFirstName(currentProfile.first_name || "");
-      setLastName(currentProfile.last_name || "");
+      setFirstName(currentProfile.first_name || session?.user?.user_metadata?.first_name || "");
+      setLastName(currentProfile.last_name || session?.user?.user_metadata?.last_name || "");
+    } else if (session?.user) {
+      // Fallback caso currentProfile ainda não tenha carregado
+      setFirstName(session.user.user_metadata?.first_name || "");
+      setLastName(session.user.user_metadata?.last_name || "");
     }
-  }, [currentProfile]);
+  }, [currentProfile, session]);
 
   // Buscar configurações do usuário
   const { data: userSettings, isLoading: settingsLoading } = useQuery({
