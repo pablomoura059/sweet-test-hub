@@ -29,8 +29,8 @@ export default function MinhaContaPage() {
   const [birthDate, setBirthDate] = useState("");
 
   // Estados de logo do sistema
-  const [logoUrl, setLogoUrl] = useState<string>("");
-  const [logoPreview, setLogoPreview] = useState<string>("");
+  const [logoDbPath, setLogoDbPath] = useState<string>(""); // caminho real no Storage
+  const [logoPreview, setLogoPreview] = useState<string>(""); // URL de exibição
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   // Máscara brasileira de telefone
@@ -60,8 +60,8 @@ export default function MinhaContaPage() {
       return;
     }
 
-    setLogoPreview(URL.createObjectURL(file));
-    setLogoUrl(URL.createObjectURL(file));
+    const blobUrl = URL.createObjectURL(file);
+    setLogoPreview(blobUrl);
   };
 
   const openLogoInput = () => {
@@ -159,8 +159,12 @@ export default function MinhaContaPage() {
       setTheme(userSettings.theme || "dark");
       setPrimaryColor(colorNameToHex(userSettings.primary_color) || "#2F6FED");
       if (userSettings.logo_url) {
-        setLogoUrl(userSettings.logo_url);
-        setLogoPreview(userSettings.logo_url);
+        setLogoDbPath(userSettings.logo_url);
+        // Converter caminho do Storage em URL pública para exibição
+        const { data: urlData } = supabase.storage
+          .from("system-logos")
+          .getPublicUrl(userSettings.logo_url);
+        setLogoPreview(urlData.publicUrl);
       }
     }
   }, [userSettings]);
@@ -226,7 +230,7 @@ export default function MinhaContaPage() {
             system_subtitle: systemSubtitle,
             theme,
             primary_color: colorValue,
-            logo_url: logoUrl || null,
+            logo_url: logoDbPath || null,
           },
           { onConflict: "user_id" }
         )
@@ -280,7 +284,7 @@ export default function MinhaContaPage() {
   const calculatedAge = calculateAge(birthDate);
 
   // Determinar o que mostrar na previa da logo
-  const logoPreviewSrc = logoPreview || (logoUrl ? logoUrl : null);
+  const logoPreviewSrc = logoPreview || null;
 
   const themeOptions = [
     { id: "dark", label: "Escuro", icon: <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /> },
