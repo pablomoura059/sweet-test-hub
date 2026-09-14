@@ -145,11 +145,14 @@ function RootComponent() {
   const router = useRouter();
   const [primaryColor, setPrimaryColor] = useState("#2F6FED");
 
-  // Carregar cor primária do user_settings
+  // Carregar cor primária do user_settings e definir em document.documentElement
   useEffect(() => {
     const loadPrimaryColor = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) return;
+      if (!session?.user?.id) {
+        document.documentElement.style.setProperty("--color-primary", "#2F6FED");
+        return;
+      }
 
       const { data } = await supabase
         .from("user_settings")
@@ -157,26 +160,21 @@ function RootComponent() {
         .eq("user_id", session.user.id)
         .single();
 
-      if (data?.primary_color) {
-        const colorMap: Record<string, string> = {
-          blue: "#2F6FED",
-          purple: "#8B5CF6",
-          green: "#10B981",
-          orange: "#F59E0B",
-          red: "#EF4444",
-          pink: "#EC4899",
-        };
-        const hex = colorMap[data.primary_color] || "#2F6FED";
-        setPrimaryColor(hex);
-        document.documentElement.style.setProperty("--color-primary", hex);
-      } else {
-        document.documentElement.style.setProperty("--color-primary", "#2F6FED");
-      }
+      const colorMap: Record<string, string> = {
+        blue: "#2F6FED",
+        purple: "#8B5CF6",
+        green: "#10B981",
+        orange: "#F59E0B",
+        red: "#EF4444",
+        pink: "#EC4899",
+      };
+      const hex = data?.primary_color ? (colorMap[data.primary_color] || "#2F6FED") : "#2F6FED";
+      setPrimaryColor(hex);
+      document.documentElement.style.setProperty("--color-primary", hex);
     };
 
     loadPrimaryColor();
 
-    // Escutar mudanças de auth para recarregar cor
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
       loadPrimaryColor();
     });
@@ -185,6 +183,11 @@ function RootComponent() {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Atualizar --color-primary em document.documentElement sempre que primaryColor mudar
+  useEffect(() => {
+    document.documentElement.style.setProperty("--color-primary", primaryColor);
+  }, [primaryColor]);
 
   // Proteção global: verificar profile em cada navegação
   useEffect(() => {
@@ -220,10 +223,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div style={{ "--color-primary": primaryColor } as React.CSSProperties}>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-      </div>
+      <Outlet />
     </QueryClientProvider>
   );
 }
