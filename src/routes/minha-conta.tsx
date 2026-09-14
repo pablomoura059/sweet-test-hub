@@ -1,20 +1,167 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import {
+  Menu, Home, Wallet, Users, CheckCircle, BarChart2, Settings,
+  LogOut, User,
+} from "lucide-react";
+import {
+  Sheet, SheetContent, SheetTrigger,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/minha-conta")({
   component: MinhaContaPage,
 });
 
 export default function MinhaContaPage() {
+  const router = useRouter();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [firstName, setFirstName] = useState("Pablo");
   const [lastName, setLastName] = useState("Moreira");
   const [email] = useState("pablo@email.com");
 
-  const systemName = `${firstName} ${lastName} Empréstimos`.trim();
-  const systemSubtitle = "Sistema financeiro";
+  const { data: session } = useQuery({
+    queryKey: ["auth-session"],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      return session;
+    },
+  });
+
+  const { data: currentProfile } = useQuery({
+    queryKey: ["current-profile", session?.user.id],
+    queryFn: async () => {
+      if (!session?.user.id) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("role, first_name, last_name")
+        .eq("id", session.user.id)
+        .single();
+      return data;
+    },
+    enabled: !!session?.user.id,
+  });
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.navigate({ to: "/login" });
+  };
+
+  const systemName = `${currentProfile?.first_name || firstName} ${currentProfile?.last_name || lastName} Empréstimos`.trim();
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#0B1220" }}>
+      {/* ── Header ─────────────────────────────────────────── */}
+      <header className="sticky top-0 z-40 bg-[#101A2B]/95 backdrop-blur-xl border-b border-[#26364D]/60">
+        <div className="flex items-center justify-between px-4 py-3 max-w-2xl mx-auto">
+          <div className="flex items-center gap-3">
+            <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-[#718096] hover:text-[#F3F6FA] hover:bg-[#162235] transition-colors">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="bg-[#101A2B] border-[#26364D] w-[300px] p-0 flex flex-col">
+                <div className="px-5 pt-6 pb-5 border-b border-[#26364D]/60">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2F6FED] to-[#1a4fd4] flex items-center justify-center shadow-lg shadow-blue-600/20 shrink-0">
+                      <span className="text-base font-bold text-white">$</span>
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-[#F3F6FA] leading-tight">
+                        {currentProfile?.first_name && currentProfile?.last_name
+                          ? `${currentProfile.first_name} ${currentProfile.last_name} Empréstimos`
+                          : currentProfile?.first_name
+                          ? `${currentProfile.first_name} Empréstimos`
+                          : systemName}
+                      </div>
+                      <div className="text-[11px] text-[#718096] font-normal mt-0.5">Sistema financeiro</div>
+                    </div>
+                  </div>
+                </div>
+                <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+                  <div className="space-y-0.5">
+                    <p className="text-[9px] font-bold text-[#718096] uppercase tracking-widest px-3 mb-2">Visão Geral</p>
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
+                      onClick={() => { setIsMenuOpen(false); router.navigate({ to: "/dashboard" }); }}>
+                      <Home className="h-4 w-4 shrink-0" />
+                      Dashboard
+                    </button>
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-[9px] font-bold text-[#718096] uppercase tracking-widest px-3 mb-2">Gestão</p>
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
+                      onClick={() => { setIsMenuOpen(false); router.navigate({ to: "/dashboard" }); }}>
+                      <Wallet className="h-4 w-4 shrink-0" />
+                      Empréstimos
+                    </button>
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
+                      onClick={() => { setIsMenuOpen(false); router.navigate({ to: "/people" }); }}>
+                      <Users className="h-4 w-4 shrink-0" />
+                      Pessoas
+                    </button>
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
+                      onClick={() => { setIsMenuOpen(false); router.navigate({ to: "/dashboard" }); }}>
+                      <CheckCircle className="h-4 w-4 shrink-0" />
+                      Finalizados
+                    </button>
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-[9px] font-bold text-[#718096] uppercase tracking-widest px-3 mb-2">Análises</p>
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
+                      onClick={() => { setIsMenuOpen(false); router.navigate({ to: "/reports" }); }}>
+                      <BarChart2 className="h-4 w-4 shrink-0" />
+                      Relatórios
+                    </button>
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-[9px] font-bold text-[#718096] uppercase tracking-widest px-3 mb-2">Sistema</p>
+                    {currentProfile?.role === "admin" && (
+                      <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
+                        onClick={() => { setIsMenuOpen(false); router.navigate({ to: "/gestores" }); }}>
+                        <Users className="h-4 w-4 shrink-0" />
+                        Gestores
+                      </button>
+                    )}
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#2F6FED]/10 border border-[#2F6FED]/30 text-[#2F6FED] text-sm font-semibold cursor-default">
+                      <Settings className="h-4 w-4 shrink-0" />
+                      Minha Conta
+                    </button>
+                  </div>
+                  <div className="h-px bg-[#26364D]/60 mx-1" />
+                  <button onClick={() => { setIsMenuOpen(false); handleLogout(); }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#718096] hover:text-red-400 hover:bg-red-500/10 text-sm font-medium transition-all duration-150 cursor-pointer">
+                    <LogOut className="h-4 w-4 shrink-0" />
+                    Sair
+                  </button>
+                </nav>
+                <div className="px-5 py-4 border-t border-[#26364D]/60">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-[#162235] border border-[#26364D] flex items-center justify-center shrink-0">
+                      <User className="h-3.5 w-3.5 text-[#718096]" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold text-[#AAB5C5]">{currentProfile?.role === "admin" ? "Administrador" : "Gestor"}</p>
+                      <p className="text-[9px] text-[#718096] truncate">{session?.user?.email}</p>
+                    </div>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2F6FED] to-[#1a4fd4] flex items-center justify-center shadow-lg shadow-blue-600/20">
+              <span className="text-sm font-bold text-white">$</span>
+            </div>
+            <h1 className="text-sm sm:text-base font-bold text-[#F3F6FA] tracking-tight whitespace-nowrap">
+              Minha Conta
+            </h1>
+          </div>
+        </div>
+      </header>
+
+      {/* ── Main ─────────────────────────────────────────── */}
       <div className="max-w-2xl mx-auto px-4 py-8 pb-10">
         {/* Cabeçalho */}
         <div className="mb-8">
@@ -188,7 +335,7 @@ export default function MinhaContaPage() {
                 <label className="text-sm font-medium text-[#AAB5C5]">Subtítulo</label>
                 <input
                   type="text"
-                  defaultValue={systemSubtitle}
+                  defaultValue="Sistema financeiro"
                   className="w-full rounded-lg border px-3.5 py-2.5 text-sm text-[#F3F6FA] shadow-sm transition-colors placeholder:text-[#718096] focus:outline-none focus:ring-2"
                   style={{
                     backgroundColor: "#101A2B",
@@ -252,7 +399,7 @@ export default function MinhaContaPage() {
                 </div>
                 <div>
                   <p className="text-sm font-bold text-[#F3F6FA]">{systemName}</p>
-                  <p className="text-[11px] text-[#718096]">{systemSubtitle}</p>
+                  <p className="text-[11px] text-[#718096]">Sistema financeiro</p>
                 </div>
               </div>
             </div>
