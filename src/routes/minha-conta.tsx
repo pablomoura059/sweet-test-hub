@@ -27,6 +27,18 @@ export default function MinhaContaPage() {
   const [phone, setPhone] = useState("");
   const [birthDate, setBirthDate] = useState("");
 
+  // Máscara brasileira de telefone
+  const formatPhone = (value: string): string => {
+    const digits = value.replace(/\D/g, "").slice(0, 11);
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPhone(formatPhone(e.target.value));
+  };
+
   // Estados dos campos de configuração
   const [systemName, setSystemName] = useState("");
   const [systemSubtitle, setSystemSubtitle] = useState("Sistema financeiro");
@@ -47,7 +59,7 @@ export default function MinhaContaPage() {
       if (!session?.user.id) return null;
       const { data } = await supabase
         .from("profiles")
-        .select("role, first_name, last_name")
+        .select("role, first_name, last_name, phone, birth_date")
         .eq("id", session.user.id)
         .single();
       return data;
@@ -68,7 +80,7 @@ export default function MinhaContaPage() {
     return age > 0 ? age : 0;
   };
 
-  // Inicializar campos de perfil a partir do banco
+  // Inicializar campos de perfil a partir do banco (profiles)
   useEffect(() => {
     const profileFirst = currentProfile?.first_name;
     const profileLast = currentProfile?.last_name;
@@ -90,6 +102,9 @@ export default function MinhaContaPage() {
       const parts = metaName.split(" ");
       setLastName(parts.slice(1).join(" ") || "");
     }
+    // Telefone e data de nascimento vindos de public.profiles
+    if (currentProfile?.phone) setPhone(currentProfile.phone);
+    if (currentProfile?.birth_date) setBirthDate(currentProfile.birth_date);
   }, [currentProfile, session]);
 
   // Buscar configurações do usuário
@@ -114,8 +129,6 @@ export default function MinhaContaPage() {
       setSystemSubtitle(userSettings.system_subtitle || "Sistema financeiro");
       setTheme(userSettings.theme || "dark");
       setPrimaryColor(colorNameToHex(userSettings.primary_color) || "#2F6FED");
-      if (userSettings.phone) setPhone(userSettings.phone);
-      if (userSettings.birth_date) setBirthDate(userSettings.birth_date);
     }
   }, [userSettings]);
 
@@ -169,9 +182,9 @@ export default function MinhaContaPage() {
       if (!session?.user.id) throw new Error("Usuário não autenticado");
 
       const colorValue = hexToColorName(primaryColor);
-      console.log("[MinhaConta] Salvando primary_color:", colorValue, "(hex:", primaryColor + ")");
 
-      const { data, error } = await supabase
+      // Salvar configurações de sistema em user_settings
+      const { error: settingsError } = await supabase
         .from("user_settings")
         .upsert(
           {
@@ -180,26 +193,36 @@ export default function MinhaContaPage() {
             system_subtitle: systemSubtitle,
             theme,
             primary_color: colorValue,
-            phone: phone || null,
-            birth_date: birthDate || null,
           },
           { onConflict: "user_id" }
         )
         .select("primary_color")
         .single();
 
-      if (error) {
-        console.error("[MinhaConta] Erro ao salvar settings:", error);
-        throw error;
+      if (settingsError) {
+        console.error("[MinhaConta] Erro ao salvar settings:", settingsError);
+        throw settingsError;
       }
 
-      console.log("[MinhaConta] Resposta do banco primary_color:", data?.primary_color);
-      return data;
+      // Salvar telefone e data de nascimento em public.profiles
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          phone: phone || null,
+          birth_date: birthDate || null,
+        })
+        .eq("id", session.user.id);
+
+      if (profileError) {
+        console.error("[MinhaConta] Erro ao salvar perfil:", profileError);
+        throw profileError;
+      }
     },
     onSuccess: () => {
       toast.success("Configurações salvas com sucesso!");
       queryClient.resetQueries({ queryKey: ["user-settings", session?.user.id] });
       queryClient.refetchQueries({ queryKey: ["user-settings", session?.user.id] });
+      queryClient.invalidateQueries({ queryKey: ["current-profile", session?.user.id] });
     },
     onError: (err: Error) => {
       toast.error(`Erro ao salvar: ${err.message}`);
@@ -410,9 +433,9 @@ export default function MinhaContaPage() {
                 <input
                   type="tel"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-colors placeholder:text-[#718096] focus:outline-none"
-                  style={{ backgroundColor: "#101A2B", borderColor: "#26364D", color: "#F3F6FA" }}
+                  onChange={handlePhoneChange}
+                  className="w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-colors placeholder:text-[#718096] focus:outline-none focus:ring-2"
+                  style={{ backgroundColor: "#101A2B", borderColor: "#26364D", color: "#F3F6FA", outlineColor: "var(--color-primary)" }}
                   placeholder="(00) 00000-0000"
                 />
               </div>
