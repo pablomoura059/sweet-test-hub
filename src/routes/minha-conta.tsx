@@ -46,6 +46,53 @@ export default function MinhaContaPage() {
   };
 
   // Upload de logo do sistema
+  // Comprimir imagem no navegador antes do upload
+  const compressImage = (file: File): Promise<Blob> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const maxSize = 1024;
+          let { width, height } = img;
+          if (width > maxSize || height > maxSize) {
+            if (width > height) {
+              height = Math.round((height * maxSize) / width);
+              width = maxSize;
+            } else {
+              width = Math.round((width * maxSize) / height);
+              height = maxSize;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          const tryCompress = (quality: number) => {
+            canvas.toBlob(
+              (blob) => {
+                if (blob && blob.size <= 1024 * 1024) {
+                  resolve(blob);
+                } else if (quality > 0.3) {
+                  tryCompress(quality - 0.15);
+                } else {
+                  resolve(blob || new Blob([], { type: "image/jpeg" }));
+                }
+              },
+              "image/jpeg",
+              quality
+            );
+          };
+          tryCompress(0.8);
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(e.target?.result);
+    });
+  };
+
   const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !session?.user.id) return;
@@ -57,25 +104,27 @@ export default function MinhaContaPage() {
       return;
     }
 
-    // Validar tamanho (2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Arquivo muito grande. O limite é 2MB.");
-      return;
-    }
-
     setIsUploadingLogo(true);
 
     try {
+      // Comprimir imagem se >1MB (2MB de referência para arquivo original)
+      let fileToUpload: File = file;
+      if (file.size > 1024 * 1024) {
+        const compressedBlob = await compressImage(file);
+        fileToUpload = new File([compressedBlob], file.name.replace(/\.[^.]+$/, ".jpg"), {
+          type: "image/jpeg",
+        });
+      }
+
       // Gerar preview local
-      const previewUrl = URL.createObjectURL(file);
+      const previewUrl = URL.createObjectURL(fileToUpload);
       setLogoPreview(previewUrl);
 
       // Upload para storage
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${session.user.id}/logo.${fileExt}`;
+      const fileName = `${session.user.id}/logo.jpg`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from("system-logos")
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, fileToUpload, { upsert: true });
 
       if (uploadError) {
         toast.error("Erro ao fazer upload da logo.");
