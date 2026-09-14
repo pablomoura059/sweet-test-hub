@@ -236,7 +236,7 @@ export default function MinhaContaPage() {
               <SheetContent side="left" className="bg-[#101A2B] border-[#26364D] w-[300px] p-0 flex flex-col">
                 <div className="px-5 pt-6 pb-5 border-b border-[#26364D]/60">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#2F6FED] to-[#1a4fd4] flex items-center justify-center shadow-lg shadow-blue-600/20 shrink-0">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shrink-0" style={{ background: `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))`, boxShadow: `0 8px 24px color-mix(in srgb, var(--color-primary) 25%, transparent)` }}>
                       <span className="text-base font-bold text-white">$</span>
                     </div>
                     <div>
@@ -291,7 +291,7 @@ export default function MinhaContaPage() {
                         Gestores
                       </button>
                     )}
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#2F6FED]/10 border border-[#2F6FED]/30 text-[#2F6FED] text-sm font-semibold cursor-default">
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold cursor-default" style={{ backgroundColor: "color-mix(in srgb, var(--color-primary) 10%, transparent)", borderColor: "color-mix(in srgb, var(--color-primary) 30%, transparent)", color: "var(--color-primary)" }}>
                       <Settings className="h-4 w-4 shrink-0" />
                       Minha Conta
                     </button>
@@ -317,7 +317,7 @@ export default function MinhaContaPage() {
               </SheetContent>
             </Sheet>
 
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2F6FED] to-[#1a4fd4] flex items-center justify-center shadow-lg shadow-blue-600/20">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg" style={{ background: `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))`, boxShadow: `0 8px 24px color-mix(in srgb, var(--color-primary) 25%, transparent)` }}>
               <span className="text-sm font-bold text-white">$</span>
             </div>
             <h1 className="text-sm sm:text-base font-bold text-[#F3F6FA] tracking-tight whitespace-nowrap">

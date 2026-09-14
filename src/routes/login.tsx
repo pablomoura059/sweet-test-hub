@@ -168,7 +168,7 @@ function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo e Título */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 mb-4 shadow-lg shadow-blue-600/30">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 shadow-lg" style={{ background: `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))`, boxShadow: `0 8px 32px color-mix(in srgb, var(--color-primary) 35%, transparent)` }}>
             <span className="text-2xl font-bold text-white">$</span>
           </div>
           <h1 className="text-2xl font-bold text-white mb-1">Empréstimos</h1>
@@ -204,7 +204,7 @@ function LoginPage() {
                     placeholder="seu@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10 bg-slate-900/50 border-slate-600 text-white placeholder:text-slate-500 focus:border-blue-500 focus:ring-blue-500"
+                    className="pl-10 bg-slate-900/50 border-slate-600 text-white placeholder:text-slate-500 focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]"
                     required
                     autoComplete="email"
                   />
@@ -243,7 +243,7 @@ function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 transition-colors disabled:opacity-50"
+                className="w-full text-white font-medium py-2.5 transition-colors disabled:opacity-50" style={{ background: `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))` }}
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -263,7 +263,7 @@ function LoginPage() {
                 <button
                   type="button"
                   onClick={handleForgotPassword}
-                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                  className="text-sm transition-colors" style={{ color: "var(--color-primary)" }}
                 >
                   Esqueceu sua senha?
                 </button>
@@ -277,7 +277,7 @@ function LoginPage() {
               <button
                 type="button"
                 onClick={() => router.navigate({ to: "/signup" })}
-                className="text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+                className="font-semibold transition-colors" style={{ color: "var(--color-primary)" }}
               >
                 Criar conta
               </button>
@@ -326,7 +326,7 @@ function LoginPage() {
                   </Button>
                   <Button
                     type="submit"
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                    className="flex-1 text-white" style={{ background: "var(--color-primary)" }}
                     disabled={isRecoveryLoading}
                   >
                     {isRecoveryLoading ? "Enviando..." : "Enviar link"}
