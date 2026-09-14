@@ -65,7 +65,6 @@ const formatDateBR = (date: string | null | undefined) => {
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
-// Usa getPublicUrl do client real do Supabase
 const getPhotoUrl = (photoPath: string | null | undefined): string | null => {
   if (!photoPath) return null;
   if (photoPath.startsWith('data:')) return photoPath;
@@ -75,8 +74,6 @@ const getPhotoUrl = (photoPath: string | null | undefined): string | null => {
   const { data } = supabase.storage
     .from('person-photos')
     .getPublicUrl(photoPath);
-
-  console.log("[getPhotoUrl] photoPath:", photoPath, "→ publicUrl:", data.publicUrl);
 
   return data.publicUrl;
 };
@@ -157,6 +154,20 @@ function PeoplePage() {
     queryFn: async () => { const { data: { session } } = await supabase.auth.getSession(); return session; },
   });
 
+  const { data: userSettings } = useQuery({
+    queryKey: ["user-settings", session?.user.id],
+    queryFn: async () => {
+      if (!session?.user.id) return null;
+      const { data } = await supabase
+        .from("user_settings")
+        .select("primary_color")
+        .eq("user_id", session.user.id)
+        .single();
+      return data;
+    },
+    enabled: !!session?.user.id,
+  });
+
   const { data: people, isLoading } = useQuery({
     queryKey: ["people", session?.user.id],
     queryFn: async () => {
@@ -182,12 +193,6 @@ function PeoplePage() {
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const path = `${userId}/${personId}.${ext}`;
 
-    console.log("[uploadPhoto] PHOTO_FILE_EXISTS:", !!file);
-    console.log("[uploadPhoto] PHOTO_FILE_IS_FILE:", file instanceof File);
-    console.log("[uploadPhoto] PHOTO_FILE_NAME:", file.name);
-    console.log("[uploadPhoto] PHOTO_FILE_SIZE:", file.size);
-    console.log("[uploadPhoto] PHOTO_FILE_TYPE:", file.type);
-
     if (file.size > 5 * 1024 * 1024) {
       throw new Error("A foto deve ter no máximo 5 MB");
     }
@@ -196,27 +201,18 @@ function PeoplePage() {
     }
 
     const { data, error } = await supabase.storage.from("person-photos").upload(path, file, { upsert: false });
-
-    console.log("[uploadPhoto] UPLOAD_DATA:", JSON.stringify(data));
-    console.log("[uploadPhoto] UPLOAD_ERROR:", error ? error.message : null);
-    console.log("[uploadPhoto] UPLOAD_RESULT:", JSON.stringify({ data, error }));
-
     if (error) {
       throw new Error("Erro ao enviar foto: " + error.message);
     }
-
     if (!data?.path) {
       throw new Error("Upload não retornou confirmação. Tente novamente.");
     }
-
-    console.log("[uploadPhoto] UPLOAD_PATH:", data.path);
 
     const { error: downloadError } = await supabase.storage.from("person-photos").download(data.path);
     if (downloadError) {
       throw new Error("Arquivo enviado mas não pôde ser verificado. Tente novamente.");
     }
 
-    console.log("[uploadPhoto] VERIFICACAO_OK:", data.path);
     return data.path;
   };
 
@@ -224,12 +220,7 @@ function PeoplePage() {
     mutationFn: async ({ photoFile }: { photoFile: File | null }) => {
       if (!session?.user.id) throw new Error("Não autenticado");
 
-      console.log("[createMutation] PHOTO_FILE_EXISTS:", !!photoFile);
-      console.log("[createMutation] PHOTO_FILE_TYPE:", photoFile ? photoFile.constructor.name : 'null');
-      console.log("[createMutation] PHOTO_FILE_SIZE:", photoFile ? photoFile.size : 0);
-
       if (photoFile !== null && !(photoFile instanceof File)) {
-        console.error("[createMutation] photoFile não é File:", photoFile);
         throw new Error("Arquivo de foto inválido");
       }
 
@@ -245,36 +236,26 @@ function PeoplePage() {
       if (error) throw error;
       if (!data) throw new Error("Erro ao criar pessoa — retorno vazio");
 
-      console.log("[createMutation] PESSOA_CRIADA_ID:", data.id);
-
       if (photoFile) {
         const photoPath = await uploadPhoto(session.user.id, data.id, photoFile);
-
         const { error: updateError } = await supabase
           .from("people")
           .update({ photo_url: photoPath })
           .eq("id", data.id);
-
         if (updateError) {
-          console.error("[createMutation] PHOTO_URL_UPDATE_ERROR:", updateError);
           throw new Error("Erro ao salvar foto: " + updateError.message);
         }
-
-        console.log("[createMutation] FOTO_ATUALIZADA_COM_SUCESSO:", photoPath);
       }
 
       return data;
     },
     onSuccess: () => {
       toast.success("Pessoa cadastrada com sucesso!", {
-        className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium !rounded-xl",
+        className: "!bg-[#101A2B] !border-[var(--color-primary)]/30 !text-[#F3F6FA] !font-medium !rounded-xl",
       });
       queryClient.invalidateQueries({ queryKey: ["people"] });
     },
     onError: (err: Error) => {
-      console.error("[createMutation.onError] Erro completo:", err);
-      console.error("[createMutation.onError] message:", err?.message);
-      console.error("[createMutation.onError] stack:", err?.stack);
       toast.error(err?.message || "Erro ao cadastrar pessoa", {
         className: "!bg-red-900/50 !border-red-500/30 !text-red-200 !font-medium !rounded-xl",
       });
@@ -285,13 +266,9 @@ function PeoplePage() {
     mutationFn: async ({ id, photoFile }: { id: string; photoFile: File | null }) => {
       if (!session?.user.id) throw new Error("Não autenticado");
 
-      console.log("[updateMutation] PHOTO_FILE_EXISTS:", !!photoFile);
-      console.log("[updateMutation] PHOTO_FILE_TYPE:", photoFile ? photoFile.constructor.name : 'null');
-
       let photoUrl: string | null = editPerson?.photo_url || null;
 
       if (photoFile !== null && !(photoFile instanceof File)) {
-        console.error("[updateMutation] photoFile não é File:", photoFile);
         throw new Error("Arquivo de foto inválido");
       }
 
@@ -309,15 +286,12 @@ function PeoplePage() {
       }).eq("id", id);
 
       if (error) {
-        console.error("[updateMutation] PHOTO_URL_UPDATE_ERROR:", error);
         throw new Error("Erro ao salvar foto: " + error.message);
       }
-
-      console.log("[updateMutation] FOTO_ATUALIZADA_COM_SUCESSO:", photoUrl);
     },
     onSuccess: () => {
       toast.success("Pessoa atualizada com sucesso!", {
-        className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium !rounded-xl",
+        className: "!bg-[#101A2B] !border-[var(--color-primary)]/30 !text-[#F3F6FA] !font-medium !rounded-xl",
       });
       queryClient.invalidateQueries({ queryKey: ["people"] });
     },
@@ -395,9 +369,6 @@ function PeoplePage() {
     if (!formName.trim()) { toast.error("Informe o nome da pessoa"); return; }
 
     const fileToUpload = photoFileRef.current;
-    console.log("[handleSubmit] photoFileRef.current:", fileToUpload);
-    console.log("[handleSubmit] PHOTO_FILE_TYPE:", fileToUpload ? fileToUpload.constructor.name : 'null');
-    console.log("[handleSubmit] PHOTO_FILE_SIZE:", fileToUpload ? fileToUpload.size : 0);
 
     try {
       if (editPerson) {
@@ -433,7 +404,8 @@ function PeoplePage() {
               className="text-[#718096] hover:text-[#F3F6FA] hover:bg-[#162235] transition-colors">
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2F6FED] to-[#1a4fd4] flex items-center justify-center shadow-lg shadow-blue-600/20">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg"
+              style={{ background: `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))` }}>
               <Users className="h-4 w-4 text-white" />
             </div>
             <div>
@@ -444,7 +416,8 @@ function PeoplePage() {
             </div>
           </div>
           <Button onClick={openCreate} size="sm"
-            className="bg-gradient-to-r from-[#2F6FED] to-[#1a4fd4] hover:from-[#3d7ef5] hover:to-[#2a5ee0] text-white shadow-lg shadow-blue-600/20 font-semibold transition-all duration-200 active:scale-95">
+            className="bg-gradient-to-r text-white shadow-lg font-semibold transition-all duration-200 active:scale-95"
+            style={{ background: `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))`, boxShadow: `0 4px 14px var(--color-primary)40` }}>
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Nova Pessoa</span>
             <span className="sm:hidden">Nova</span>
@@ -457,7 +430,8 @@ function PeoplePage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#718096]" />
           <Input type="text" placeholder="Buscar por nome ou telefone..."
             value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50 text-sm h-10" />
+            className="pl-9 bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] text-sm h-10"
+            style={{ borderColor: "#26364D" }} />
         </div>
 
         {isLoading ? (
@@ -480,8 +454,8 @@ function PeoplePage() {
           <div className="space-y-2">
             {filtered.map((person, idx) => (
               <Card key={person.id}
-                className="bg-[#162235] border-[#26364D] hover:border-[#2F6FED]/40 transition-all duration-200 cursor-pointer animate-fade-in-up group"
-                style={{ animationDelay: `${idx * 40}ms`, animationFillMode: "both" }}
+                className="bg-[#162235] border-[#26364D] transition-all duration-200 cursor-pointer animate-fade-in-up group"
+                style={{ animationDelay: `${idx * 40}ms`, animationFillMode: "both", borderColor: "#26364D" }}
                 onClick={() => setViewPerson(person)}>
                 <CardContent className="p-3 sm:p-4 flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
@@ -506,7 +480,7 @@ function PeoplePage() {
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-[#718096] group-hover:text-[#2F6FED] transition-colors" />
+                    <ChevronRight className="h-4 w-4 text-[#718096] transition-colors" />
                   </div>
                 </CardContent>
               </Card>
@@ -543,7 +517,8 @@ function PeoplePage() {
               <div className="relative">
                 <PersonAvatar photoUrl={photoPreview} name={formName || "Pessoa"} size="xl" />
                 <button type="button" onClick={() => fileInputRef.current?.click()}
-                  className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#2F6FED] border-2 border-[#101A2B] flex items-center justify-center hover:bg-[#3d7ef5] transition-colors">
+                  className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full border-2 border-[#101A2B] flex items-center justify-center transition-colors"
+                  style={{ backgroundColor: "var(--color-primary)" }}>
                   <Camera className="h-3.5 w-3.5 text-white" />
                 </button>
               </div>
@@ -555,29 +530,32 @@ function PeoplePage() {
               <Label htmlFor="person-name" className="text-xs font-semibold text-[#AAB5C5]">Nome completo *</Label>
               <Input id="person-name" value={formName} onChange={(e) => setFormName(e.target.value)}
                 placeholder="Nome da pessoa"
-                className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50"
-                autoFocus required />
+                className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096]"
+                style={{ borderColor: "#26364D" }} autoFocus required />
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="person-phone" className="text-xs font-semibold text-[#AAB5C5]">Telefone</Label>
               <Input id="person-phone" type="tel" value={formPhone} onChange={handlePhoneChange}
                 placeholder="(00) 00000-0000"
-                className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50" />
+                className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096]"
+                style={{ borderColor: "#26364D" }} />
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="person-birth" className="text-xs font-semibold text-[#AAB5C5]">Data de nascimento</Label>
               <Input id="person-birth" type="date" value={formBirthDate} onChange={(e) => setFormBirthDate(e.target.value)}
-                className="bg-[#162235] border-[#26364D] text-[#F3F6FA] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50 [&::-webkit-calendar-picker-indicator]:invert-50" />
+                className="bg-[#162235] border-[#26364D] text-[#F3F6FA] [&::-webkit-calendar-picker-indicator]:invert-50"
+                style={{ borderColor: "#26364D" }} />
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="person-notes" className="text-xs font-semibold text-[#AAB5C5]">Observações</Label>
               <Textarea id="person-notes" value={formNotes} onChange={(e) => setFormNotes(e.target.value)}
                 placeholder="Observações opcionais..."
-                className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] resize-none focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50"
-                rows={3} />
+                className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] resize-none"
+                rows={3}
+                style={{ borderColor: "#26364D" }} />
             </div>
 
             <div className="flex gap-3 pt-1">
@@ -585,7 +563,8 @@ function PeoplePage() {
                 className="flex-1 border-[#26364D] text-[#AAB5C5] hover:bg-[#162235] hover:text-[#F3F6FA] transition-colors"
                 disabled={isPending}>Cancelar</Button>
               <Button type="submit"
-                className="flex-1 bg-gradient-to-r from-[#2F6FED] to-[#1a4fd4] hover:from-[#3d7ef5] hover:to-[#2a5ee0] text-white font-semibold transition-all active:scale-95"
+                className="flex-1 text-white font-semibold transition-all active:scale-95"
+                style={{ background: `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))`, boxShadow: `0 4px 14px var(--color-primary)40` }}
                 disabled={isPending}>
                 {isPending ? "Salvando..." : editPerson ? <><Check className="h-4 w-4 mr-1" /> Salvar</> : <><Plus className="h-4 w-4 mr-1" /> Cadastrar</>}
               </Button>
@@ -619,8 +598,9 @@ function PeoplePage() {
                 <div className="space-y-2">
                   {viewPerson.phone && (
                     <div className="flex items-center gap-3 p-3 rounded-xl bg-[#162235] border border-[#26364D]">
-                      <div className="w-8 h-8 rounded-lg bg-[#2F6FED]/10 flex items-center justify-center shrink-0">
-                        <Phone className="h-4 w-4 text-[#2F6FED]" />
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: "color-mix(in srgb, var(--color-primary) 10%, transparent)" }}>
+                        <Phone className="h-4 w-4" style={{ color: "var(--color-primary)" }} />
                       </div>
                       <div>
                         <p className="text-[10px] font-semibold text-[#718096] uppercase tracking-wider">Telefone</p>
@@ -630,8 +610,9 @@ function PeoplePage() {
                   )}
                   {viewPerson.birth_date && (
                     <div className="flex items-center gap-3 p-3 rounded-xl bg-[#162235] border border-[#26364D]">
-                      <div className="w-8 h-8 rounded-lg bg-[#2F6FED]/10 flex items-center justify-center shrink-0">
-                        <Calendar className="h-4 w-4 text-[#2F6FED]" />
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: "color-mix(in srgb, var(--color-primary) 10%, transparent)" }}>
+                        <Calendar className="h-4 w-4" style={{ color: "var(--color-primary)" }} />
                       </div>
                       <div>
                         <p className="text-[10px] font-semibold text-[#718096] uppercase tracking-wider">Nascimento</p>
@@ -642,8 +623,9 @@ function PeoplePage() {
                   {viewPerson.notes && (
                     <div className="p-3 rounded-xl bg-[#162235] border border-[#26364D]">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="w-8 h-8 rounded-lg bg-[#2F6FED]/10 flex items-center justify-center shrink-0">
-                          <FileText className="h-4 w-4 text-[#2F6FED]" />
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                          style={{ backgroundColor: "color-mix(in srgb, var(--color-primary) 10%, transparent)" }}>
+                          <FileText className="h-4 w-4" style={{ color: "var(--color-primary)" }} />
                         </div>
                         <p className="text-[10px] font-semibold text-[#718096] uppercase tracking-wider">Observações</p>
                       </div>
