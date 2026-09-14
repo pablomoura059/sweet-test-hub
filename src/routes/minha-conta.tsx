@@ -55,13 +55,25 @@ export default function MinhaContaPage() {
 
   // Inicializar campos de perfil a partir do banco
   useEffect(() => {
-    if (currentProfile) {
-      setFirstName(currentProfile.first_name || session?.user?.user_metadata?.first_name || "");
-      setLastName(currentProfile.last_name || session?.user?.user_metadata?.last_name || "");
-    } else if (session?.user) {
-      // Fallback caso currentProfile ainda não tenha carregado
-      setFirstName(session.user.user_metadata?.first_name || "");
-      setLastName(session.user.user_metadata?.last_name || "");
+    const profileFirst = currentProfile?.first_name;
+    const profileLast = currentProfile?.last_name;
+    const metaFirst = session?.user?.user_metadata?.first_name;
+    const metaLast = session?.user?.user_metadata?.last_name;
+    const metaName = session?.user?.user_metadata?.name;
+    if (profileFirst !== undefined && profileFirst !== null && profileFirst !== "") {
+      setFirstName(profileFirst);
+    } else if (metaFirst) {
+      setFirstName(metaFirst);
+    } else if (metaName) {
+      setFirstName(metaName.split(" ")[0] || "");
+    }
+    if (profileLast !== undefined && profileLast !== null && profileLast !== "") {
+      setLastName(profileLast);
+    } else if (metaLast) {
+      setLastName(metaLast);
+    } else if (metaName) {
+      const parts = metaName.split(" ");
+      setLastName(parts.slice(1).join(" ") || "");
     }
   }, [currentProfile, session]);
 
