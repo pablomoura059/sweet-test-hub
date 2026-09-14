@@ -55,118 +55,22 @@ export default function MinhaContaPage() {
   });
 
   // ── Upload de logo do sistema ─────────────────────────────────────────
-  // Comprimir imagem no navegador antes do upload
-  const compressImage = (file: File): Promise<Blob> => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          const maxSize = 1024;
-          let { width, height } = img;
-          if (width > maxSize || height > maxSize) {
-            if (width > height) {
-              height = Math.round((height * maxSize) / width);
-              width = maxSize;
-            } else {
-              width = Math.round((width * maxSize) / height);
-              height = maxSize;
-            }
-          }
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext("2d");
-          ctx?.drawImage(img, 0, 0, width, height);
-
-          const tryCompress = (quality: number) => {
-            canvas.toBlob(
-              (blob) => {
-                if (blob && blob.size <= 1024 * 1024) {
-                  resolve(blob);
-                } else if (quality > 0.3) {
-                  tryCompress(quality - 0.15);
-                } else {
-                  resolve(blob || new Blob([], { type: "image/jpeg" }));
-                }
-              },
-              "image/jpeg",
-              quality
-            );
-          };
-          tryCompress(0.8);
-        };
-        img.src = e.target?.result as string;
-      };
-      reader.readAsDataURL(e.target?.result);
-    });
-  };
-
-  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !session?.user.id) return;
+    if (!file) return;
 
-    // Validar tipo
-    const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
+    const allowedTypes = ["image/jpeg", "image/png"];
     if (!allowedTypes.includes(file.type)) {
-      toast.error("Formato não suportado. Use JPG ou PNG.");
+      toast.error("Use apenas JPG ou PNG");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("A logo deve ter no máximo 5 MB");
       return;
     }
 
-    setIsUploadingLogo(true);
-
-    try {
-      // Comprimir imagem se >1MB (2MB de referência para arquivo original)
-      let fileToUpload: File = file;
-      if (file.size > 1024 * 1024) {
-        const compressedBlob = await compressImage(file);
-        fileToUpload = new File([compressedBlob], file.name.replace(/\.[^.]+$/, ".jpg"), {
-          type: "image/jpeg",
-        });
-      }
-
-      // Gerar preview local
-      const previewUrl = URL.createObjectURL(fileToUpload);
-      setLogoPreview(previewUrl);
-
-      // Upload para storage
-      const fileName = `${session.user.id}/logo.jpg`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("system-logos")
-        .upload(fileName, fileToUpload, { upsert: true });
-
-      if (uploadError) {
-        console.error("[handleLogoChange] Erro no Supabase Storage:", {
-          message: uploadError.message,
-          status: uploadError.status,
-          error: uploadError,
-        });
-        toast.error(`Erro ao fazer upload da logo: ${uploadError.message}`);
-        setLogoPreview("");
-        setIsUploadingLogo(false);
-        return;
-      }
-
-      // Obter URL pública
-      const { data: publicUrlData } = supabase.storage
-        .from("system-logos")
-        .getPublicUrl(fileName);
-
-      if (publicUrlData?.publicUrl) {
-        setLogoUrl(publicUrlData.publicUrl);
-        toast.success("Logo carregada com sucesso!");
-      }
-    } catch (err) {
-      console.error("Erro no upload:", err);
-      toast.error("Erro ao carregar a logo.");
-      setLogoPreview("");
-    } finally {
-      setIsUploadingLogo(false);
-    }
-  };
-
-  const openLogoInput = () => {
-    logoInputRef.current?.click();
+    setLogoPreview(URL.createObjectURL(file));
+    setLogoUrl(URL.createObjectURL(file));
   };
 
   // Estados dos campos de configuração
