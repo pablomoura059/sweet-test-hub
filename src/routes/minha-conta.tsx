@@ -46,7 +46,7 @@ export default function MinhaContaPage() {
   };
 
   // ── Upload de logo do sistema ─────────────────────────────────────────
-  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -60,8 +60,46 @@ export default function MinhaContaPage() {
       return;
     }
 
+    if (!session?.user.id) {
+      toast.error("Usuário não autenticado");
+      return;
+    }
+
+    // Preview temporário com blob URL
     const blobUrl = URL.createObjectURL(file);
     setLogoPreview(blobUrl);
+    setIsUploadingLogo(true);
+
+    try {
+      const fileExt = file.type === "image/png" ? "png" : "jpg";
+      const filePath = `${session.user.id}/logo.${fileExt}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("system-logos")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) {
+        console.error("[Logo] Erro no upload:", uploadError);
+        toast.error("Erro ao fazer upload da logo");
+        return;
+      }
+
+      // Salvar caminho real no estado (não blob)
+      setLogoDbPath(filePath);
+
+      // Preview com URL pública real
+      const { data: urlData } = supabase.storage
+        .from("system-logos")
+        .getPublicUrl(filePath);
+      setLogoPreview(urlData.publicUrl);
+
+      toast.success("Logo carregada com sucesso!");
+    } catch (err) {
+      console.error("[Logo] Erro:", err);
+      toast.error("Erro ao fazer upload da logo");
+    } finally {
+      setIsUploadingLogo(false);
+    }
   };
 
   const openLogoInput = () => {
