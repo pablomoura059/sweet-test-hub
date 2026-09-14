@@ -865,13 +865,16 @@ function DashboardPage() {
                     </div>
                     <div>
                       <div className="text-sm font-bold text-[#F3F6FA] leading-tight">
-                        {currentProfile?.first_name && currentProfile?.last_name
-                          ? `${currentProfile.first_name} ${currentProfile.last_name} Empréstimos`
-                          : currentProfile?.first_name
-                          ? `${currentProfile.first_name} Empréstimos`
-                          : "Empréstimos"}
+                        {userSettings?.system_name ||
+                          (currentProfile?.first_name && currentProfile?.last_name
+                            ? `${currentProfile.first_name} ${currentProfile.last_name} Empréstimos`
+                            : currentProfile?.first_name
+                            ? `${currentProfile.first_name} Empréstimos`
+                            : "Empréstimos")}
                       </div>
-                      <div className="text-[11px] text-[#718096] font-normal mt-0.5">Sistema financeiro</div>
+                      <div className="text-[11px] text-[#718096] font-normal mt-0.5">
+                        {userSettings?.system_subtitle || "Sistema financeiro"}
+                      </div>
                     </div>
                   </div>
                 </div>
