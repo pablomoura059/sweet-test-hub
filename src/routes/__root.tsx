@@ -7,11 +7,12 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { Toaster } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 function NotFoundComponent() {
   return (
@@ -142,6 +143,48 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  const [primaryColor, setPrimaryColor] = useState("#2F6FED");
+
+  // Carregar cor primária do user_settings
+  useEffect(() => {
+    const loadPrimaryColor = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return;
+
+      const { data } = await supabase
+        .from("user_settings")
+        .select("primary_color")
+        .eq("user_id", session.user.id)
+        .single();
+
+      if (data?.primary_color) {
+        const colorMap: Record<string, string> = {
+          blue: "#2F6FED",
+          purple: "#8B5CF6",
+          green: "#10B981",
+          orange: "#F59E0B",
+          red: "#EF4444",
+          pink: "#EC4899",
+        };
+        const hex = colorMap[data.primary_color] || "#2F6FED";
+        setPrimaryColor(hex);
+        document.documentElement.style.setProperty("--color-primary", hex);
+      } else {
+        document.documentElement.style.setProperty("--color-primary", "#2F6FED");
+      }
+    };
+
+    loadPrimaryColor();
+
+    // Escutar mudanças de auth para recarregar cor
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      loadPrimaryColor();
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   // Proteção global: verificar profile em cada navegação
   useEffect(() => {
@@ -177,8 +220,10 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <div style={{ "--color-primary": primaryColor } as React.CSSProperties}>
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+      </div>
     </QueryClientProvider>
   );
 }
