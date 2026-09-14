@@ -45,7 +45,16 @@ export default function MinhaContaPage() {
     setPhone(formatPhone(e.target.value));
   };
 
-  // Upload de logo do sistema
+  // ── Sessão ──────────────────────────────────────────────────────────
+  const { data: session } = useQuery({
+    queryKey: ["auth-session"],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      return session;
+    },
+  });
+
+  // ── Upload de logo do sistema ─────────────────────────────────────────
   // Comprimir imagem no navegador antes do upload
   const compressImage = (file: File): Promise<Blob> => {
     return new Promise((resolve) => {
@@ -127,7 +136,12 @@ export default function MinhaContaPage() {
         .upload(fileName, fileToUpload, { upsert: true });
 
       if (uploadError) {
-        toast.error("Erro ao fazer upload da logo.");
+        console.error("[handleLogoChange] Erro no Supabase Storage:", {
+          message: uploadError.message,
+          status: uploadError.status,
+          error: uploadError,
+        });
+        toast.error(`Erro ao fazer upload da logo: ${uploadError.message}`);
         setLogoPreview("");
         setIsUploadingLogo(false);
         return;
