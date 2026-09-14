@@ -585,6 +585,20 @@ function DashboardPage() {
     enabled: !!session?.user.id,
   });
 
+  const { data: userSettings } = useQuery({
+    queryKey: ["user-settings", session?.user.id],
+    queryFn: async () => {
+      if (!session?.user.id) return null;
+      const { data } = await supabase
+        .from("user_settings")
+        .select("system_name, system_subtitle")
+        .eq("user_id", session.user.id)
+        .single();
+      return data;
+    },
+    enabled: !!session?.user.id,
+  });
+
   const { data: people } = useQuery({
     queryKey: ["people", session?.user.id],
     queryFn: async () => {
