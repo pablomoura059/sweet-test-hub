@@ -420,7 +420,7 @@ export default function MinhaContaPage() {
                   value={systemName}
                   onChange={(e) => setSystemName(e.target.value)}
                   className="w-full rounded-lg border px-3.5 py-2.5 text-sm text-[#F3F6FA] shadow-sm transition-colors placeholder:text-[#718096] focus:outline-none focus:ring-2"
-                  style={{ backgroundColor: "#101A2B", borderColor: "#26364D", color: "#F3F6FA" }}
+                  style={{ backgroundColor: "#101A2B", borderColor: "var(--color-primary)", color: "#F3F6FA", outlineColor: "var(--color-primary)" }}
                   placeholder="Nome do seu sistema"
                 />
               </div>
