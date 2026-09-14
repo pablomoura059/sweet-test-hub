@@ -60,6 +60,8 @@ export default function MinhaContaPage() {
       return;
     }
 
+    // Busca session dentro do handler para evitar race condition
+    const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user.id) {
       toast.error("Usuário não autenticado");
       return;
@@ -80,7 +82,7 @@ export default function MinhaContaPage() {
 
       if (uploadError) {
         console.error("[Logo] Erro no upload:", uploadError);
-        toast.error("Erro ao fazer upload da logo");
+        toast.error(`Erro ao fazer upload: ${uploadError.message}`);
         return;
       }
 
@@ -94,9 +96,10 @@ export default function MinhaContaPage() {
       setLogoPreview(urlData.publicUrl);
 
       toast.success("Logo carregada com sucesso!");
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("[Logo] Erro:", err);
-      toast.error("Erro ao fazer upload da logo");
+      const message = err instanceof Error ? err.message : "Erro desconhecido";
+      toast.error(`Erro ao fazer upload: ${message}`);
     } finally {
       setIsUploadingLogo(false);
     }
