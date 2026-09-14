@@ -138,7 +138,10 @@ export default function MinhaContaPage() {
     mutationFn: async () => {
       if (!session?.user.id) throw new Error("Usuário não autenticado");
 
-      const { error } = await supabase
+      const colorValue = hexToColorName(primaryColor);
+      console.log("[MinhaConta] Salvando primary_color:", colorValue, "(hex:", primaryColor + ")");
+
+      const { data, error } = await supabase
         .from("user_settings")
         .upsert(
           {
@@ -146,17 +149,26 @@ export default function MinhaContaPage() {
             system_name: systemName,
             system_subtitle: systemSubtitle,
             theme,
-            primary_color: hexToColorName(primaryColor),
-            updated_at: new Date().toISOString(),
+            primary_color: colorValue,
           },
           { onConflict: "user_id" }
-        );
+        )
+        .select("primary_color")
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("[MinhaConta] Erro ao salvar settings:", error);
+        throw error;
+      }
+
+      console.log("[MinhaConta] Resposta do banco primary_color:", data?.primary_color);
+      return data;
     },
     onSuccess: () => {
       toast.success("Configurações salvas com sucesso!");
+      // Invalida E refaz a query para garantir dado fresco do banco
       queryClient.invalidateQueries({ queryKey: ["user-settings", session?.user.id] });
+      queryClient.refetchQueries({ queryKey: ["user-settings", session?.user.id] });
     },
     onError: (err: Error) => {
       toast.error(`Erro ao salvar: ${err.message}`);
