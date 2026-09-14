@@ -45,15 +45,6 @@ export default function MinhaContaPage() {
     setPhone(formatPhone(e.target.value));
   };
 
-  // ── Sessão ──────────────────────────────────────────────────────────
-  const { data: session } = useQuery({
-    queryKey: ["auth-session"],
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      return session;
-    },
-  });
-
   // ── Upload de logo do sistema ─────────────────────────────────────────
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -71,6 +62,10 @@ export default function MinhaContaPage() {
 
     setLogoPreview(URL.createObjectURL(file));
     setLogoUrl(URL.createObjectURL(file));
+  };
+
+  const openLogoInput = () => {
+    logoInputRef.current?.click();
   };
 
   // Estados dos campos de configuração
@@ -572,7 +567,7 @@ export default function MinhaContaPage() {
                   />
 
                   <button
-                    onClick={openLogoInput}
+                    onClick={() => logoInputRef.current?.click()}
                     disabled={isUploadingLogo}
                     className="inline-flex items-center gap-1.5 rounded-lg border px-4 py-2 text-sm font-medium text-[#AAB5C5] shadow-sm transition-colors hover:bg-[#18263A] active:scale-95 disabled:opacity-50"
                     style={{ borderColor: "#26364D", backgroundColor: "#101A2B" }}
