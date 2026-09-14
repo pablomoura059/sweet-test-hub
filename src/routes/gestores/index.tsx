@@ -366,8 +366,8 @@ function GestoresPage() {
                       <span className="text-base font-bold text-white">$</span>
                     </div>
                     <div>
-                      <div className="text-sm font-bold text-[#F3F6FA] leading-tight">Empréstimos</div>
-                      <div className="text-[11px] text-[#718096] font-normal mt-0.5">Sistema financeiro</div>
+                      <div className="text-sm font-bold text-[#F3F6FA] leading-tight">{currentSettings?.system_name || 'Empréstimos'}</div>
+                      <div className="text-[11px] text-[#718096] font-normal mt-0.5">{currentSettings?.system_subtitle || 'Sistema financeiro'}</div>
                     </div>
                   </div>
                 </div>
