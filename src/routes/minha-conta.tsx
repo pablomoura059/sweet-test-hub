@@ -166,8 +166,8 @@ export default function MinhaContaPage() {
     },
     onSuccess: () => {
       toast.success("Configurações salvas com sucesso!");
-      // Invalida E refaz a query para garantir dado fresco do banco
-      queryClient.invalidateQueries({ queryKey: ["user-settings", session?.user.id] });
+      // Reset e refetch forçam reload síncrono do userSettings para atualizar o estado local
+      queryClient.resetQueries({ queryKey: ["user-settings", session?.user.id] });
       queryClient.refetchQueries({ queryKey: ["user-settings", session?.user.id] });
     },
     onError: (err: Error) => {
