@@ -132,7 +132,7 @@ function ActionButton({ status, onApprove, onDeny, onBlock, onReactivate, isPend
   );
 }
 
-export const Route = createFileRoute("/gestores")({
+export const Route = createFileRoute("/gestores/")({
   component: GestoresPage,
 });
 
