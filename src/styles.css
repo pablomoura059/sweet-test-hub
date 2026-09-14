@@ -10,7 +10,9 @@
   --color-card-foreground: #F3F6FA;
   --color-popover: #101A2B;
   --color-popover-foreground: #F3F6FA;
-  --color-primary: var(--color-primary, #2F6FED);
+  --color-primary: #2F6FED;
+  --color-primary-dark: #1a3a8f;
+  --color-primary-light: #5b8ff5;
   --color-primary-foreground: #ffffff;
   --color-secondary: #162235;
   --color-secondary-foreground: #AAB5C5;
@@ -22,7 +24,7 @@
   --color-destructive-foreground: #ffffff;
   --color-border: #26364D;
   --color-input: #26364D;
-  --color-ring: var(--color-primary, #2F6FED);
+  --color-ring: var(--color-primary);
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
@@ -56,7 +58,7 @@
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #2F6FED;
+    background: var(--color-primary);
   }
 }
 

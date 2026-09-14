@@ -160,17 +160,28 @@ function RootComponent() {
         .eq("user_id", session.user.id)
         .single();
 
-      const colorMap: Record<string, string> = {
-        blue: "#2F6FED",
-        purple: "#8B5CF6",
-        green: "#10B981",
-        orange: "#F59E0B",
-        red: "#EF4444",
-        pink: "#EC4899",
-      };
-      const hex = data?.primary_color ? (colorMap[data.primary_color] || "#2F6FED") : "#2F6FED";
-      setPrimaryColor(hex);
-      document.documentElement.style.setProperty("--color-primary", hex);
+        const colorMap: Record<string, string> = {
+    blue: "#2F6FED",
+    purple: "#7C3AED",
+    green: "#059669",
+    orange: "#D97706",
+    red: "#DC2626",
+    pink: "#DB2777",
+  };
+  const hex = data?.primary_color ? (colorMap[data.primary_color] || "#2F6FED") : "#2F6FED";
+  const darken = (h: string) => {
+    const r = parseInt(h.slice(1, 3), 16);
+    const g = parseInt(h.slice(3, 5), 16);
+    const b = parseInt(h.slice(5, 7), 16);
+    const blend = (v: number, t: number) => Math.round(v * (1 - t) + 0 * t);
+    const d = "#" + [r, g, b].map((v, i) => Math.max(0, [40, 20, 120][i])).map(v => Math.max(0, Math.round(v * 0.65)).toString(16).padStart(2, "0")).join("");
+    const lighter = "#" + [r, g, b].map(v => Math.min(255, Math.round(v * 1.25))).map(v => v.toString(16).padStart(2, "0")).join("");
+    setPrimaryColor(hex);
+    document.documentElement.style.setProperty("--color-primary", hex);
+    document.documentElement.style.setProperty("--color-primary-dark", d);
+    document.documentElement.style.setProperty("--color-primary-light", lighter);
+  };
+  darken(hex);
     };
 
     loadPrimaryColor();
@@ -184,9 +195,25 @@ function RootComponent() {
     };
   }, []);
 
-  // Atualizar --color-primary em document.documentElement sempre que primaryColor mudar
+  // Atualizar todas as variáveis de cor primária sempre que primaryColor mudar
   useEffect(() => {
-    document.documentElement.style.setProperty("--color-primary", primaryColor);
+    const colorMap: Record<string, string> = {
+      blue: "#2F6FED",
+      purple: "#7C3AED",
+      green: "#059669",
+      orange: "#D97706",
+      red: "#DC2626",
+      pink: "#DB2777",
+    };
+    const hex = colorMap[primaryColor] || primaryColor;
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    const dark = "#" + [40, 20, 120].map((v, i) => Math.round([r, g, b][i] * 0.65)).map(v => Math.max(0, v).toString(16).padStart(2, "0")).join("");
+    const light = "#" + [r, g, b].map(v => Math.min(255, Math.round(v * 1.25))).map(v => v.toString(16).padStart(2, "0")).join("");
+    document.documentElement.style.setProperty("--color-primary", hex);
+    document.documentElement.style.setProperty("--color-primary-dark", dark);
+    document.documentElement.style.setProperty("--color-primary-light", light);
   }, [primaryColor]);
 
   // Proteção global: verificar profile em cada navegação

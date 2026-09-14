@@ -591,7 +591,7 @@ function DashboardPage() {
       if (!session?.user.id) return null;
       const { data } = await supabase
         .from("user_settings")
-        .select("system_name, system_subtitle")
+        .select("system_name, system_subtitle, primary_color")
         .eq("user_id", session.user.id)
         .single();
       return data;
@@ -838,6 +838,18 @@ function DashboardPage() {
   const handlePersonCreated = (person: Person) => {
     setFormData({ ...formData, person_id: person.id, person_name: person.name });
   };
+
+  // Derivar primaryColor a partir de userSettings para consumo nos estilos inline
+  const primaryColor = userSettings?.primary_color || "blue";
+  const colorMap: Record<string, string> = {
+    blue: "#2F6FED", purple: "#7C3AED", green: "#059669", orange: "#D97706", red: "#DC2626", pink: "#DB2777",
+  };
+  const hex = colorMap[primaryColor] || "#2F6FED";
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const primaryDark = "#" + [40, 20, 120].map((v, i) => Math.round([r, g, b][i] * 0.65)).map(v => Math.max(0, v).toString(16).padStart(2, "0")).join("");
+  const primaryLight = "#" + [r, g, b].map(v => Math.min(255, Math.round(v * 1.25))).map(v => v.toString(16).padStart(2, "0")).join("");
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#0B1220" }}>
