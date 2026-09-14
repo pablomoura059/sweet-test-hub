@@ -64,7 +64,7 @@ export default function MinhaContaPage() {
     enabled: !!session?.user.id,
   });
 
-  // Inicializar campos quando settings carregarem
+  // Carregar campos do banco quando userSettings for carregado
   useEffect(() => {
     if (userSettings) {
       setSystemName(userSettings.system_name || "");
@@ -74,35 +74,50 @@ export default function MinhaContaPage() {
     }
   }, [userSettings]);
 
-  // Upsert inicial se não existir settings
+  // Upsert inicial APENAS se userSettings ainda não existir — aguarda currentProfile carregado
   useEffect(() => {
-    if (!session?.user.id || userSettings || !currentProfile) return;
+    if (!session?.user.id || userSettings) return;
 
-    const fullName = [currentProfile.first_name, currentProfile.last_name]
-      .filter(Boolean)
-      .join(" ");
-    const defaultSystemName = fullName ? `${fullName} Empréstimos` : "Empréstimos";
+    // Aguarda currentProfile estar completamente carregado antes de criar o registro
+    queryClient.ensureQueryData({
+      queryKey: ["current-profile", session.user.id],
+      queryFn: async () => {
+        const { data } = await supabase
+          .from("profiles")
+          .select("role, first_name, last_name")
+          .eq("id", session.user.id)
+          .single();
+        return data;
+      },
+    }).then(({ data: profile }) => {
+      if (!profile) return;
 
-    supabase
-      .from("user_settings")
-      .upsert(
-        {
-          user_id: session.user.id,
-          system_name: defaultSystemName,
-          system_subtitle: "Sistema financeiro",
-          theme: "dark",
-          primary_color: "blue",
-        },
-        { onConflict: "user_id" }
-      )
-      .then(({ error }) => {
-        if (error) {
-          console.error("Erro ao criar settings inicial:", error);
-        } else {
-          queryClient.invalidateQueries({ queryKey: ["user-settings", session.user.id] });
-        }
-      });
-  }, [session?.user.id, userSettings, currentProfile, queryClient]);
+      const fullName = [profile.first_name, profile.last_name]
+        .filter(Boolean)
+        .join(" ");
+      const defaultSystemName = fullName ? `${fullName} Empréstimos` : "Empréstimos";
+
+      supabase
+        .from("user_settings")
+        .upsert(
+          {
+            user_id: session.user.id,
+            system_name: defaultSystemName,
+            system_subtitle: "Sistema financeiro",
+            theme: "dark",
+            primary_color: "blue",
+          },
+          { onConflict: "user_id" }
+        )
+        .then(({ error }) => {
+          if (error) {
+            console.error("Erro ao criar settings inicial:", error);
+          } else {
+            queryClient.invalidateQueries({ queryKey: ["user-settings", session.user.id] });
+          }
+        });
+    }).catch(console.error);
+  }, [session?.user.id, userSettings, queryClient]);
 
   // Mutation para salvar configurações
   const saveSettingsMutation = useMutation({
