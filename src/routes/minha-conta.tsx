@@ -1,10 +1,10 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import {
   Menu, Home, Wallet, Users, CheckCircle, BarChart2, Settings,
-  LogOut, User,
+  LogOut, User, Upload,
 } from "lucide-react";
 import {
   Sheet, SheetContent, SheetTrigger,
@@ -20,12 +20,18 @@ export default function MinhaContaPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   // Estados dos campos de perfil
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [birthDate, setBirthDate] = useState("");
+
+  // Estados de logo do sistema
+  const [logoUrl, setLogoUrl] = useState<string>("");
+  const [logoPreview, setLogoPreview] = useState<string>("");
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   // Máscara brasileira de telefone
   const formatPhone = (value: string): string => {
@@ -37,6 +43,67 @@ export default function MinhaContaPage() {
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPhone(formatPhone(e.target.value));
+  };
+
+  // Upload de logo do sistema
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !session?.user.id) return;
+
+    // Validar tipo
+    const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Formato não suportado. Use JPG ou PNG.");
+      return;
+    }
+
+    // Validar tamanho (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Arquivo muito grande. O limite é 2MB.");
+      return;
+    }
+
+    setIsUploadingLogo(true);
+
+    try {
+      // Gerar preview local
+      const previewUrl = URL.createObjectURL(file);
+      setLogoPreview(previewUrl);
+
+      // Upload para storage
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${session.user.id}/logo.${fileExt}`;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("system-logos")
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) {
+        toast.error("Erro ao fazer upload da logo.");
+        setLogoPreview("");
+        setIsUploadingLogo(false);
+        return;
+      }
+
+      // Obter URL pública
+      const { data: publicUrlData } = supabase.storage
+        .from("system-logos")
+        .getPublicUrl(fileName);
+
+      if (publicUrlData?.publicUrl) {
+        setLogoUrl(publicUrlData.publicUrl);
+        toast.success("Logo carregada com sucesso!");
+      }
+    } catch (err) {
+      console.error("Erro no upload:", err);
+      toast.error("Erro ao carregar a logo.");
+      setLogoPreview("");
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
+
+  const openLogoInput = () => {
+    logoInputRef.current?.click();
   };
 
   // Estados dos campos de configuração
@@ -129,6 +196,10 @@ export default function MinhaContaPage() {
       setSystemSubtitle(userSettings.system_subtitle || "Sistema financeiro");
       setTheme(userSettings.theme || "dark");
       setPrimaryColor(colorNameToHex(userSettings.primary_color) || "#2F6FED");
+      if (userSettings.logo_url) {
+        setLogoUrl(userSettings.logo_url);
+        setLogoPreview(userSettings.logo_url);
+      }
     }
   }, [userSettings]);
 
@@ -183,7 +254,7 @@ export default function MinhaContaPage() {
 
       const colorValue = hexToColorName(primaryColor);
 
-      // Salvar configurações de sistema em user_settings
+      // Salvar configurações de sistema em user_settings (inclui logo_url)
       const { error: settingsError } = await supabase
         .from("user_settings")
         .upsert(
@@ -193,10 +264,11 @@ export default function MinhaContaPage() {
             system_subtitle: systemSubtitle,
             theme,
             primary_color: colorValue,
+            logo_url: logoUrl || null,
           },
           { onConflict: "user_id" }
         )
-        .select("primary_color")
+        .select("primary_color, logo_url")
         .single();
 
       if (settingsError) {
@@ -244,6 +316,9 @@ export default function MinhaContaPage() {
   const defaultSystemName = fullName ? `${fullName} Empréstimos` : "Empréstimos";
   const displaySystemName = systemName || defaultSystemName;
   const calculatedAge = calculateAge(birthDate);
+
+  // Determinar o que mostrar na previa da logo
+  const logoPreviewSrc = logoPreview || (logoUrl ? logoUrl : null);
 
   const themeOptions = [
     { id: "dark", label: "Escuro", icon: <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /> },
@@ -495,32 +570,67 @@ export default function MinhaContaPage() {
               </div>
             </div>
 
+            {/* Upload de Logo do Sistema */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-[#AAB5C5]">Logo do sistema</label>
               <div className="flex items-start gap-4">
+                {/* Prévia atual da logo */}
                 <div
-                  className="w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}99)` }}
+                  className="w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden border"
+                  style={{
+                    backgroundColor: "#101A2B",
+                    borderColor: "#26364D",
+                  }}
                 >
-                  <span className="text-xl font-bold text-white">$</span>
+                  {logoPreviewSrc ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={logoPreviewSrc}
+                      alt="Logo do sistema"
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <span className="text-xl font-bold" style={{ color: "var(--color-primary)" }}>$</span>
+                  )}
                 </div>
+
                 <div className="flex flex-col gap-2 pt-1">
+                  {/* Input de arquivo oculto */}
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/jpg"
+                    onChange={handleLogoChange}
+                    className="hidden"
+                  />
+
                   <button
-                    className="inline-flex items-center gap-1.5 rounded-lg border px-4 py-2 text-sm font-medium text-[#AAB5C5] shadow-sm transition-colors hover:bg-[#18263A] active:scale-95"
+                    onClick={openLogoInput}
+                    disabled={isUploadingLogo}
+                    className="inline-flex items-center gap-1.5 rounded-lg border px-4 py-2 text-sm font-medium text-[#AAB5C5] shadow-sm transition-colors hover:bg-[#18263A] active:scale-95 disabled:opacity-50"
                     style={{ borderColor: "#26364D", backgroundColor: "#101A2B" }}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="17 8 12 3 7 8" />
-                      <line x1="12" y1="3" x2="12" y2="15" />
-                    </svg>
-                    Adicionar logo
+                    {isUploadingLogo ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        Carregando...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4" />
+                        {logoPreviewSrc ? "Trocar logo" : "Adicionar logo"}
+                      </>
+                    )}
                   </button>
                   <p className="text-xs text-[#718096]">PNG ou JPG, máximo 2MB</p>
                 </div>
               </div>
             </div>
 
+            {/* Prévia da identidade */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-[#AAB5C5]">Prévia</label>
               <div
@@ -528,10 +638,19 @@ export default function MinhaContaPage() {
                 style={{ backgroundColor: "#101A2B", borderColor: "#26364D" }}
               >
                 <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}99)` }}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden"
+                  style={{ background: logoPreviewSrc ? "transparent" : `linear-gradient(135deg, ${primaryColor}, ${primaryColor}99)` }}
                 >
-                  <span className="text-sm font-bold text-white">$</span>
+                  {logoPreviewSrc ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={logoPreviewSrc}
+                      alt="Logo"
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <span className="text-sm font-bold text-white">$</span>
+                  )}
                 </div>
                 <div>
                   <p className="text-sm font-bold text-[#F3F6FA]">{displaySystemName}</p>
