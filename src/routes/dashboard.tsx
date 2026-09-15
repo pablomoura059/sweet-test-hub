@@ -1076,11 +1076,12 @@ function DashboardPage() {
                 key={opt.value}
                 type="button"
                 onClick={() => setPeriod(opt.value)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
-                  period === opt.value
-                    ? "bg-[#2F6FED] border-[#2F6FED] text-white"
-                    : "bg-[#101A2B] border-[#26364D] text-[#AAB5C5] hover:border-[#2F6FED]/50 hover:text-[#F3F6FA]"
-                }`}
+                                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
+                    period === opt.value
+                      ? "border-[var(--color-primary)] text-white"
+                      : "bg-[#101A2B] border-[#26364D] text-[#AAB5C5] hover:border-[#2F6FED]/50 hover:text-[#F3F6FA]"
+                  }`}
+                  style={period === opt.value ? { backgroundColor: "var(--color-primary)" } : {}}
               >
                 {opt.label}
               </button>
