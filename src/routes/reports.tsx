@@ -3,7 +3,6 @@ import { ArrowLeft, Wallet, TrendingUp, DollarSign, AlertCircle, Clock, CheckCir
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useRouter } from "@tanstack/react-router";
@@ -39,13 +38,21 @@ const PERIOD_OPTIONS = [
   { label: "90 dias", days: 90 },
 ];
 
+const STATUS_OPTIONS = [
+  { key: null, label: "Todos", color: "#718096" },
+  { key: "active", label: "Ativos", color: "#60a5fa" },
+  { key: "finished", label: "Finalizados", color: "#34d399" },
+  { key: "atrasado", label: "Atrasados", color: "#f59e0b" },
+  { key: "cancelled", label: "Cancelados", color: "#94a3b8" },
+];
+
 function ReportsPage() {
   const router = useRouter();
   const [periodDays, setPeriodDays] = useState(30);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
 
-  const handleCategoryClick = (category: string | null) => {
-    setSelectedCategory((prev) => (prev === category ? null : category));
+  const handleStatusClick = (status: string | null) => {
+    setSelectedStatus((prev) => (prev === status ? null : status));
   };
 
   const { data: session } = useQuery({
@@ -114,41 +121,66 @@ function ReportsPage() {
     });
   })();
 
-  const totalInvested = filteredInvestments.reduce(
+  // Aplica filtro de status sobre o resultado já filtrado por período
+  const getFilteredByStatus = () => {
+    if (!selectedStatus) return filteredInvestments;
+    switch (selectedStatus) {
+      case "active":
+        return filteredInvestments.filter(
+          (inv) => inv.status === "active" && !(inv.return_date < today && inv.status !== "finished" && inv.status !== "cancelled")
+        );
+      case "finished":
+        return filteredInvestments.filter((inv) => inv.status === "finished");
+      case "atrasado":
+        return filteredInvestments.filter(
+          (inv) => inv.return_date < today && inv.status !== "finished" && inv.status !== "cancelled"
+        );
+      case "cancelled":
+        return filteredInvestments.filter((inv) => inv.status === "cancelled");
+      default:
+        return filteredInvestments;
+    }
+  };
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  // Métricas filtradas por período + status
+  const filteredByStatus = getFilteredByStatus();
+
+  const totalInvested = filteredByStatus.reduce(
     (sum, inv) => sum + Number(inv.invested_amount),
     0
   );
 
-  const totalExpectedReturn = filteredInvestments.reduce(
+  const totalExpectedReturn = filteredByStatus.reduce(
     (sum, inv) => sum + Number(inv.expected_return || 0),
     0
   );
 
-  const totalExpectedProfit = filteredInvestments.reduce(
+  const totalExpectedProfit = filteredByStatus.reduce(
     (sum, inv) => sum + Number(inv.expected_profit || 0),
     0
   );
 
-  const totalReceived = filteredInvestments.reduce(
+  const totalReceived = filteredByStatus.reduce(
     (sum, inv) => sum + Number(inv.actual_received || 0),
     0
   );
 
-  const totalActualProfit = filteredInvestments.reduce(
+  const totalActualProfit = filteredByStatus.reduce(
     (sum, inv) => sum + Number(inv.actual_profit || 0),
     0
   );
 
-  const today = new Date().toISOString().slice(0, 10);
-  const overdueCount = filteredInvestments.filter(
+  const overdueCount = filteredByStatus.filter(
     (inv) => inv.return_date < today && inv.status !== "finished" && inv.status !== "cancelled"
   ).length;
 
   const statusCounts = {
-    ativos: investments?.filter((inv) => inv.status === "active").length ?? 0,
-    finalizados: investments?.filter((inv) => inv.status === "finished").length ?? 0,
-    atrasados: investments?.filter((inv) => inv.return_date < today && inv.status !== "finished" && inv.status !== "cancelled").length ?? 0,
-    cancelados: investments?.filter((inv) => inv.status === "cancelled").length ?? 0,
+    ativos: filteredByStatus.filter((inv) => inv.status === "active").length ?? 0,
+    finalizados: filteredByStatus.filter((inv) => inv.status === "finished").length ?? 0,
+    atrasados: filteredByStatus.filter((inv) => inv.return_date < today && inv.status !== "finished" && inv.status !== "cancelled").length ?? 0,
+    cancelados: filteredByStatus.filter((inv) => inv.status === "cancelled").length ?? 0,
   };
 
   const allDistributionData = [
@@ -158,32 +190,7 @@ function ReportsPage() {
     { name: "Cancelados", quantidade: statusCounts.cancelados, fill: "#94a3b8" },
   ];
 
-  // Only show bars for selected category (or all if null)
-  const filteredDistributionData = selectedCategory
-    ? allDistributionData.filter((d) => d.name === selectedCategory)
-    : allDistributionData;
-
-  // Filter list by selected category
-  const getFilteredByCategory = () => {
-    if (!selectedCategory) return filteredInvestments;
-    switch (selectedCategory) {
-      case "Ativos":
-        return filteredInvestments.filter(
-          (inv) => inv.status === "active" && !(inv.return_date < today && inv.status !== "finished" && inv.status !== "cancelled")
-        );
-      case "Finalizados":
-        return filteredInvestments.filter((inv) => inv.status === "finished");
-      case "Atrasados":
-        return filteredInvestments.filter(
-          (inv) => inv.return_date < today && inv.status !== "finished" && inv.status !== "cancelled"
-        );
-      case "Cancelados":
-        return filteredInvestments.filter((inv) => inv.status === "cancelled");
-      default:
-        return filteredInvestments;
-    }
-  };
-  const filteredByCategory = getFilteredByCategory();
+  const filteredDistributionData = allDistributionData;
 
   const distributionConfig = {
     Ativos: { label: "Ativos", color: "#60a5fa" },
@@ -193,9 +200,9 @@ function ReportsPage() {
   };
 
   const chartData = (() => {
-    if (!filteredInvestments || filteredInvestments.length === 0) return [];
+    if (!filteredByStatus || filteredByStatus.length === 0) return [];
 
-    const sorted = [...filteredInvestments].sort(
+    const sorted = [...filteredByStatus].sort(
       (a, b) =>
         new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
     );
@@ -297,7 +304,8 @@ function ReportsPage() {
       </header>
 
       <main className="p-4 max-w-5xl mx-auto space-y-6">
-        <div className="flex items-center gap-2">
+        {/* Filtros de período e status no topo da página */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
           {PERIOD_OPTIONS.map((option) => (
             <Button
               key={option.days}
@@ -313,8 +321,33 @@ function ReportsPage() {
               {option.label}
             </Button>
           ))}
+
+          <div className="h-6 w-px bg-[#26364D]/60 hidden sm:block mx-1" />
+
+          {STATUS_OPTIONS.map((opt) => {
+            const isActive = selectedStatus === opt.key;
+            return (
+              <button
+                key={opt.label}
+                onClick={() => handleStatusClick(opt.key)}
+                className={
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-200 cursor-pointer " +
+                  (isActive
+                    ? "bg-[var(--color-primary)] border-[var(--color-primary)] text-white shadow-sm"
+                    : "border-[#26364D] text-[#718096] hover:border-[var(--color-primary)]/50 hover:text-[#F3F6FA]")
+                }
+              >
+                <div
+                  className="h-2 w-2 rounded-[2px]"
+                  style={{ backgroundColor: isActive ? "white" : opt.color }}
+                />
+                {opt.label}
+              </button>
+            );
+          })}
         </div>
 
+        {/* Indicadores filtrados */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4">
           {isLoading ? (
             <>
@@ -343,7 +376,7 @@ function ReportsPage() {
                       {formatCurrency(totalInvested)}
                     </p>
                     <p className="text-[9px] text-[#718096] mt-0.5 font-medium">
-                      {filteredInvestments.length} empréstimo{filteredInvestments.length !== 1 ? "s" : ""} no período
+                      {filteredByStatus.length} empréstimo{filteredByStatus.length !== 1 ? "s" : ""} no período
                     </p>
                   </div>
                 </CardContent>
@@ -437,7 +470,7 @@ function ReportsPage() {
           )}
         </div>
 
-        {/* Gráfico: Evolução da Carteira */}
+        {/* Gráfico: Evolução da Carteira (filtrado por período + status) */}
         <div>
           <h2 className="text-sm font-bold text-[#F3F6FA] mb-3">Evolução da Carteira</h2>
           {chartData.length === 0 && !isLoading ? (
@@ -508,7 +541,7 @@ function ReportsPage() {
           )}
         </div>
 
-        {/* Gráfico: Distribuição da Carteira */}
+        {/* Gráfico: Distribuição da Carteira (sem filtro local) */}
         <div>
           <h2 className="text-sm font-bold text-[#F3F6FA] mb-3">Distribuição da Carteira</h2>
           {chartData.length === 0 && !isLoading ? (
@@ -526,37 +559,6 @@ function ReportsPage() {
           ) : (
             <Card className="bg-[#162235] border-[#26364D]">
               <CardContent className="p-4">
-                {/* Controles interativos */}
-                <div className="flex flex-wrap gap-1.5 mb-4">
-                  {[
-                    { key: null, label: "Todos", color: "#718096" },
-                    { key: "Ativos", label: "Ativos", color: "#60a5fa" },
-                    { key: "Finalizados", label: "Finalizados", color: "#34d399" },
-                    { key: "Atrasados", label: "Atrasados", color: "#f59e0b" },
-                    { key: "Cancelados", label: "Cancelados", color: "#94a3b8" },
-                  ].map((opt) => {
-                    const isActive = selectedCategory === opt.key;
-                    return (
-                      <button
-                        key={opt.label}
-                        onClick={() => handleCategoryClick(opt.key)}
-                        className={
-                          "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-200 cursor-pointer " +
-                          (isActive
-                            ? "bg-blue-600 border-blue-600 text-white shadow-sm"
-                            : "border-[#26364D] text-[#718096] hover:border-[#60a5fa]/50 hover:text-[#F3F6FA]")
-                        }
-                      >
-                        <div
-                          className="h-2 w-2 rounded-[2px]"
-                          style={{ backgroundColor: isActive ? "white" : opt.color }}
-                        />
-                        {opt.label}
-                      </button>
-                    );
-                  })}
-                </div>
-
                 <ChartContainer config={distributionConfig} className="w-full h-28 md:h-56">
                   <ResponsiveContainer width="100%" height={112}>
                     <BarChart data={filteredDistributionData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
@@ -590,8 +592,6 @@ function ReportsPage() {
                         dataKey="quantidade"
                         radius={[6, 6, 0, 0]}
                         cursor="pointer"
-                        onClick={(data) => handleCategoryClick(data.name)}
-                        style={{ opacity: selectedCategory && filteredDistributionData.length > 1 ? (filteredDistributionData.length === 1 ? 1 : 0.2) : 1 }}
                       >
                         {filteredDistributionData.map((entry) => (
                           <Cell
@@ -608,7 +608,7 @@ function ReportsPage() {
           )}
         </div>
 
-        {/* Resumo da Carteira */}
+        {/* Resumo da Carteira (filtrado por período + status) */}
         <div>
           <h2 className="text-sm font-bold text-[#F3F6FA] mb-1">Resumo da Carteira</h2>
           <p className="text-xs text-[#718096] mb-3">Visão consolidada do desempenho dos seus empréstimos</p>
@@ -621,7 +621,7 @@ function ReportsPage() {
                   </div>
                   <p className="text-xs font-semibold text-[#718096] uppercase tracking-wider text-center mb-1">Total</p>
                   <p className="text-xl font-bold text-[#F3F6FA] leading-none">
-                    {filteredInvestments.length}
+                    {filteredByStatus.length}
                   </p>
                   <p className="text-[10px] text-[#718096] mt-1">empréstimos</p>
                 </div>
@@ -632,7 +632,7 @@ function ReportsPage() {
                   </div>
                   <p className="text-xs font-semibold text-[#718096] uppercase tracking-wider text-center mb-1">Ativos</p>
                   <p className="text-xl font-bold text-[#F3F6FA] leading-none">
-                    {filteredInvestments.filter((inv) => inv.status === "active").length}
+                    {filteredByStatus.filter((inv) => inv.status === "active").length}
                   </p>
                   <p className="text-[10px] text-[#718096] mt-1">em andamento</p>
                 </div>
@@ -665,7 +665,7 @@ function ReportsPage() {
           </Card>
         </div>
 
-        {/* Empréstimos do Período */}
+        {/* Empréstimos do Período (filtrados por período + status) */}
         <div>
           <h2 className="text-sm font-bold text-[#F3F6FA] mb-3">Empréstimos do Período</h2>
           <Card className="bg-[#162235] border-[#26364D] overflow-hidden">
@@ -677,9 +677,9 @@ function ReportsPage() {
                   ))}
                 </div>
               </CardContent>
-            ) : filteredByCategory.length === 0 ? (
+            ) : filteredByStatus.length === 0 ? (
               <CardContent className="p-8 flex items-center justify-center">
-                <p className="text-[#718096] text-sm">{selectedCategory ? `Nenhum empréstimo ${selectedCategory.toLowerCase()} no período.` : "Nenhum empréstimo no período selecionado."}</p>
+                <p className="text-[#718096] text-sm">Nenhum empréstimo no período selecionado.</p>
               </CardContent>
             ) : (
               <>
@@ -696,7 +696,7 @@ function ReportsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredByCategory.map((inv, idx) => {
+                      {filteredByStatus.map((inv, idx) => {
                         const displayStatus = getDisplayStatus(inv);
                         const statusCfg = getStatusConfig(displayStatus);
                         const StatusIcon = statusCfg.icon;
@@ -770,7 +770,7 @@ function ReportsPage() {
                 </div>
 
                 <div className="md:hidden divide-y divide-[#26364D]/30">
-                  {filteredByCategory.map((inv) => {
+                  {filteredByStatus.map((inv) => {
                     const displayStatus = getDisplayStatus(inv);
                     const statusCfg = getStatusConfig(displayStatus);
                     const StatusIcon = statusCfg.icon;
