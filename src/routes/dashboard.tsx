@@ -21,9 +21,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/dashboard")({
-  beforeLoad: async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) throw new Error("Não autenticado");
+  beforeLoad: () => {
+    if (!supabase) throw new Error("Não autenticado");
   },
   component: DashboardPage,
 });
