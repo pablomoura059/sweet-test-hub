@@ -978,18 +978,23 @@ function DashboardPage() {
               </SheetContent>
             </Sheet>
 
-                    <div className="w-11 h-11 rounded-xl flex items-center justify-center shadow-lg overflow-hidden" style={!getLogoUrl() ? { background: `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))`, boxShadow: `0 4px 16px color-mix(in srgb, var(--color-primary) 35%, transparent)` } : { backgroundColor: "#101A2B", border: "1px solid #26364D" }}>
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center shadow-lg overflow-hidden shrink-0" style={!getLogoUrl() ? { background: `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))`, boxShadow: `0 4px 16px color-mix(in srgb, var(--color-primary) 35%, transparent)` } : { backgroundColor: "#101A2B", border: "1px solid #26364D" }}>
                       {getLogoUrl() ? (
                         <img src={getLogoUrl()!} alt="Logo" className="w-full h-full object-contain" />
                       ) : (
                         <span className="text-base font-bold text-white">$</span>
                       )}
                     </div>
-            <h1 className="text-sm sm:text-base font-bold text-[#F3F6FA] tracking-tight whitespace-nowrap">
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-base font-bold text-[#F3F6FA] tracking-tight whitespace-nowrap truncate">
                 {userSettings?.system_name ||
                   `${currentProfile?.first_name ?? ""} ${currentProfile?.last_name ?? ""}`.trim() ||
                   "Empréstimos"}
               </h1>
+              {userSettings?.system_subtitle && (
+                <p className="text-[11px] text-[#718096] leading-tight truncate">{userSettings.system_subtitle}</p>
+              )}
+            </div>
           </div>
 
           <Dialog open={isNewLoanOpen} onOpenChange={setIsNewLoanOpen}>
