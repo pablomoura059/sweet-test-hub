@@ -145,49 +145,53 @@ function RootComponent() {
   const router = useRouter();
   const [primaryColor, setPrimaryColor] = useState("#2F6FED");
 
-  // Carregar cor primária do user_settings e definir em document.documentElement
+  // Carregar cor primária e tema do user_settings
   useEffect(() => {
-    const loadPrimaryColor = async () => {
+    const loadTheme = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) {
         document.documentElement.style.setProperty("--color-primary", "#2F6FED");
+        document.documentElement.removeAttribute("data-theme");
         return;
       }
 
       const { data } = await supabase
         .from("user_settings")
-        .select("primary_color")
+        .select("primary_color, theme")
         .eq("user_id", session.user.id)
         .single();
 
-        const colorMap: Record<string, string> = {
-    blue: "#2F6FED",
-    purple: "#7C3AED",
-    green: "#059669",
-    orange: "#D97706",
-    red: "#DC2626",
-    pink: "#DB2777",
-  };
-  const hex = data?.primary_color ? (colorMap[data.primary_color] || "#2F6FED") : "#2F6FED";
-  const darken = (h: string) => {
-    const r = parseInt(h.slice(1, 3), 16);
-    const g = parseInt(h.slice(3, 5), 16);
-    const b = parseInt(h.slice(5, 7), 16);
-    const blend = (v: number, t: number) => Math.round(v * (1 - t) + 0 * t);
-    const d = "#" + [r, g, b].map((v, i) => Math.max(0, [40, 20, 120][i])).map(v => Math.max(0, Math.round(v * 0.65)).toString(16).padStart(2, "0")).join("");
-    const lighter = "#" + [r, g, b].map(v => Math.min(255, Math.round(v * 1.25))).map(v => v.toString(16).padStart(2, "0")).join("");
-    setPrimaryColor(hex);
-    document.documentElement.style.setProperty("--color-primary", hex);
-    document.documentElement.style.setProperty("--color-primary-dark", d);
-    document.documentElement.style.setProperty("--color-primary-light", lighter);
-  };
-  darken(hex);
+      const colorMap: Record<string, string> = {
+        blue: "#2F6FED",
+        purple: "#7C3AED",
+        green: "#059669",
+        orange: "#D97706",
+        red: "#DC2626",
+        pink: "#DB2777",
+      };
+      const hex = data?.primary_color ? (colorMap[data.primary_color] || "#2F6FED") : "#2F6FED";
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      const dark = "#" + [r, g, b].map((v, i) => Math.round([r, g, b][i] * 0.65)).map(v => Math.max(0, v).toString(16).padStart(2, "0")).join("");
+      const light = "#" + [r, g, b].map(v => Math.min(255, Math.round(v * 1.25))).map(v => v.toString(16).padStart(2, "0")).join("");
+      setPrimaryColor(hex);
+      document.documentElement.style.setProperty("--color-primary", hex);
+      document.documentElement.style.setProperty("--color-primary-dark", dark);
+      document.documentElement.style.setProperty("--color-primary-light", light);
+
+      // Aplicar tema claro ou escuro
+      if (data?.theme === "light") {
+        document.documentElement.setAttribute("data-theme", "light");
+      } else {
+        document.documentElement.removeAttribute("data-theme");
+      }
     };
 
-    loadPrimaryColor();
+    loadTheme();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      loadPrimaryColor();
+      loadTheme();
     });
 
     return () => {

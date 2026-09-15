@@ -337,8 +337,10 @@ export default function MinhaContaPage() {
     return found ? found.name : "blue";
   }
 
+  const isLight = theme === "light";
+
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#0B1220" }}>
+    <div className="min-h-screen" style={{ backgroundColor: isLight ? "#FFFFFF" : "#0B1220" }}>
       {/* Header */}
       <header className="sticky top-0 z-40 bg-[#101A2B]/95 backdrop-blur-xl border-b border-[#26364D]/60">
         <div className="flex items-center justify-between px-4 py-3 max-w-2xl mx-auto">

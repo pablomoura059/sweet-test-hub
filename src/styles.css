@@ -157,4 +157,23 @@ iframe[src*="lovable.dev/badge"] {
   width: 0 !important;
   height: 0 !important;
 }
+/* Light theme overrides */
+[data-theme="light"] {
+  --color-background: #FFFFFF;
+  --color-foreground: #1E293B;
+  --color-card: #FFFFFF;
+  --color-card-foreground: #1E293B;
+  --color-popover: #FFFFFF;
+  --color-popover-foreground: #1E293B;
+  --color-secondary: #F8FAFC;
+  --color-secondary-foreground: #475569;
+  --color-muted: #F1F5F9;
+  --color-muted-foreground: #64748B;
+  --color-accent: #F1F5F9;
+  --color-accent-foreground: #1E293B;
+  --color-border: #E2E8F0;
+  --color-input: #E2E8F0;
+  --color-ring: var(--color-primary);
+}
+
 /* NEXUS-PRO:WATERMARK-HIDE:END */
