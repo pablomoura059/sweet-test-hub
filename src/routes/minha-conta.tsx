@@ -60,12 +60,13 @@ export default function MinhaContaPage() {
       return;
     }
 
-    // Busca session dentro do handler para evitar race condition
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user.id) {
-      toast.error("Usuário não autenticado");
+    // Valida usuário com getUser() para garantir sessão real antes do upload
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData?.user?.id) {
+      toast.error(`Usuário não autenticado: ${userError?.message || "sessão inválida"}`);
       return;
     }
+    const userId = userData.user.id;
 
     // Preview temporário com blob URL
     const blobUrl = URL.createObjectURL(file);
@@ -74,7 +75,7 @@ export default function MinhaContaPage() {
 
     try {
       const fileExt = file.type === "image/png" ? "png" : "jpg";
-      const filePath = `${session.user.id}/logo.${fileExt}`;
+      const filePath = `${userId}/logo.${fileExt}`;
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from("system-logos")
