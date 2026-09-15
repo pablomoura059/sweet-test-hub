@@ -167,7 +167,7 @@ function PersonSelector({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-3 py-2.5 bg-[#162235] border border-[#26364D] rounded-lg text-left transition-all focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50 hover:border-[#2F6FED]/50"
+        className="w-full flex items-center justify-between px-3 py-2.5 bg-[#162235] border border-[#26364D] rounded-lg text-left transition-all focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/50 hover:border-[var(--color-primary)]/50"
       >
         <span className={selectedPerson ? "text-[#F3F6FA] text-sm" : "text-[#718096] text-sm"}>
           {selectedPerson ? selectedPerson.name : "Selecione uma pessoa..."}
@@ -192,7 +192,7 @@ function PersonSelector({
                 placeholder="Buscar pessoa..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-2 bg-[#101A2B] border border-[#26364D] rounded-lg text-[#F3F6FA] placeholder:text-[#718096] text-xs focus:outline-none focus:border-[#2F6FED]"
+                className="w-full pl-8 pr-3 py-2 bg-[#101A2B] border border-[#26364D] rounded-lg text-[#F3F6FA] placeholder:text-[#718096] text-xs focus:outline-none focus:border-[var(--color-primary)]"
                 autoFocus
               />
             </div>
@@ -223,7 +223,7 @@ function PersonSelector({
                       )}
                     </div>
                     {selectedPerson?.id === p.id && (
-                      <Check className="h-3.5 w-3.5 text-[#2F6FED] ml-auto shrink-0" />
+                      <Check className="h-3.5 w-3.5 text-[var(--color-primary)] ml-auto shrink-0" />
                     )}
                   </button>
                 );
@@ -239,7 +239,7 @@ function PersonSelector({
             <button
               type="button"
               onClick={() => { setOpen(false); onAddNew(); }}
-              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg bg-[#2F6FED]/10 border border-[#2F6FED]/30 text-[#2F6FED] hover:bg-[#2F6FED]/20 transition-colors text-xs font-semibold"
+              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/30 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/20 transition-colors text-xs font-semibold"
             >
               <UserPlus className="h-3.5 w-3.5 shrink-0" />
               Cadastrar nova pessoa
@@ -259,11 +259,11 @@ function StatCard({ title, value, icon: Icon, color, iconColor, description, ind
 }) {
   return (
     <Card
-      className="bg-[#162235] border-[#26364D] hover:border-blue-500/40 transition-all duration-300 hover:scale-[1.02] cursor-default group animate-fade-in-up"
+      className="bg-[#162235] border-[#26364D] hover:border-[var(--color-primary)]/40 transition-all duration-300 hover:scale-[1.02] cursor-default group animate-fade-in-up"
       style={{ animationDelay: `${index * 80}ms`, animationFillMode: "both" }}
     >
       <CardContent className="p-3 sm:p-5 flex items-start gap-2.5 sm:gap-4 overflow-hidden">
-        <div className={`p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl ${color} border border-[#26364D] group-hover:border-blue-500/30 transition-colors shrink-0`}>
+        <div className={`p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl ${color} border border-[#26364D] group-hover:border-[var(--color-primary)]/30 transition-colors shrink-0`}>
           <Icon className={`h-3.5 w-3.5 sm:h-5 sm:w-5 ${iconColor}`} />
         </div>
         <div className="min-w-0 flex-1 overflow-hidden">
