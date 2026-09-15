@@ -194,8 +194,13 @@ function RootComponent() {
       loadTheme();
     });
 
+    // Sincronizar com evento disparado por outras páginas (ex: Minha Conta)
+    const onThemeChanged = () => loadTheme();
+    window.addEventListener("theme-changed", onThemeChanged);
+
     return () => {
       subscription.unsubscribe();
+      window.removeEventListener("theme-changed", onThemeChanged);
     };
   }, []);
 

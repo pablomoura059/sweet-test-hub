@@ -288,6 +288,7 @@ export default function MinhaContaPage() {
       queryClient.resetQueries({ queryKey: ["user-settings", session?.user.id] });
       queryClient.refetchQueries({ queryKey: ["user-settings", session?.user.id] });
       queryClient.invalidateQueries({ queryKey: ["current-profile", session?.user.id] });
+      window.dispatchEvent(new CustomEvent("theme-changed"));
     },
     onError: (err: Error) => {
       toast.error(`Erro ao salvar: ${err.message}`);
