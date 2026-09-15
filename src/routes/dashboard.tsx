@@ -72,12 +72,12 @@ const getStatusInfo = (status: string, returnDate: string) => {
 type FilterType = "all" | "active" | "finished" | "late" | "cancelled";
 
 const STAT_CARDS = [
-  { key: "totalInvested", icon: Wallet, color: "bg-blue-600/10", iconColor: "text-blue-400" },
-  { key: "totalInStreet", icon: DollarSign, color: "bg-blue-600/10", iconColor: "text-blue-400" },
+  { key: "totalInvested", icon: Wallet, color: "bg-[var(--color-primary)]/10", iconColor: "text-[var(--color-primary)]" },
+  { key: "totalInStreet", icon: DollarSign, color: "bg-[var(--color-primary)]/10", iconColor: "text-[var(--color-primary)]" },
   { key: "expectedProfit", icon: TrendingUp, color: "bg-emerald-500/10", iconColor: "text-emerald-400" },
-  { key: "expectedReturn", icon: PieChart, color: "bg-blue-600/10", iconColor: "text-blue-400" },
+  { key: "expectedReturn", icon: PieChart, color: "bg-[var(--color-primary)]/10", iconColor: "text-[var(--color-primary)]" },
   { key: "receivedProfit", icon: Activity, color: "bg-emerald-500/10", iconColor: "text-emerald-400" },
-  { key: "activeCount", icon: Clock, color: "bg-blue-600/10", iconColor: "text-blue-400" },
+  { key: "activeCount", icon: Clock, color: "bg-[var(--color-primary)]/10", iconColor: "text-[var(--color-primary)]" },
 ] as const;
 
 const CARD_LABELS: Record<string, { title: string; description: string }> = {
@@ -302,9 +302,10 @@ function FilterChip({ label, active, onClick }: { label: string; active: boolean
       onClick={onClick}
       className={`px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all duration-200 ${
         active
-          ? "bg-[#2F6FED] text-white shadow-md shadow-blue-600/20"
-          : "bg-[#162235] border border-[#26364D] text-[#718096] hover:text-[#F3F6FA] hover:border-blue-500/30"
+          ? "text-white shadow-md"
+          : "bg-[#162235] border border-[#26364D] text-[#718096] hover:text-[#F3F6FA] hover:border-[var(--color-primary)]/30"
       }`}
+      style={active ? { backgroundColor: "var(--color-primary)", boxShadow: "var(--shadow-primary)" } : {}}
     >
       {label}
     </button>
@@ -988,7 +989,8 @@ function DashboardPage() {
 
           <Dialog open={isNewLoanOpen} onOpenChange={setIsNewLoanOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" className="bg-gradient-to-r from-[#2F6FED] to-[#1a4fd4] hover:from-[#3d7ef5] hover:to-[#2a5ee0] text-white shadow-lg shadow-blue-600/20 font-semibold transition-all duration-200 active:scale-95">
+              <Button size="sm" className="font-semibold transition-all duration-200 active:scale-95"
+                  style={{ background: "linear-gradient(to right, var(--color-primary), var(--color-secondary))", color: "white", boxShadow: "var(--shadow-primary)" }}>
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">Novo Empréstimo</span>
                 <span className="sm:hidden">Novo</span>
@@ -1063,7 +1065,7 @@ function DashboardPage() {
         {/* ── Filtro de Período ─────────────────────────── */}
         <div className="bg-[#162235] border border-[#26364D] rounded-2xl p-3 sm:p-4 space-y-3 animate-fade-in-up">
           <div className="flex flex-wrap items-center gap-2">
-            <Calendar className="h-4 w-4 text-[#2F6FED] shrink-0" />
+            <Calendar className="h-4 w-4 shrink-0" style={{ color: "var(--color-primary)" }} />
             <span className="text-xs font-semibold text-[#AAB5C5] mr-1">Período:</span>
             {([
               { value: "30", label: "Últimos 30 dias" },
@@ -1166,7 +1168,7 @@ function DashboardPage() {
           <SectionHeader title="Todos os Empréstimos" />
           <div className="space-y-2">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#718096]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "var(--color-primary)" }} />
               <Input
                 type="text"
                 placeholder="Buscar por pessoa..."
