@@ -230,7 +230,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: bgMain }}>
+    <div className="min-h-screen" style={{ backgroundColor: "var(--background)" }}>
       {/* Mobile Header */}
       <header className="sticky top-0 z-50 md:hidden" style={{ backgroundColor: bgSidebar, borderBottom: `1px solid ${borderColor}` }}>
         <div className="flex items-center justify-between px-4 py-3">
