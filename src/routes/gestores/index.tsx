@@ -383,7 +383,7 @@ function GestoresPage() {
                     </div>
                     <div>
                       <div className="text-sm font-bold text-[#F3F6FA] leading-tight">{systemName}</div>
-                      <div className="text-[11px] text-[#718096] font-normal mt-0.5">{currentSettings?.system_subtitle || 'Sistema financeiro'}</div>
+                      <div className="text-[11px] text-[#718096] font-normal mt-0.5">{userSettings?.system_subtitle || 'Sistema financeiro'}</div>
                     </div>
                   </div>
                 </div>
