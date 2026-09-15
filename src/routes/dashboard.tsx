@@ -43,19 +43,38 @@ export default function DashboardPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
+  const [theme, setTheme] = useState<string>("dark");
 
   useEffect(() => {
     const loadSettings = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) return;
-      const { data } = await supabase
-        .from("user_settings")
-        .select("system_name, system_subtitle, logo_url")
-        .eq("user_id", session.user.id)
-        .single();
-      if (data) setUserSettings(data);
+
+      const [settingsRes, themeRes] = await Promise.all([
+        supabase
+          .from("user_settings")
+          .select("system_name, system_subtitle, logo_url")
+          .eq("user_id", session.user.id)
+          .single(),
+        supabase
+          .from("user_settings")
+          .select("theme")
+          .eq("user_id", session.user.id)
+          .single(),
+      ]);
+
+      if (settingsRes.data) setUserSettings(settingsRes.data);
+      if (themeRes.data?.theme) setTheme(themeRes.data.theme);
     };
     loadSettings();
+
+    const onThemeChanged = () => {
+      const storedTheme = document.documentElement.getAttribute("data-theme");
+      if (storedTheme) setTheme(storedTheme);
+      else setTheme("dark");
+    };
+    window.addEventListener("theme-changed", onThemeChanged);
+    return () => window.removeEventListener("theme-changed", onThemeChanged);
   }, []);
 
   useEffect(() => {
@@ -68,6 +87,27 @@ export default function DashboardPage() {
       end: end.toISOString().split("T")[0],
     });
   }, [period]);
+
+  const isLight = theme === "light";
+
+  // Theme-aware CSS variables
+  const bgMain = "var(--background, #F1F5F9)";
+  const bgSidebar = isLight ? "var(--sidebar-background, #E8EEF5)" : "var(--color-sidebar, #162235)";
+  const bgCard = isLight ? "var(--card, #E8EEF5)" : "var(--color-card, #162235)";
+  const bgSecondary = isLight ? "var(--secondary, #E2E8F0)" : "var(--secondary, #18263A)";
+  const bgInput = isLight ? "var(--input, #F5F7FA)" : "var(--input, #101A2B)";
+  const bgElevated = isLight ? "var(--popover, #EAF0F6)" : "var(--color-sidebar, #162235)";
+
+  const textPrimary = isLight ? "var(--foreground, #1E293B)" : "var(--color-foreground, #F3F6FA)";
+  const textSecondary = isLight ? "var(--sidebar-foreground, #1E293B)" : "var(--color-sidebar-foreground, #F3F6FA)";
+  const textMuted = isLight ? "var(--muted-foreground, #64748B)" : "var(--color-muted-foreground, #718096)";
+
+  const borderColor = isLight ? "var(--border, #CBD5E1)" : "var(--color-border, #26364D)";
+  const navTextColor = isLight ? "#64748B" : "#AAB5C5";
+
+  const cardShadow = isLight
+    ? "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)"
+    : "none";
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["dashboard-stats", dateRange.start, dateRange.end, statusFilter],
@@ -190,21 +230,21 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "var(--background, #0B1220)" }}>
+    <div className="min-h-screen" style={{ backgroundColor: bgMain }}>
       {/* Mobile Header */}
-      <header className="sticky top-0 z-50 md:hidden" style={{ backgroundColor: "var(--color-sidebar, #162235)", borderBottom: "1px solid var(--color-border, #26364D)" }}>
+      <header className="sticky top-0 z-50 md:hidden" style={{ backgroundColor: bgSidebar, borderBottom: `1px solid ${borderColor}` }}>
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" style={{ color: "var(--color-sidebar-foreground, #718096)" }}>
+                <Button variant="ghost" size="icon" style={{ color: textMuted }}>
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[300px] p-0 flex flex-col" style={{ backgroundColor: "var(--color-sidebar, #162235)", borderColor: "var(--color-border, #26364D)" }}>
-                <div className="px-5 pt-6 pb-5 border-b" style={{ borderColor: "var(--color-border, #26364D)" }}>
+              <SheetContent side="left" className="w-[300px] p-0 flex flex-col" style={{ backgroundColor: bgElevated, borderColor }}>
+                <div className="px-5 pt-6 pb-5 border-b" style={{ borderColor }}>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0" style={{ background: logoUrl ? "transparent" : `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))`, boxShadow: "0 8px 24px color-mix(in srgb, var(--color-primary) 25%, transparent)" }}>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0" style={{ background: logoUrl ? "transparent" : `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))`, boxShadow: isLight ? "0 4px 12px rgba(0,0,0,0.08)" : "0 8px 24px color-mix(in srgb, var(--color-primary) 25%, transparent)" }}>
                       {logoUrl ? (
                         <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" />
                       ) : (
@@ -212,8 +252,8 @@ export default function DashboardPage() {
                       )}
                     </div>
                     <div>
-                      <div className="text-sm font-bold leading-tight" style={{ color: "var(--color-sidebar-foreground, #F3F6FA)" }}>{systemName}</div>
-                      {systemSubtitle && <div className="text-[11px] mt-0.5" style={{ color: "var(--color-muted-foreground, #718096)" }}>{systemSubtitle}</div>}
+                      <div className="text-sm font-bold leading-tight" style={{ color: textSecondary }}>{systemName}</div>
+                      {systemSubtitle && <div className="text-[11px] mt-0.5" style={{ color: textMuted }}>{systemSubtitle}</div>}
                     </div>
                   </div>
                 </div>
@@ -230,7 +270,7 @@ export default function DashboardPage() {
                       className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
                       style={{
                         backgroundColor: item.active ? "color-mix(in srgb, var(--color-primary) 10%, transparent)" : "transparent",
-                        color: item.active ? "var(--color-primary)" : "var(--color-sidebar-foreground, #AAB5C5)",
+                        color: item.active ? "var(--color-primary)" : navTextColor,
                       }}
                     >
                       <item.icon className="h-4 w-4" />
@@ -241,7 +281,7 @@ export default function DashboardPage() {
               </SheetContent>
             </Sheet>
 
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: logoUrl ? "transparent" : `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))`, boxShadow: "0 8px 24px color-mix(in srgb, var(--color-primary) 25%, transparent)" }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: logoUrl ? "transparent" : `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))`, boxShadow: isLight ? "0 4px 12px rgba(0,0,0,0.08)" : "0 8px 24px color-mix(in srgb, var(--color-primary) 25%, transparent)" }}>
               {logoUrl ? (
                 <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" />
               ) : (
@@ -249,8 +289,8 @@ export default function DashboardPage() {
               )}
             </div>
             <div className="min-w-0">
-              <div className="text-sm font-bold truncate" style={{ color: "var(--color-sidebar-foreground, #F3F6FA)" }}>{systemName}</div>
-              {systemSubtitle && <div className="text-[11px] truncate" style={{ color: "var(--color-muted-foreground, #718096)" }}>{systemSubtitle}</div>}
+              <div className="text-sm font-bold truncate" style={{ color: textSecondary }}>{systemName}</div>
+              {systemSubtitle && <div className="text-[11px] truncate" style={{ color: textMuted }}>{systemSubtitle}</div>}
             </div>
           </div>
 
@@ -268,9 +308,9 @@ export default function DashboardPage() {
                 onClick={() => setPeriod(p)}
                 className="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all"
                 style={{
-                  backgroundColor: period === p ? "var(--color-primary)" : "var(--secondary, #18263A)",
-                  color: period === p ? "#fff" : "var(--muted-foreground, #718096)",
-                  border: period !== p ? "1px solid var(--border, #26364D)" : "none",
+                  backgroundColor: period === p ? "var(--color-primary)" : bgSecondary,
+                  color: period === p ? "#fff" : textMuted,
+                  border: period !== p ? `1px solid ${borderColor}` : "none",
                 }}
               >
                 {getPeriodLabel(p)}
@@ -283,10 +323,10 @@ export default function DashboardPage() {
       {/* Desktop Layout */}
       <div className="hidden md:flex">
         {/* Desktop Sidebar */}
-        <aside className="fixed left-0 top-0 h-screen w-64 flex flex-col border-r z-40" style={{ backgroundColor: "var(--color-sidebar, #162235)", borderColor: "var(--color-border, #26364D)" }}>
-          <div className="px-5 pt-6 pb-5 border-b" style={{ borderColor: "var(--color-border, #26364D)" }}>
+        <aside className="fixed left-0 top-0 h-screen w-64 flex flex-col border-r z-40" style={{ backgroundColor: bgSidebar, borderColor, boxShadow: isLight ? "2px 0 8px rgba(0,0,0,0.04)" : "none" }}>
+          <div className="px-5 pt-6 pb-5 border-b" style={{ borderColor }}>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden" style={{ background: logoUrl ? "transparent" : `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))`, boxShadow: "0 8px 24px color-mix(in srgb, var(--color-primary) 25%, transparent)" }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden" style={{ background: logoUrl ? "transparent" : `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))`, boxShadow: isLight ? "0 4px 12px rgba(0,0,0,0.08)" : "0 8px 24px color-mix(in srgb, var(--color-primary) 25%, transparent)" }}>
                 {logoUrl ? (
                   <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" />
                 ) : (
@@ -294,8 +334,8 @@ export default function DashboardPage() {
                 )}
               </div>
               <div>
-                <div className="text-sm font-bold leading-tight" style={{ color: "var(--color-sidebar-foreground, #F3F6FA)" }}>{systemName}</div>
-                {systemSubtitle && <div className="text-[11px] mt-0.5" style={{ color: "var(--color-muted-foreground, #718096)" }}>{systemSubtitle}</div>}
+                <div className="text-sm font-bold leading-tight" style={{ color: textSecondary }}>{systemName}</div>
+                {systemSubtitle && <div className="text-[11px] mt-0.5" style={{ color: textMuted }}>{systemSubtitle}</div>}
               </div>
             </div>
           </div>
@@ -312,7 +352,7 @@ export default function DashboardPage() {
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
                 style={{
                   backgroundColor: item.active ? "color-mix(in srgb, var(--color-primary) 10%, transparent)" : "transparent",
-                  color: item.active ? "var(--color-primary)" : "var(--color-sidebar-foreground, #AAB5C5)",
+                  color: item.active ? "var(--color-primary)" : navTextColor,
                 }}
               >
                 <item.icon className="h-4 w-4" />
@@ -320,7 +360,7 @@ export default function DashboardPage() {
               </button>
             ))}
           </nav>
-          <div className="px-5 py-4 border-t" style={{ borderColor: "var(--color-border, #26364D)" }}>
+          <div className="px-5 py-4 border-t" style={{ borderColor }}>
             <Button
               size="sm"
               className="w-full gap-1.5"
@@ -334,20 +374,20 @@ export default function DashboardPage() {
         {/* Desktop Main Content */}
         <main className="flex-1 ml-64">
           {/* Desktop Header */}
-          <header className="sticky top-0 z-30 border-b" style={{ backgroundColor: "var(--color-sidebar, #162235)", borderColor: "var(--color-border, #26364D)" }}>
+          <header className="sticky top-0 z-30 border-b" style={{ backgroundColor: bgSidebar, borderColor }}>
             <div className="flex items-center justify-between px-8 py-4">
               <div>
-                <h1 className="text-xl font-bold" style={{ color: "var(--color-sidebar-foreground, #F3F6FA)" }}>Dashboard</h1>
-                <p className="text-sm mt-0.5" style={{ color: "var(--color-muted-foreground, #718096)" }}>Visão geral dos seus investimentos</p>
+                <h1 className="text-xl font-bold" style={{ color: textSecondary }}>Dashboard</h1>
+                <p className="text-sm mt-0.5" style={{ color: textMuted }}>Visão geral dos seus investimentos</p>
               </div>
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "var(--color-muted-foreground, #718096)" }} />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: textMuted }} />
                   <input
                     type="text"
                     placeholder="Buscar..."
                     className="pl-9 pr-4 py-2 rounded-lg text-sm w-64 border"
-                    style={{ backgroundColor: "var(--input, #101A2B)", borderColor: "var(--border, #26364D)", color: "var(--foreground, #F3F6FA)" }}
+                    style={{ backgroundColor: bgInput, borderColor, color: textPrimary }}
                   />
                 </div>
                 <Button size="sm" className="gap-1.5" style={{ backgroundColor: "var(--color-primary)", color: "#fff" }}>
@@ -368,8 +408,8 @@ export default function DashboardPage() {
                     className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
                     style={{
                       backgroundColor: period === p ? "var(--color-primary)" : "transparent",
-                      color: period === p ? "#fff" : "var(--muted-foreground, #718096)",
-                      border: period !== p ? "1px solid var(--border, #26364D)" : "none",
+                      color: period === p ? "#fff" : textMuted,
+                      border: period !== p ? `1px solid ${borderColor}` : "none",
                     }}
                   >
                     {getPeriodLabel(p)}
@@ -382,19 +422,19 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {statsLoading
                 ? Array.from({ length: 4 }).map((_, i) => (
-                    <Card key={i} className="p-5" style={{ backgroundColor: "var(--color-card, #162235)", borderColor: "var(--color-border, #26364D)" }}>
+                    <Card key={i} className="p-5" style={{ backgroundColor: bgCard, borderColor, boxShadow: cardShadow }}>
                       <Skeleton className="h-4 w-24 mb-3" />
                       <Skeleton className="h-8 w-32" />
                     </Card>
                   ))
                 : statsData.map((stat, i) => (
-                    <Card key={i} className="p-5 relative overflow-hidden" style={{ backgroundColor: "var(--color-card, #162235)", borderColor: "var(--color-border, #26364D)" }}>
+                    <Card key={i} className="p-5 relative overflow-hidden" style={{ backgroundColor: bgCard, borderColor, boxShadow: cardShadow }}>
                       <div className="flex items-start justify-between">
                         <div>
-                          <p className="text-sm font-medium" style={{ color: "var(--color-muted-foreground, #718096)" }}>{stat.title}</p>
-                          <p className="text-2xl font-bold mt-1" style={{ color: "var(--color-foreground, #F3F6FA)" }}>{stat.value}</p>
+                          <p className="text-sm font-medium" style={{ color: textMuted }}>{stat.title}</p>
+                          <p className="text-2xl font-bold mt-1" style={{ color: textPrimary }}>{stat.value}</p>
                           {stat.trend !== null && stat.trend !== undefined && (
-                            <div className={`flex items-center gap-1 mt-1 text-xs font-medium ${stat.trend >= 0 ? "text-green-400" : "text-red-400"}`}>
+                            <div className={`flex items-center gap-1 mt-1 text-xs font-medium ${stat.trend >= 0 ? "text-green-500" : "text-red-500"}`}>
                               {stat.trend >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                               {Math.abs(stat.trend).toFixed(1)}%
                             </div>
@@ -409,10 +449,10 @@ export default function DashboardPage() {
             </div>
 
             {/* Recent Loans Table */}
-            <Card style={{ backgroundColor: "var(--color-card, #162235)", borderColor: "var(--color-border, #26364D)" }}>
-              <CardHeader className="pb-3" style={{ borderColor: "var(--color-border, #26364D)" }}>
+            <Card style={{ backgroundColor: bgCard, borderColor, boxShadow: cardShadow }}>
+              <CardHeader className="pb-3" style={{ borderBottom: `1px solid ${borderColor}` }}>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-semibold" style={{ color: "var(--color-foreground, #F3F6FA)" }}>Empréstimos do Período</CardTitle>
+                  <CardTitle className="text-base font-semibold" style={{ color: textPrimary }}>Empréstimos do Período</CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
@@ -435,7 +475,7 @@ export default function DashboardPage() {
                       <div
                         key={loan.id}
                         className="flex items-center justify-between p-3 rounded-xl transition-colors"
-                        style={{ backgroundColor: "transparent", borderColor: "var(--color-border, #26364D)" }}
+                        style={{ backgroundColor: "transparent" }}
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
@@ -443,10 +483,10 @@ export default function DashboardPage() {
                             {loan.client ? `${loan.client.first_name?.[0] || ""}${loan.client.last_name?.[0] || ""}`.toUpperCase() : "??"}
                           </div>
                           <div>
-                            <p className="text-sm font-medium" style={{ color: "var(--color-foreground, #F3F6FA)" }}>
+                            <p className="text-sm font-medium" style={{ color: textPrimary }}>
                               {loan.client ? `${loan.client.first_name} ${loan.client.last_name}` : "Cliente"}
                             </p>
-                            <p className="text-xs" style={{ color: "var(--color-muted-foreground, #718096)" }}>
+                            <p className="text-xs" style={{ color: textMuted }}>
                               {loan.amount ? formatCurrency(loan.amount) : "—"} • {loan.interest_rate ? `${loan.interest_rate}%` : "—"} a.m.
                             </p>
                           </div>
@@ -456,7 +496,7 @@ export default function DashboardPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8" style={{ color: "var(--color-muted-foreground, #718096)" }}>
+                  <div className="text-center py-8" style={{ color: textMuted }}>
                     <Wallet className="h-8 w-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">Nenhum empréstimo encontrado</p>
                   </div>
@@ -474,17 +514,17 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 gap-3">
             {statsLoading
               ? Array.from({ length: 4 }).map((_, i) => (
-                  <Card key={i} className="p-4" style={{ backgroundColor: "var(--color-card, #162235)", borderColor: "var(--color-border, #26364D)" }}>
+                  <Card key={i} className="p-4" style={{ backgroundColor: bgCard, borderColor, boxShadow: cardShadow }}>
                     <Skeleton className="h-3 w-16 mb-2" />
                     <Skeleton className="h-6 w-20" />
                   </Card>
                 ))
               : statsData.map((stat, i) => (
-                  <Card key={i} className="p-4" style={{ backgroundColor: "var(--color-card, #162235)", borderColor: "var(--color-border, #26364D)" }}>
-                    <p className="text-xs font-medium mb-1" style={{ color: "var(--color-muted-foreground, #718096)" }}>{stat.title}</p>
-                    <p className="text-lg font-bold" style={{ color: "var(--color-foreground, #F3F6FA)" }}>{stat.value}</p>
+                  <Card key={i} className="p-4" style={{ backgroundColor: bgCard, borderColor, boxShadow: cardShadow }}>
+                    <p className="text-xs font-medium mb-1" style={{ color: textMuted }}>{stat.title}</p>
+                    <p className="text-lg font-bold" style={{ color: textPrimary }}>{stat.value}</p>
                     {stat.trend !== null && stat.trend !== undefined && (
-                      <div className={`flex items-center gap-1 mt-0.5 text-xs font-medium ${stat.trend >= 0 ? "text-green-400" : "text-red-400"}`}>
+                      <div className={`flex items-center gap-1 mt-0.5 text-xs font-medium ${stat.trend >= 0 ? "text-green-500" : "text-red-500"}`}>
                         {stat.trend >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
                         {Math.abs(stat.trend).toFixed(1)}%
                       </div>
@@ -494,9 +534,9 @@ export default function DashboardPage() {
           </div>
 
           {/* Mobile Loans */}
-          <Card style={{ backgroundColor: "var(--color-card, #162235)", borderColor: "var(--color-border, #26364D)" }}>
-            <CardHeader className="pb-3" style={{ borderColor: "var(--color-border, #26364D)" }}>
-              <CardTitle className="text-sm font-semibold" style={{ color: "var(--color-foreground, #F3F6FA)" }}>Empréstimos do Período</CardTitle>
+          <Card style={{ backgroundColor: bgCard, borderColor, boxShadow: cardShadow }}>
+            <CardHeader className="pb-3" style={{ borderBottom: `1px solid ${borderColor}` }}>
+              <CardTitle className="text-sm font-semibold" style={{ color: textPrimary }}>Empréstimos do Período</CardTitle>
             </CardHeader>
             <CardContent>
               {loansLoading ? (
@@ -526,10 +566,10 @@ export default function DashboardPage() {
                           {loan.client ? `${loan.client.first_name?.[0] || ""}${loan.client.last_name?.[0] || ""}`.toUpperCase() : "??"}
                         </div>
                         <div>
-                          <p className="text-xs font-medium" style={{ color: "var(--color-foreground, #F3F6FA)" }}>
+                          <p className="text-xs font-medium" style={{ color: textPrimary }}>
                             {loan.client ? `${loan.client.first_name} ${loan.client.last_name}` : "Cliente"}
                           </p>
-                          <p className="text-[10px]" style={{ color: "var(--color-muted-foreground, #718096)" }}>
+                          <p className="text-[10px]" style={{ color: textMuted }}>
                             {loan.amount ? formatCurrency(loan.amount) : "—"}
                           </p>
                         </div>
@@ -539,7 +579,7 @@ export default function DashboardPage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-6" style={{ color: "var(--color-muted-foreground, #718096)" }}>
+                <div className="text-center py-6" style={{ color: textMuted }}>
                   <Wallet className="h-6 w-6 mx-auto mb-1.5 opacity-50" />
                   <p className="text-xs">Nenhum empréstimo</p>
                 </div>
