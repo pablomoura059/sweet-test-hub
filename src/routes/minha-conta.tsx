@@ -339,96 +339,105 @@ export default function MinhaContaPage() {
 
   const isLight = theme === "light";
 
+  // Dynamic theme-aware colors — fall back to dark values when not in light mode
+  const bgMain = isLight ? "var(--color-background)" : "#0B1220";
+  const bgSurface = isLight ? "var(--color-card)" : "#162235";
+  const bgElevated = isLight ? "var(--color-popover)" : "#101A2B";
+  const borderColor = isLight ? "var(--color-border)" : "#26364D";
+  const textPrimary = isLight ? "var(--color-foreground)" : "#F3F6FA";
+  const textSecondary = isLight ? "var(--color-secondary-foreground)" : "#AAB5C5";
+  const textMuted = isLight ? "var(--color-muted-foreground)" : "#718096";
+
   return (
-    <div className="min-h-screen" style={{ backgroundColor: isLight ? "#FFFFFF" : "#0B1220" }}>
+    <div className="min-h-screen" style={{ backgroundColor: bgMain }}>
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-[#101A2B]/95 backdrop-blur-xl border-b border-[#26364D]/60">
+      <header className="sticky top-0 z-40 border-b bg-popover/95 backdrop-blur-xl" style={{ borderColor, backgroundColor: bgElevated }}>
         <div className="flex items-center justify-between px-4 py-3 max-w-2xl mx-auto">
           <div className="flex items-center gap-3">
             <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-[#718096] hover:text-[#F3F6FA] hover:bg-[#162235] transition-colors">
+                <Button variant="ghost" size="icon" className="hover:bg-accent transition-colors" style={{ color: textSecondary }}>
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="bg-[#101A2B] border-[#26364D] w-[300px] p-0 flex flex-col">
-                <div className="px-5 pt-6 pb-5 border-b border-[#26364D]/60">
+              <SheetContent side="left" className="p-0 flex flex-col" style={{ backgroundColor: bgElevated, borderColor }}>
+                <div className="px-5 pt-6 pb-5 border-b" style={{ borderColor }}>
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shrink-0" style={{ background: `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))`, boxShadow: `0 8px 24px color-mix(in srgb, var(--color-primary) 25%, transparent)` }}>
                       <span className="text-base font-bold text-white">$</span>
                     </div>
                     <div>
-                      <div className="text-sm font-bold text-[#F3F6FA] leading-tight">
+                      <div className="text-sm font-bold leading-tight" style={{ color: textPrimary }}>
                         {fullName ? `${fullName} Empréstimos` : "Empréstimos"}
                       </div>
-                      <div className="text-[11px] text-[#718096] font-normal mt-0.5">Sistema financeiro</div>
+                      <div className="text-[11px] font-normal mt-0.5" style={{ color: textMuted }}>Sistema financeiro</div>
                     </div>
                   </div>
                 </div>
                 <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
                   <div className="space-y-0.5">
-                    <p className="text-[9px] font-bold text-[#718096] uppercase tracking-widest px-3 mb-2">Visão Geral</p>
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
+                    <p className="text-[9px] font-bold uppercase tracking-widest px-3 mb-2" style={{ color: textMuted }}>Visão Geral</p>
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer hover:bg-accent" style={{ color: textSecondary }}
                       onClick={() => { setIsMenuOpen(false); router.navigate({ to: "/dashboard" }); }}>
                       <Home className="h-4 w-4 shrink-0" />
                       Dashboard
                     </button>
                   </div>
                   <div className="space-y-0.5">
-                    <p className="text-[9px] font-bold text-[#718096] uppercase tracking-widest px-3 mb-2">Gestão</p>
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
+                    <p className="text-[9px] font-bold uppercase tracking-widest px-3 mb-2" style={{ color: textMuted }}>Gestão</p>
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer hover:bg-accent" style={{ color: textSecondary }}
                       onClick={() => { setIsMenuOpen(false); router.navigate({ to: "/dashboard" }); }}>
                       <Wallet className="h-4 w-4 shrink-0" />
                       Empréstimos
                     </button>
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer hover:bg-accent" style={{ color: textSecondary }}
                       onClick={() => { setIsMenuOpen(false); router.navigate({ to: "/people" }); }}>
                       <Users className="h-4 w-4 shrink-0" />
                       Pessoas
                     </button>
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer hover:bg-accent" style={{ color: textSecondary }}
                       onClick={() => { setIsMenuOpen(false); router.navigate({ to: "/dashboard" }); }}>
                       <CheckCircle className="h-4 w-4 shrink-0" />
                       Finalizados
                     </button>
                   </div>
                   <div className="space-y-0.5">
-                    <p className="text-[9px] font-bold text-[#718096] uppercase tracking-widest px-3 mb-2">Análises</p>
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
+                    <p className="text-[9px] font-bold uppercase tracking-widest px-3 mb-2" style={{ color: textMuted }}>Análises</p>
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer hover:bg-accent" style={{ color: textSecondary }}
                       onClick={() => { setIsMenuOpen(false); router.navigate({ to: "/reports" }); }}>
                       <BarChart2 className="h-4 w-4 shrink-0" />
                       Relatórios
                     </button>
                   </div>
                   <div className="space-y-0.5">
-                    <p className="text-[9px] font-bold text-[#718096] uppercase tracking-widest px-3 mb-2">Sistema</p>
+                    <p className="text-[9px] font-bold uppercase tracking-widest px-3 mb-2" style={{ color: textMuted }}>Sistema</p>
                     {currentProfile?.role === "admin" && (
-                      <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] text-sm font-medium transition-all duration-150 cursor-pointer"
+                      <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer hover:bg-accent" style={{ color: textSecondary }}
                         onClick={() => { setIsMenuOpen(false); router.navigate({ to: "/gestores" }); }}>
                         <Users className="h-4 w-4 shrink-0" />
                         Gestores
                       </button>
                     )}
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold cursor-default" style={{ backgroundColor: "color-mix(in srgb, var(--color-primary) 10%, transparent)", borderColor: "color-mix(in srgb, var(--color-primary) 30%, transparent)", color: "var(--color-primary)" }}>
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold cursor-default" style={{ backgroundColor: `color-mix(in srgb, var(--color-primary) 10%, transparent)`, borderColor: `color-mix(in srgb, var(--color-primary) 30%, transparent)`, color: "var(--color-primary)" }}>
                       <Settings className="h-4 w-4 shrink-0" />
                       Minha Conta
                     </button>
                   </div>
-                  <div className="h-px bg-[#26364D]/60 mx-1" />
+                  <div className="h-px mx-1" style={{ backgroundColor: borderColor }} />
                   <button onClick={() => { setIsMenuOpen(false); handleLogout(); }}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[#718096] hover:text-red-400 hover:bg-red-500/10 text-sm font-medium transition-all duration-150 cursor-pointer">
-                    <LogOut className="h-4 w-4 shrink-0" />
-                    Sair
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer hover:bg-destructive/10 hover:text-destructive">
+                    <LogOut className="h-4 w-4 shrink-0" style={{ color: textMuted }} />
+                    <span style={{ color: textMuted }}>Sair</span>
                   </button>
                 </nav>
-                <div className="px-5 py-4 border-t border-[#26364D]/60">
+                <div className="px-5 py-4 border-t" style={{ borderColor }}>
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-[#162235] border border-[#26364D] flex items-center justify-center shrink-0">
-                      <User className="h-3.5 w-3.5 text-[#718096]" />
+                    <div className="w-7 h-7 rounded-lg border flex items-center justify-center shrink-0" style={{ backgroundColor: bgSurface, borderColor }}>
+                      <User className="h-3.5 w-3.5" style={{ color: textMuted }} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[10px] font-semibold text-[#AAB5C5]">{currentProfile?.role === "admin" ? "Administrador" : "Gestor"}</p>
-                      <p className="text-[9px] text-[#718096] truncate">{session?.user?.email}</p>
+                      <p className="text-[10px] font-semibold" style={{ color: textSecondary }}>{currentProfile?.role === "admin" ? "Administrador" : "Gestor"}</p>
+                      <p className="text-[9px] truncate" style={{ color: textMuted }}>{session?.user?.email}</p>
                     </div>
                   </div>
                 </div>
@@ -438,7 +447,7 @@ export default function MinhaContaPage() {
             <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg" style={{ background: `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))`, boxShadow: `0 8px 24px color-mix(in srgb, var(--color-primary) 25%, transparent)` }}>
               <span className="text-sm font-bold text-white">$</span>
             </div>
-            <h1 className="text-sm sm:text-base font-bold text-[#F3F6FA] tracking-tight whitespace-nowrap">
+            <h1 className="text-sm sm:text-base font-bold tracking-tight whitespace-nowrap" style={{ color: textPrimary }}>
               Minha Conta
             </h1>
           </div>
@@ -448,83 +457,83 @@ export default function MinhaContaPage() {
       {/* Main */}
       <div className="max-w-2xl mx-auto px-4 py-8 pb-10">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-[#F3F6FA] sm:text-3xl" style={{ color: "#F3F6FA" }}>
+          <h1 className="text-2xl font-bold sm:text-3xl" style={{ color: textPrimary }}>
             Minha Conta
           </h1>
-          <p className="mt-1 text-sm text-[#718096] sm:text-base">
+          <p className="mt-1 text-sm sm:text-base" style={{ color: textMuted }}>
             Gerencie seu perfil e as preferências do sistema
           </p>
         </div>
 
         {/* Card Perfil */}
-        <div className="rounded-2xl border mb-6 overflow-hidden" style={{ backgroundColor: "#162235", borderColor: "#26364D" }}>
-          <div className="border-b px-6 py-4 sm:px-8" style={{ borderColor: "#26364D" }}>
-            <h2 className="text-base font-semibold text-[#F3F6FA]">Perfil</h2>
-            <p className="mt-0.5 text-sm text-[#718096]">Suas informações pessoais</p>
+        <div className="rounded-2xl border mb-6 overflow-hidden" style={{ backgroundColor: bgSurface, borderColor, boxShadow: "var(--shadow-card)" }}>
+          <div className="border-b px-6 py-4 sm:px-8" style={{ borderColor }}>
+            <h2 className="text-base font-semibold" style={{ color: textPrimary }}>Perfil</h2>
+            <p className="mt-0.5 text-sm" style={{ color: textMuted }}>Suas informações pessoais</p>
           </div>
           <div className="px-6 py-6 sm:px-8">
             <div className="grid gap-5 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-[#AAB5C5]">Nome</label>
+                <label className="text-sm font-medium" style={{ color: textSecondary }}>Nome</label>
                 <input
                   type="text"
                   value={firstName}
                   readOnly
                   className="w-full cursor-not-allowed rounded-lg border px-3.5 py-2.5 text-sm shadow-sm"
-                  style={{ backgroundColor: "#0B1220", borderColor: "#26364D", color: "#718096" }}
+                  style={{ backgroundColor: bgMain, borderColor, color: textMuted }}
                   placeholder="Seu nome"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-[#AAB5C5]">Sobrenome</label>
+                <label className="text-sm font-medium" style={{ color: textSecondary }}>Sobrenome</label>
                 <input
                   type="text"
                   value={lastName}
                   readOnly
                   className="w-full cursor-not-allowed rounded-lg border px-3.5 py-2.5 text-sm shadow-sm"
-                  style={{ backgroundColor: "#0B1220", borderColor: "#26364D", color: "#718096" }}
+                  style={{ backgroundColor: bgMain, borderColor, color: textMuted }}
                   placeholder="Seu sobrenome"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-[#AAB5C5]">E-mail</label>
+                <label className="text-sm font-medium" style={{ color: textSecondary }}>E-mail</label>
                 <input
                   type="email"
                   value={session?.user?.email || ""}
                   readOnly
                   className="w-full cursor-not-allowed rounded-lg border px-3.5 py-2.5 text-sm shadow-sm"
-                  style={{ backgroundColor: "#0B1220", borderColor: "#26364D", color: "#718096" }}
+                  style={{ backgroundColor: bgMain, borderColor, color: textMuted }}
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-[#AAB5C5]">Telefone</label>
+                <label className="text-sm font-medium" style={{ color: textSecondary }}>Telefone</label>
                 <input
                   type="tel"
                   value={phone}
                   onChange={handlePhoneChange}
-                  className="w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-colors placeholder:text-[#718096] focus:outline-none focus:ring-2"
-                  style={{ backgroundColor: "#101A2B", borderColor: "#26364D", color: "#F3F6FA", outlineColor: "var(--color-primary)" }}
+                  className="w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2"
+                  style={{ backgroundColor: bgElevated, borderColor, color: textPrimary, outlineColor: "var(--color-primary)" }}
                   placeholder="(00) 00000-0000"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-[#AAB5C5]">Data de nascimento</label>
+                <label className="text-sm font-medium" style={{ color: textSecondary }}>Data de nascimento</label>
                 <input
                   type="date"
                   value={birthDate}
                   onChange={(e) => setBirthDate(e.target.value)}
                   className="w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-colors focus:outline-none"
-                  style={{ backgroundColor: "#101A2B", borderColor: "#26364D", color: "#F3F6FA" }}
+                  style={{ backgroundColor: bgElevated, borderColor, color: textPrimary }}
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-[#AAB5C5]">Idade</label>
+                <label className="text-sm font-medium" style={{ color: textSecondary }}>Idade</label>
                 <input
                   type="text"
                   value={calculatedAge > 0 ? `${calculatedAge} anos` : "—"}
                   readOnly
                   className="w-full cursor-not-allowed rounded-lg border px-3.5 py-2.5 text-sm shadow-sm"
-                  style={{ backgroundColor: "#0B1220", borderColor: "#26364D", color: "#718096" }}
+                  style={{ backgroundColor: bgMain, borderColor, color: textMuted }}
                 />
               </div>
             </div>
@@ -532,32 +541,32 @@ export default function MinhaContaPage() {
         </div>
 
         {/* Card Identidade do Sistema */}
-        <div className="rounded-2xl border mb-6 overflow-hidden" style={{ backgroundColor: "#162235", borderColor: "#26364D" }}>
-          <div className="border-b px-6 py-4 sm:px-8" style={{ borderColor: "#26364D" }}>
-            <h2 className="text-base font-semibold text-[#F3F6FA]">Identidade do Sistema</h2>
-            <p className="mt-0.5 text-sm text-[#718096]">Personalize como seu sistema será apresentado.</p>
+        <div className="rounded-2xl border mb-6 overflow-hidden" style={{ backgroundColor: bgSurface, borderColor, boxShadow: "var(--shadow-card)" }}>
+          <div className="border-b px-6 py-4 sm:px-8" style={{ borderColor }}>
+            <h2 className="text-base font-semibold" style={{ color: textPrimary }}>Identidade do Sistema</h2>
+            <p className="mt-0.5 text-sm" style={{ color: textMuted }}>Personalize como seu sistema será apresentado.</p>
           </div>
           <div className="px-6 py-6 sm:px-8 space-y-6">
             <div className="space-y-5">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-[#AAB5C5]">Nome do sistema</label>
+                <label className="text-sm font-medium" style={{ color: textSecondary }}>Nome do sistema</label>
                 <input
                   type="text"
                   value={systemName}
                   onChange={(e) => setSystemName(e.target.value)}
-                  className="w-full rounded-lg border px-3.5 py-2.5 text-sm text-[#F3F6FA] shadow-sm transition-colors placeholder:text-[#718096] focus:outline-none focus:ring-2"
-                  style={{ backgroundColor: "#101A2B", borderColor: "var(--color-primary)", color: "#F3F6FA", outlineColor: "var(--color-primary)" }}
+                  className="w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2"
+                  style={{ backgroundColor: bgElevated, borderColor: "var(--color-primary)", color: textPrimary, outlineColor: "var(--color-primary)" }}
                   placeholder="Nome do seu sistema"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-[#AAB5C5]">Subtítulo</label>
+                <label className="text-sm font-medium" style={{ color: textSecondary }}>Subtítulo</label>
                 <input
                   type="text"
                   value={systemSubtitle}
                   onChange={(e) => setSystemSubtitle(e.target.value)}
-                  className="w-full rounded-lg border px-3.5 py-2.5 text-sm text-[#F3F6FA] shadow-sm transition-colors placeholder:text-[#718096] focus:outline-none focus:ring-2"
-                  style={{ backgroundColor: "#101A2B", borderColor: "#26364D", color: "#F3F6FA" }}
+                  className="w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2"
+                  style={{ backgroundColor: bgElevated, borderColor, color: textPrimary }}
                   placeholder="Ex: Sistema financeiro"
                 />
               </div>
@@ -565,14 +574,11 @@ export default function MinhaContaPage() {
 
             {/* Upload de Logo do Sistema */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#AAB5C5]">Logo do sistema</label>
+              <label className="text-sm font-medium" style={{ color: textSecondary }}>Logo do sistema</label>
               <div className="flex items-start gap-4">
                 <div
                   className="w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden border"
-                  style={{
-                    backgroundColor: "#101A2B",
-                    borderColor: "#26364D",
-                  }}
+                  style={{ backgroundColor: bgElevated, borderColor }}
                 >
                   {logoPreviewSrc ? (
                     <img
@@ -597,8 +603,8 @@ export default function MinhaContaPage() {
                   <button
                     onClick={() => logoInputRef.current?.click()}
                     disabled={isUploadingLogo}
-                    className="inline-flex items-center gap-1.5 rounded-lg border px-4 py-2 text-sm font-medium text-[#AAB5C5] shadow-sm transition-colors hover:bg-[#18263A] active:scale-95 disabled:opacity-50"
-                    style={{ borderColor: "#26364D", backgroundColor: "#101A2B" }}
+                    className="inline-flex items-center gap-1.5 rounded-lg border px-4 py-2 text-sm font-medium shadow-sm transition-colors active:scale-95 disabled:opacity-50"
+                    style={{ borderColor, backgroundColor: bgElevated, color: textSecondary }}
                   >
                     {isUploadingLogo ? (
                       <>
@@ -615,17 +621,17 @@ export default function MinhaContaPage() {
                       </>
                     )}
                   </button>
-                  <p className="text-xs text-[#718096]">PNG ou JPG, máximo 2MB</p>
+                  <p className="text-xs" style={{ color: textMuted }}>PNG ou JPG, máximo 2MB</p>
                 </div>
               </div>
             </div>
 
             {/* Prévia da identidade */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#AAB5C5]">Prévia</label>
+              <label className="text-sm font-medium" style={{ color: textSecondary }}>Prévia</label>
               <div
                 className="rounded-xl border p-4 flex items-center gap-3"
-                style={{ backgroundColor: "#101A2B", borderColor: "#26364D" }}
+                style={{ backgroundColor: bgElevated, borderColor }}
               >
                 <div
                   className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden"
@@ -642,8 +648,8 @@ export default function MinhaContaPage() {
                   )}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-[#F3F6FA]">{displaySystemName}</p>
-                  <p className="text-[11px] text-[#718096]">{systemSubtitle}</p>
+                  <p className="text-sm font-bold" style={{ color: textPrimary }}>{displaySystemName}</p>
+                  <p className="text-[11px]" style={{ color: textMuted }}>{systemSubtitle}</p>
                 </div>
               </div>
             </div>
@@ -651,15 +657,15 @@ export default function MinhaContaPage() {
         </div>
 
         {/* Card Aparência */}
-        <div className="rounded-2xl border mb-6 overflow-hidden" style={{ backgroundColor: "#162235", borderColor: "#26364D" }}>
-          <div className="border-b px-6 py-4 sm:px-8" style={{ borderColor: "#26364D" }}>
-            <h2 className="text-base font-semibold text-[#F3F6FA]">Aparência</h2>
-            <p className="mt-0.5 text-sm text-[#718096]">Personalize a aparência do seu sistema.</p>
+        <div className="rounded-2xl border mb-6 overflow-hidden" style={{ backgroundColor: bgSurface, borderColor, boxShadow: "var(--shadow-card)" }}>
+          <div className="border-b px-6 py-4 sm:px-8" style={{ borderColor }}>
+            <h2 className="text-base font-semibold" style={{ color: textPrimary }}>Aparência</h2>
+            <p className="mt-0.5 text-sm" style={{ color: textMuted }}>Personalize a aparência do seu sistema.</p>
           </div>
           <div className="px-6 py-6 sm:px-8 space-y-6">
             {/* Tema */}
             <div className="space-y-3">
-              <label className="text-sm font-medium text-[#AAB5C5]">Tema</label>
+              <label className="text-sm font-medium" style={{ color: textSecondary }}>Tema</label>
               <div className="flex gap-2">
                 {themeOptions.map((t) => {
                   const isActive = t.id === theme;
@@ -667,13 +673,12 @@ export default function MinhaContaPage() {
                     <button
                       key={t.id}
                       onClick={() => setTheme(t.id)}
-                      className={`flex-1 flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition-all active:scale-95 ${
-                        isActive ? "text-white shadow-sm" : "text-[#AAB5C5]"
-                      }`}
+                      className="flex-1 flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition-all active:scale-95"
                       style={{
-                        borderColor: isActive ? primaryColor : "#26364D",
-                        backgroundColor: isActive ? `${primaryColor}26` : "#101A2B",
+                        borderColor: isActive ? primaryColor : borderColor,
+                        backgroundColor: isActive ? `${primaryColor}26` : bgElevated,
                         boxShadow: isActive ? `0 0 0 1px ${primaryColor}` : "none",
+                        color: isActive ? "white" : textSecondary,
                       }}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
@@ -688,7 +693,7 @@ export default function MinhaContaPage() {
 
             {/* Cor principal */}
             <div className="space-y-3">
-              <label className="text-sm font-medium text-[#AAB5C5]">Cor principal</label>
+              <label className="text-sm font-medium" style={{ color: textSecondary }}>Cor principal</label>
               <div className="flex flex-wrap items-center gap-3">
                 {colorOptions.map((item) => {
                   const isActive = item.color === primaryColor;
@@ -697,7 +702,7 @@ export default function MinhaContaPage() {
                       key={item.color}
                       onClick={() => setPrimaryColor(item.color)}
                       className="relative flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-90"
-                      style={{ backgroundColor: item.color, boxShadow: isActive ? `0 0 0 3px #162235, 0 0 0 5px ${item.color}` : "none" }}
+                      style={{ backgroundColor: item.color, boxShadow: isActive ? `0 0 0 3px ${bgSurface}, 0 0 0 5px ${item.color}` : "none" }}
                       title={item.label}
                     >
                       {isActive && (
@@ -713,29 +718,29 @@ export default function MinhaContaPage() {
 
             {/* Prévia */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#AAB5C5]">Prévia</label>
+              <label className="text-sm font-medium" style={{ color: textSecondary }}>Prévia</label>
               <div
                 className="rounded-xl border p-4 space-y-3"
-                style={{ backgroundColor: "#101A2B", borderColor: "#26364D" }}
+                style={{ backgroundColor: bgElevated, borderColor }}
               >
-                <div className="flex items-center gap-2 pb-3 border-b" style={{ borderColor: "#26364D" }}>
+                <div className="flex items-center gap-2 pb-3 border-b" style={{ borderColor }}>
                   <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}99)` }}>
                     <span className="text-[10px] font-bold text-white">$</span>
                   </div>
-                  <div className="h-2 w-24 rounded" style={{ backgroundColor: "#26364D" }} />
+                  <div className="h-2 w-24 rounded" style={{ backgroundColor: borderColor }} />
                   <div className="ml-auto flex gap-1">
                     <div className="h-6 w-6 rounded-full" style={{ backgroundColor: primaryColor, opacity: 0.4 }} />
                     <div className="h-6 w-6 rounded-full" style={{ backgroundColor: primaryColor, opacity: 0.4 }} />
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <div className="flex-1 rounded-lg p-2.5" style={{ backgroundColor: "#162235", border: "1px solid #26364D" }}>
+                  <div className="flex-1 rounded-lg p-2.5 border" style={{ backgroundColor: bgSurface, borderColor }}>
                     <div className="h-1.5 w-16 rounded mb-1.5" style={{ backgroundColor: primaryColor, opacity: 0.7 }} />
-                    <div className="h-1.5 w-10 rounded" style={{ backgroundColor: "#718096", opacity: 0.4 }} />
+                    <div className="h-1.5 w-10 rounded" style={{ backgroundColor: textMuted, opacity: 0.4 }} />
                   </div>
-                  <div className="flex-1 rounded-lg p-2.5" style={{ backgroundColor: "#162235", border: "1px solid #26364D" }}>
+                  <div className="flex-1 rounded-lg p-2.5 border" style={{ backgroundColor: bgSurface, borderColor }}>
                     <div className="h-1.5 w-16 rounded mb-1.5" style={{ backgroundColor: primaryColor, opacity: 0.7 }} />
-                    <div className="h-1.5 w-10 rounded" style={{ backgroundColor: "#718096", opacity: 0.4 }} />
+                    <div className="h-1.5 w-10 rounded" style={{ backgroundColor: textMuted, opacity: 0.4 }} />
                   </div>
                 </div>
                 <div className="flex justify-center pt-1">
