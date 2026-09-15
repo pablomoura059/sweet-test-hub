@@ -359,13 +359,17 @@ export default function MinhaContaPage() {
   const cardShadow = "var(--shadow-card)";
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: bgMain }}>
+    <div
+      className="min-h-screen"
+      style={{ backgroundColor: bgMain }}
+      data-theme={isLight ? "light" : "dark"}
+    >
       {/* Header */}
       <header
-        className="sticky top-0 z-40 border-b backdrop-blur-xl"
+        className="sticky top-0 z-40 border-b"
         style={{
-          borderColor,
-          backgroundColor: bgElevated,
+          borderColor: isLight ? "var(--sidebar-border)" : "var(--border)",
+          backgroundColor: isLight ? "var(--sidebar-background)" : "var(--card)",
         }}
       >
         <div className="flex items-center justify-between px-4 py-3 max-w-2xl mx-auto">
