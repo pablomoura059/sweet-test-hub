@@ -190,7 +190,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "var(--color-background, #0B1220)" }}>
+    <div className="min-h-screen" style={{ backgroundColor: "var(--background, #0B1220)" }}>
       {/* Mobile Header */}
       <header className="sticky top-0 z-50 md:hidden" style={{ backgroundColor: "var(--color-sidebar, #162235)", borderBottom: "1px solid var(--color-border, #26364D)" }}>
         <div className="flex items-center justify-between px-4 py-3">
@@ -268,9 +268,9 @@ export default function DashboardPage() {
                 onClick={() => setPeriod(p)}
                 className="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all"
                 style={{
-                  backgroundColor: period === p ? "var(--color-primary)" : "var(--color-surface, #18263A)",
-                  color: period === p ? "#fff" : "var(--color-muted-foreground, #718096)",
-                  border: period !== p ? "1px solid var(--color-border, #26364D)" : "none",
+                  backgroundColor: period === p ? "var(--color-primary)" : "var(--secondary, #18263A)",
+                  color: period === p ? "#fff" : "var(--muted-foreground, #718096)",
+                  border: period !== p ? "1px solid var(--border, #26364D)" : "none",
                 }}
               >
                 {getPeriodLabel(p)}
@@ -347,7 +347,7 @@ export default function DashboardPage() {
                     type="text"
                     placeholder="Buscar..."
                     className="pl-9 pr-4 py-2 rounded-lg text-sm w-64 border"
-                    style={{ backgroundColor: "var(--color-surface, #101A2B)", borderColor: "var(--color-border, #26364D)", color: "var(--color-foreground, #F3F6FA)" }}
+                    style={{ backgroundColor: "var(--input, #101A2B)", borderColor: "var(--border, #26364D)", color: "var(--foreground, #F3F6FA)" }}
                   />
                 </div>
                 <Button size="sm" className="gap-1.5" style={{ backgroundColor: "var(--color-primary)", color: "#fff" }}>
@@ -368,8 +368,8 @@ export default function DashboardPage() {
                     className="px-4 py-2 rounded-lg text-sm font-medium transition-all"
                     style={{
                       backgroundColor: period === p ? "var(--color-primary)" : "transparent",
-                      color: period === p ? "#fff" : "var(--color-muted-foreground, #718096)",
-                      border: period !== p ? "1px solid var(--color-border, #26364D)" : "none",
+                      color: period === p ? "#fff" : "var(--muted-foreground, #718096)",
+                      border: period !== p ? "1px solid var(--border, #26364D)" : "none",
                     }}
                   >
                     {getPeriodLabel(p)}
