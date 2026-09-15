@@ -591,13 +591,20 @@ function DashboardPage() {
       if (!session?.user.id) return null;
       const { data } = await supabase
         .from("user_settings")
-        .select("system_name, system_subtitle, primary_color")
+        .select("system_name, system_subtitle, primary_color, logo_url")
         .eq("user_id", session.user.id)
         .single();
       return data;
     },
     enabled: !!session?.user.id,
   });
+
+  // Gerar URL pública da logo do Storage
+  const getLogoUrl = () => {
+    if (!userSettings?.logo_url) return null;
+    const { data } = supabase.storage.from("system-logos").getPublicUrl(userSettings.logo_url);
+    return data.publicUrl;
+  };
 
   const { data: people } = useQuery({
     queryKey: ["people", session?.user.id],
@@ -872,12 +879,15 @@ function DashboardPage() {
               <SheetContent side="left" className="bg-[#101A2B] border-[#26364D] w-[300px] p-0 flex flex-col">
                 <div className="px-5 pt-6 pb-5 border-b border-[#26364D]/60">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shrink-0" style={{ background: `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))` }}>
-                      <span className="text-base font-bold text-white">$</span>
-                    </div>
-                    <div>
-                      <div className="text-sm font-bold text-[#F3F6FA] leading-tight">
-                        {userSettings?.system_name ||
+                    {getLogoUrl() ? (
+                    <img src={getLogoUrl()!} alt="Logo" className="w-full h-full object-contain" />
+                  ) : (
+                    <span className="text-base font-bold text-white">$</span>
+                  )}
+                </div>
+                <div className={getLogoUrl() ? "flex items-center gap-3" : "flex items-center gap-3"}>
+                  <div className="text-sm font-bold text-[#F3F6FA] leading-tight">
+                    {userSettings?.system_name ||
                           (currentProfile?.first_name && currentProfile?.last_name
                             ? `${currentProfile.first_name} ${currentProfile.last_name} Empréstimos`
                             : currentProfile?.first_name
@@ -887,7 +897,6 @@ function DashboardPage() {
                       <div className="text-[11px] text-[#718096] font-normal mt-0.5">
                         {userSettings?.system_subtitle || "Sistema financeiro"}
                       </div>
-                    </div>
                   </div>
                 </div>
                 <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
@@ -963,8 +972,12 @@ function DashboardPage() {
               </SheetContent>
             </Sheet>
 
-                                <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg" style={{ background: `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))` }}>
-                      <span className="text-sm font-bold text-white">$</span>
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg overflow-hidden" style={!getLogoUrl() ? { background: `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))` } : { backgroundColor: "#101A2B", border: "1px solid #26364D" }}>
+                      {getLogoUrl() ? (
+                        <img src={getLogoUrl()!} alt="Logo" className="w-full h-full object-contain" />
+                      ) : (
+                        <span className="text-sm font-bold text-white">$</span>
+                      )}
                     </div>
             <h1 className="text-sm sm:text-base font-bold text-[#F3F6FA] tracking-tight whitespace-nowrap">
                 {userSettings?.system_name ||
