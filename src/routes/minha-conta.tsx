@@ -337,117 +337,253 @@ export default function MinhaContaPage() {
     return found ? found.name : "blue";
   }
 
+  // ── Theme-aware semantic variables ─────────────────────────────────────
   const isLight = theme === "light";
 
-  // Dynamic theme-aware colors — fall back to dark values when not in light mode
-  const bgMain = isLight ? "var(--color-background)" : "#0B1220";
-  const bgSurface = isLight ? "var(--color-card)" : "#162235";
-  const bgElevated = isLight ? "var(--color-popover)" : "#101A2B";
-  const borderColor = isLight ? "var(--color-border)" : "#26364D";
-  const textPrimary = isLight ? "var(--color-foreground)" : "#F3F6FA";
-  const textSecondary = isLight ? "var(--color-secondary-foreground)" : "#AAB5C5";
-  const textMuted = isLight ? "var(--color-muted-foreground)" : "#718096";
+  // Background & surfaces
+  const bgMain = "var(--background)";
+  const bgSurface = "var(--card)";
+  const bgElevated = "var(--popover)";
+  const bgSecondary = "var(--secondary)";
+
+  // Text
+  const textPrimary = "var(--foreground)";
+  const textSecondary = "var(--secondary-foreground)";
+  const textMuted = "var(--muted-foreground)";
+
+  // Border & input
+  const borderColor = "var(--border)";
+  const inputBg = "var(--input)";
+
+  // Shadow
+  const cardShadow = "var(--shadow-card)";
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: bgMain }}>
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b bg-popover/95 backdrop-blur-xl" style={{ borderColor, backgroundColor: bgElevated }}>
+      <header
+        className="sticky top-0 z-40 border-b backdrop-blur-xl"
+        style={{
+          borderColor,
+          backgroundColor: bgElevated,
+        }}
+      >
         <div className="flex items-center justify-between px-4 py-3 max-w-2xl mx-auto">
           <div className="flex items-center gap-3">
             <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="hover:bg-accent transition-colors" style={{ color: textSecondary }}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="hover:bg-accent transition-colors"
+                  style={{ color: textSecondary }}
+                >
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="p-0 flex flex-col" style={{ backgroundColor: bgElevated, borderColor }}>
+              <SheetContent
+                side="left"
+                className="p-0 flex flex-col"
+                style={{ backgroundColor: bgElevated, borderColor }}
+              >
                 <div className="px-5 pt-6 pb-5 border-b" style={{ borderColor }}>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shrink-0" style={{ background: `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))`, boxShadow: `0 8px 24px color-mix(in srgb, var(--color-primary) 25%, transparent)` }}>
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shrink-0"
+                      style={{
+                        background: `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))`,
+                        boxShadow: `0 8px 24px color-mix(in srgb, var(--color-primary) 25%, transparent)`,
+                      }}
+                    >
                       <span className="text-base font-bold text-white">$</span>
                     </div>
                     <div>
-                      <div className="text-sm font-bold leading-tight" style={{ color: textPrimary }}>
+                      <div
+                        className="text-sm font-bold leading-tight"
+                        style={{ color: textPrimary }}
+                      >
                         {fullName ? `${fullName} Empréstimos` : "Empréstimos"}
                       </div>
-                      <div className="text-[11px] font-normal mt-0.5" style={{ color: textMuted }}>Sistema financeiro</div>
+                      <div
+                        className="text-[11px] font-normal mt-0.5"
+                        style={{ color: textMuted }}
+                      >
+                        Sistema financeiro
+                      </div>
                     </div>
                   </div>
                 </div>
+
                 <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
                   <div className="space-y-0.5">
-                    <p className="text-[9px] font-bold uppercase tracking-widest px-3 mb-2" style={{ color: textMuted }}>Visão Geral</p>
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer hover:bg-accent" style={{ color: textSecondary }}
-                      onClick={() => { setIsMenuOpen(false); router.navigate({ to: "/dashboard" }); }}>
+                    <p
+                      className="text-[9px] font-bold uppercase tracking-widest px-3 mb-2"
+                      style={{ color: textMuted }}
+                    >
+                      Visão Geral
+                    </p>
+                    <button
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer hover:bg-accent"
+                      style={{ color: textSecondary }}
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        router.navigate({ to: "/dashboard" });
+                      }}
+                    >
                       <Home className="h-4 w-4 shrink-0" />
                       Dashboard
                     </button>
                   </div>
+
                   <div className="space-y-0.5">
-                    <p className="text-[9px] font-bold uppercase tracking-widest px-3 mb-2" style={{ color: textMuted }}>Gestão</p>
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer hover:bg-accent" style={{ color: textSecondary }}
-                      onClick={() => { setIsMenuOpen(false); router.navigate({ to: "/dashboard" }); }}>
+                    <p
+                      className="text-[9px] font-bold uppercase tracking-widest px-3 mb-2"
+                      style={{ color: textMuted }}
+                    >
+                      Gestão
+                    </p>
+                    <button
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer hover:bg-accent"
+                      style={{ color: textSecondary }}
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        router.navigate({ to: "/dashboard" });
+                      }}
+                    >
                       <Wallet className="h-4 w-4 shrink-0" />
                       Empréstimos
                     </button>
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer hover:bg-accent" style={{ color: textSecondary }}
-                      onClick={() => { setIsMenuOpen(false); router.navigate({ to: "/people" }); }}>
+                    <button
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer hover:bg-accent"
+                      style={{ color: textSecondary }}
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        router.navigate({ to: "/people" });
+                      }}
+                    >
                       <Users className="h-4 w-4 shrink-0" />
                       Pessoas
                     </button>
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer hover:bg-accent" style={{ color: textSecondary }}
-                      onClick={() => { setIsMenuOpen(false); router.navigate({ to: "/dashboard" }); }}>
+                    <button
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer hover:bg-accent"
+                      style={{ color: textSecondary }}
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        router.navigate({ to: "/dashboard" });
+                      }}
+                    >
                       <CheckCircle className="h-4 w-4 shrink-0" />
                       Finalizados
                     </button>
                   </div>
+
                   <div className="space-y-0.5">
-                    <p className="text-[9px] font-bold uppercase tracking-widest px-3 mb-2" style={{ color: textMuted }}>Análises</p>
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer hover:bg-accent" style={{ color: textSecondary }}
-                      onClick={() => { setIsMenuOpen(false); router.navigate({ to: "/reports" }); }}>
+                    <p
+                      className="text-[9px] font-bold uppercase tracking-widest px-3 mb-2"
+                      style={{ color: textMuted }}
+                    >
+                      Análises
+                    </p>
+                    <button
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer hover:bg-accent"
+                      style={{ color: textSecondary }}
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        router.navigate({ to: "/reports" });
+                      }}
+                    >
                       <BarChart2 className="h-4 w-4 shrink-0" />
                       Relatórios
                     </button>
                   </div>
+
                   <div className="space-y-0.5">
-                    <p className="text-[9px] font-bold uppercase tracking-widest px-3 mb-2" style={{ color: textMuted }}>Sistema</p>
+                    <p
+                      className="text-[9px] font-bold uppercase tracking-widest px-3 mb-2"
+                      style={{ color: textMuted }}
+                    >
+                      Sistema
+                    </p>
                     {currentProfile?.role === "admin" && (
-                      <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer hover:bg-accent" style={{ color: textSecondary }}
-                        onClick={() => { setIsMenuOpen(false); router.navigate({ to: "/gestores" }); }}>
+                      <button
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer hover:bg-accent"
+                        style={{ color: textSecondary }}
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          router.navigate({ to: "/gestores" });
+                        }}
+                      >
                         <Users className="h-4 w-4 shrink-0" />
                         Gestores
                       </button>
                     )}
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold cursor-default" style={{ backgroundColor: `color-mix(in srgb, var(--color-primary) 10%, transparent)`, borderColor: `color-mix(in srgb, var(--color-primary) 30%, transparent)`, color: "var(--color-primary)" }}>
+                    <button
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold cursor-default"
+                      style={{
+                        backgroundColor: "color-mix(in srgb, var(--color-primary) 10%, transparent)",
+                        borderColor: "color-mix(in srgb, var(--color-primary) 30%, transparent)",
+                        color: "var(--color-primary)",
+                      }}
+                    >
                       <Settings className="h-4 w-4 shrink-0" />
                       Minha Conta
                     </button>
                   </div>
+
                   <div className="h-px mx-1" style={{ backgroundColor: borderColor }} />
-                  <button onClick={() => { setIsMenuOpen(false); handleLogout(); }}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer hover:bg-destructive/10 hover:text-destructive">
+
+                  <button
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      handleLogout();
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 cursor-pointer hover:bg-destructive/10 hover:text-destructive"
+                  >
                     <LogOut className="h-4 w-4 shrink-0" style={{ color: textMuted }} />
                     <span style={{ color: textMuted }}>Sair</span>
                   </button>
                 </nav>
+
                 <div className="px-5 py-4 border-t" style={{ borderColor }}>
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg border flex items-center justify-center shrink-0" style={{ backgroundColor: bgSurface, borderColor }}>
+                    <div
+                      className="w-7 h-7 rounded-lg border flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: bgSurface, borderColor }}
+                    >
                       <User className="h-3.5 w-3.5" style={{ color: textMuted }} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[10px] font-semibold" style={{ color: textSecondary }}>{currentProfile?.role === "admin" ? "Administrador" : "Gestor"}</p>
-                      <p className="text-[9px] truncate" style={{ color: textMuted }}>{session?.user?.email}</p>
+                      <p
+                        className="text-[10px] font-semibold"
+                        style={{ color: textSecondary }}
+                      >
+                        {currentProfile?.role === "admin" ? "Administrador" : "Gestor"}
+                      </p>
+                      <p
+                        className="text-[9px] truncate"
+                        style={{ color: textMuted }}
+                      >
+                        {session?.user?.email}
+                      </p>
                     </div>
                   </div>
                 </div>
               </SheetContent>
             </Sheet>
 
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg" style={{ background: `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))`, boxShadow: `0 8px 24px color-mix(in srgb, var(--color-primary) 25%, transparent)` }}>
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg"
+              style={{
+                background: `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))`,
+                boxShadow: `0 8px 24px color-mix(in srgb, var(--color-primary) 25%, transparent)`,
+              }}
+            >
               <span className="text-sm font-bold text-white">$</span>
             </div>
-            <h1 className="text-sm sm:text-base font-bold tracking-tight whitespace-nowrap" style={{ color: textPrimary }}>
+            <h1
+              className="text-sm sm:text-base font-bold tracking-tight whitespace-nowrap"
+              style={{ color: textPrimary }}
+            >
               Minha Conta
             </h1>
           </div>
@@ -466,74 +602,122 @@ export default function MinhaContaPage() {
         </div>
 
         {/* Card Perfil */}
-        <div className="rounded-2xl border mb-6 overflow-hidden" style={{ backgroundColor: bgSurface, borderColor, boxShadow: "var(--shadow-card)" }}>
+        <div
+          className="rounded-2xl border mb-6 overflow-hidden"
+          style={{
+            backgroundColor: bgSurface,
+            borderColor,
+            boxShadow: cardShadow,
+          }}
+        >
           <div className="border-b px-6 py-4 sm:px-8" style={{ borderColor }}>
-            <h2 className="text-base font-semibold" style={{ color: textPrimary }}>Perfil</h2>
-            <p className="mt-0.5 text-sm" style={{ color: textMuted }}>Suas informações pessoais</p>
+            <h2 className="text-base font-semibold" style={{ color: textPrimary }}>
+              Perfil
+            </h2>
+            <p className="mt-0.5 text-sm" style={{ color: textMuted }}>
+              Suas informações pessoais
+            </p>
           </div>
           <div className="px-6 py-6 sm:px-8">
             <div className="grid gap-5 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium" style={{ color: textSecondary }}>Nome</label>
+                <label className="text-sm font-medium" style={{ color: textSecondary }}>
+                  Nome
+                </label>
                 <input
                   type="text"
                   value={firstName}
                   readOnly
                   className="w-full cursor-not-allowed rounded-lg border px-3.5 py-2.5 text-sm shadow-sm"
-                  style={{ backgroundColor: bgMain, borderColor, color: textMuted }}
+                  style={{
+                    backgroundColor: inputBg,
+                    borderColor,
+                    color: textMuted,
+                  }}
                   placeholder="Seu nome"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium" style={{ color: textSecondary }}>Sobrenome</label>
+                <label className="text-sm font-medium" style={{ color: textSecondary }}>
+                  Sobrenome
+                </label>
                 <input
                   type="text"
                   value={lastName}
                   readOnly
                   className="w-full cursor-not-allowed rounded-lg border px-3.5 py-2.5 text-sm shadow-sm"
-                  style={{ backgroundColor: bgMain, borderColor, color: textMuted }}
+                  style={{
+                    backgroundColor: inputBg,
+                    borderColor,
+                    color: textMuted,
+                  }}
                   placeholder="Seu sobrenome"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium" style={{ color: textSecondary }}>E-mail</label>
+                <label className="text-sm font-medium" style={{ color: textSecondary }}>
+                  E-mail
+                </label>
                 <input
                   type="email"
                   value={session?.user?.email || ""}
                   readOnly
                   className="w-full cursor-not-allowed rounded-lg border px-3.5 py-2.5 text-sm shadow-sm"
-                  style={{ backgroundColor: bgMain, borderColor, color: textMuted }}
+                  style={{
+                    backgroundColor: inputBg,
+                    borderColor,
+                    color: textMuted,
+                  }}
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium" style={{ color: textSecondary }}>Telefone</label>
+                <label className="text-sm font-medium" style={{ color: textSecondary }}>
+                  Telefone
+                </label>
                 <input
                   type="tel"
                   value={phone}
                   onChange={handlePhoneChange}
                   className="w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2"
-                  style={{ backgroundColor: bgElevated, borderColor, color: textPrimary, outlineColor: "var(--color-primary)" }}
+                  style={{
+                    backgroundColor: inputBg,
+                    borderColor,
+                    color: textPrimary,
+                    outlineColor: "var(--color-primary)",
+                  }}
                   placeholder="(00) 00000-0000"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium" style={{ color: textSecondary }}>Data de nascimento</label>
+                <label className="text-sm font-medium" style={{ color: textSecondary }}>
+                  Data de nascimento
+                </label>
                 <input
                   type="date"
                   value={birthDate}
                   onChange={(e) => setBirthDate(e.target.value)}
                   className="w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-colors focus:outline-none"
-                  style={{ backgroundColor: bgElevated, borderColor, color: textPrimary }}
+                  style={{
+                    backgroundColor: inputBg,
+                    borderColor,
+                    color: textPrimary,
+                  }}
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium" style={{ color: textSecondary }}>Idade</label>
+                <label className="text-sm font-medium" style={{ color: textSecondary }}>
+                  Idade
+                </label>
                 <input
                   type="text"
                   value={calculatedAge > 0 ? `${calculatedAge} anos` : "—"}
                   readOnly
                   className="w-full cursor-not-allowed rounded-lg border px-3.5 py-2.5 text-sm shadow-sm"
-                  style={{ backgroundColor: bgMain, borderColor, color: textMuted }}
+                  style={{
+                    backgroundColor: inputBg,
+                    borderColor,
+                    color: textMuted,
+                  }}
                 />
               </div>
             </div>
@@ -541,32 +725,56 @@ export default function MinhaContaPage() {
         </div>
 
         {/* Card Identidade do Sistema */}
-        <div className="rounded-2xl border mb-6 overflow-hidden" style={{ backgroundColor: bgSurface, borderColor, boxShadow: "var(--shadow-card)" }}>
+        <div
+          className="rounded-2xl border mb-6 overflow-hidden"
+          style={{
+            backgroundColor: bgSurface,
+            borderColor,
+            boxShadow: cardShadow,
+          }}
+        >
           <div className="border-b px-6 py-4 sm:px-8" style={{ borderColor }}>
-            <h2 className="text-base font-semibold" style={{ color: textPrimary }}>Identidade do Sistema</h2>
-            <p className="mt-0.5 text-sm" style={{ color: textMuted }}>Personalize como seu sistema será apresentado.</p>
+            <h2 className="text-base font-semibold" style={{ color: textPrimary }}>
+              Identidade do Sistema
+            </h2>
+            <p className="mt-0.5 text-sm" style={{ color: textMuted }}>
+              Personalize como seu sistema será apresentado.
+            </p>
           </div>
           <div className="px-6 py-6 sm:px-8 space-y-6">
             <div className="space-y-5">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium" style={{ color: textSecondary }}>Nome do sistema</label>
+                <label className="text-sm font-medium" style={{ color: textSecondary }}>
+                  Nome do sistema
+                </label>
                 <input
                   type="text"
                   value={systemName}
                   onChange={(e) => setSystemName(e.target.value)}
                   className="w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2"
-                  style={{ backgroundColor: bgElevated, borderColor: "var(--color-primary)", color: textPrimary, outlineColor: "var(--color-primary)" }}
+                  style={{
+                    backgroundColor: inputBg,
+                    borderColor: "var(--color-primary)",
+                    color: textPrimary,
+                    outlineColor: "var(--color-primary)",
+                  }}
                   placeholder="Nome do seu sistema"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium" style={{ color: textSecondary }}>Subtítulo</label>
+                <label className="text-sm font-medium" style={{ color: textSecondary }}>
+                  Subtítulo
+                </label>
                 <input
                   type="text"
                   value={systemSubtitle}
                   onChange={(e) => setSystemSubtitle(e.target.value)}
                   className="w-full rounded-lg border px-3.5 py-2.5 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2"
-                  style={{ backgroundColor: bgElevated, borderColor, color: textPrimary }}
+                  style={{
+                    backgroundColor: inputBg,
+                    borderColor,
+                    color: textPrimary,
+                  }}
                   placeholder="Ex: Sistema financeiro"
                 />
               </div>
@@ -574,7 +782,9 @@ export default function MinhaContaPage() {
 
             {/* Upload de Logo do Sistema */}
             <div className="space-y-2">
-              <label className="text-sm font-medium" style={{ color: textSecondary }}>Logo do sistema</label>
+              <label className="text-sm font-medium" style={{ color: textSecondary }}>
+                Logo do sistema
+              </label>
               <div className="flex items-start gap-4">
                 <div
                   className="w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden border"
@@ -587,7 +797,12 @@ export default function MinhaContaPage() {
                       className="w-full h-full object-contain"
                     />
                   ) : (
-                    <span className="text-xl font-bold" style={{ color: "var(--color-primary)" }}>$</span>
+                    <span
+                      className="text-xl font-bold"
+                      style={{ color: "var(--color-primary)" }}
+                    >
+                      $
+                    </span>
                   )}
                 </div>
 
@@ -604,13 +819,29 @@ export default function MinhaContaPage() {
                     onClick={() => logoInputRef.current?.click()}
                     disabled={isUploadingLogo}
                     className="inline-flex items-center gap-1.5 rounded-lg border px-4 py-2 text-sm font-medium shadow-sm transition-colors active:scale-95 disabled:opacity-50"
-                    style={{ borderColor, backgroundColor: bgElevated, color: textSecondary }}
+                    style={{
+                      borderColor,
+                      backgroundColor: bgElevated,
+                      color: textSecondary,
+                    }}
                   >
                     {isUploadingLogo ? (
                       <>
                         <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                            fill="none"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          />
                         </svg>
                         Carregando...
                       </>
@@ -621,21 +852,32 @@ export default function MinhaContaPage() {
                       </>
                     )}
                   </button>
-                  <p className="text-xs" style={{ color: textMuted }}>PNG ou JPG, máximo 2MB</p>
+                  <p className="text-xs" style={{ color: textMuted }}>
+                    PNG ou JPG, máximo 2MB
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* Prévia da identidade */}
             <div className="space-y-2">
-              <label className="text-sm font-medium" style={{ color: textSecondary }}>Prévia</label>
+              <label className="text-sm font-medium" style={{ color: textSecondary }}>
+                Prévia
+              </label>
               <div
                 className="rounded-xl border p-4 flex items-center gap-3"
-                style={{ backgroundColor: bgElevated, borderColor }}
+                style={{
+                  backgroundColor: bgElevated,
+                  borderColor,
+                }}
               >
                 <div
                   className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden"
-                  style={{ background: logoPreviewSrc ? "transparent" : `linear-gradient(135deg, ${primaryColor}, ${primaryColor}99)` }}
+                  style={{
+                    background: logoPreviewSrc
+                      ? "transparent"
+                      : `linear-gradient(135deg, ${primaryColor}, ${primaryColor}99)`,
+                  }}
                 >
                   {logoPreviewSrc ? (
                     <img
@@ -648,8 +890,12 @@ export default function MinhaContaPage() {
                   )}
                 </div>
                 <div>
-                  <p className="text-sm font-bold" style={{ color: textPrimary }}>{displaySystemName}</p>
-                  <p className="text-[11px]" style={{ color: textMuted }}>{systemSubtitle}</p>
+                  <p className="text-sm font-bold" style={{ color: textPrimary }}>
+                    {displaySystemName}
+                  </p>
+                  <p className="text-[11px]" style={{ color: textMuted }}>
+                    {systemSubtitle}
+                  </p>
                 </div>
               </div>
             </div>
@@ -657,15 +903,28 @@ export default function MinhaContaPage() {
         </div>
 
         {/* Card Aparência */}
-        <div className="rounded-2xl border mb-6 overflow-hidden" style={{ backgroundColor: bgSurface, borderColor, boxShadow: "var(--shadow-card)" }}>
+        <div
+          className="rounded-2xl border mb-6 overflow-hidden"
+          style={{
+            backgroundColor: bgSurface,
+            borderColor,
+            boxShadow: cardShadow,
+          }}
+        >
           <div className="border-b px-6 py-4 sm:px-8" style={{ borderColor }}>
-            <h2 className="text-base font-semibold" style={{ color: textPrimary }}>Aparência</h2>
-            <p className="mt-0.5 text-sm" style={{ color: textMuted }}>Personalize a aparência do seu sistema.</p>
+            <h2 className="text-base font-semibold" style={{ color: textPrimary }}>
+              Aparência
+            </h2>
+            <p className="mt-0.5 text-sm" style={{ color: textMuted }}>
+              Personalize a aparência do seu sistema.
+            </p>
           </div>
           <div className="px-6 py-6 sm:px-8 space-y-6">
             {/* Tema */}
             <div className="space-y-3">
-              <label className="text-sm font-medium" style={{ color: textSecondary }}>Tema</label>
+              <label className="text-sm font-medium" style={{ color: textSecondary }}>
+                Tema
+              </label>
               <div className="flex gap-2">
                 {themeOptions.map((t) => {
                   const isActive = t.id === theme;
@@ -675,13 +934,26 @@ export default function MinhaContaPage() {
                       onClick={() => setTheme(t.id)}
                       className="flex-1 flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition-all active:scale-95"
                       style={{
-                        borderColor: isActive ? primaryColor : borderColor,
-                        backgroundColor: isActive ? `${primaryColor}26` : bgElevated,
-                        boxShadow: isActive ? `0 0 0 1px ${primaryColor}` : "none",
-                        color: isActive ? "white" : textSecondary,
+                        borderColor: isActive ? "var(--color-primary)" : borderColor,
+                        backgroundColor: isActive
+                          ? "color-mix(in srgb, var(--color-primary) 15%, transparent)"
+                          : bgElevated,
+                        boxShadow: isActive
+                          ? `0 0 0 1px var(--color-primary)`
+                          : "none",
+                        color: isActive ? "var(--color-primary)" : textSecondary,
                       }}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="h-4 w-4"
+                      >
                         {t.icon}
                       </svg>
                       <span className="hidden sm:inline">{t.label}</span>
@@ -693,7 +965,9 @@ export default function MinhaContaPage() {
 
             {/* Cor principal */}
             <div className="space-y-3">
-              <label className="text-sm font-medium" style={{ color: textSecondary }}>Cor principal</label>
+              <label className="text-sm font-medium" style={{ color: textSecondary }}>
+                Cor principal
+              </label>
               <div className="flex flex-wrap items-center gap-3">
                 {colorOptions.map((item) => {
                   const isActive = item.color === primaryColor;
@@ -702,11 +976,25 @@ export default function MinhaContaPage() {
                       key={item.color}
                       onClick={() => setPrimaryColor(item.color)}
                       className="relative flex items-center justify-center w-9 h-9 rounded-full transition-all active:scale-90"
-                      style={{ backgroundColor: item.color, boxShadow: isActive ? `0 0 0 3px ${bgSurface}, 0 0 0 5px ${item.color}` : "none" }}
+                      style={{
+                        backgroundColor: item.color,
+                        boxShadow: isActive
+                          ? `0 0 0 3px ${bgSurface}, 0 0 0 5px ${item.color}`
+                          : "none",
+                      }}
                       title={item.label}
                     >
                       {isActive && (
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="white"
+                          strokeWidth={3}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="h-3.5 w-3.5"
+                        >
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
                       )}
@@ -718,33 +1006,78 @@ export default function MinhaContaPage() {
 
             {/* Prévia */}
             <div className="space-y-2">
-              <label className="text-sm font-medium" style={{ color: textSecondary }}>Prévia</label>
+              <label className="text-sm font-medium" style={{ color: textSecondary }}>
+                Prévia
+              </label>
               <div
                 className="rounded-xl border p-4 space-y-3"
-                style={{ backgroundColor: bgElevated, borderColor }}
+                style={{
+                  backgroundColor: bgElevated,
+                  borderColor,
+                }}
               >
-                <div className="flex items-center gap-2 pb-3 border-b" style={{ borderColor }}>
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}99)` }}>
+                <div
+                  className="flex items-center gap-2 pb-3 border-b"
+                  style={{ borderColor }}
+                >
+                  <div
+                    className="w-7 h-7 rounded-lg flex items-center justify-center"
+                    style={{
+                      background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}99)`,
+                    }}
+                  >
                     <span className="text-[10px] font-bold text-white">$</span>
                   </div>
-                  <div className="h-2 w-24 rounded" style={{ backgroundColor: borderColor }} />
+                  <div
+                    className="h-2 w-24 rounded"
+                    style={{ backgroundColor: borderColor }}
+                  />
                   <div className="ml-auto flex gap-1">
-                    <div className="h-6 w-6 rounded-full" style={{ backgroundColor: primaryColor, opacity: 0.4 }} />
-                    <div className="h-6 w-6 rounded-full" style={{ backgroundColor: primaryColor, opacity: 0.4 }} />
+                    <div
+                      className="h-6 w-6 rounded-full"
+                      style={{ backgroundColor: primaryColor, opacity: 0.4 }}
+                    />
+                    <div
+                      className="h-6 w-6 rounded-full"
+                      style={{ backgroundColor: primaryColor, opacity: 0.4 }}
+                    />
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <div className="flex-1 rounded-lg p-2.5 border" style={{ backgroundColor: bgSurface, borderColor }}>
-                    <div className="h-1.5 w-16 rounded mb-1.5" style={{ backgroundColor: primaryColor, opacity: 0.7 }} />
-                    <div className="h-1.5 w-10 rounded" style={{ backgroundColor: textMuted, opacity: 0.4 }} />
+                  <div
+                    className="flex-1 rounded-lg p-2.5 border"
+                    style={{ backgroundColor: bgSurface, borderColor }}
+                  >
+                    <div
+                      className="h-1.5 w-16 rounded mb-1.5"
+                      style={{ backgroundColor: primaryColor, opacity: 0.7 }}
+                    />
+                    <div
+                      className="h-1.5 w-10 rounded"
+                      style={{ backgroundColor: textMuted, opacity: 0.4 }}
+                    />
                   </div>
-                  <div className="flex-1 rounded-lg p-2.5 border" style={{ backgroundColor: bgSurface, borderColor }}>
-                    <div className="h-1.5 w-16 rounded mb-1.5" style={{ backgroundColor: primaryColor, opacity: 0.7 }} />
-                    <div className="h-1.5 w-10 rounded" style={{ backgroundColor: textMuted, opacity: 0.4 }} />
+                  <div
+                    className="flex-1 rounded-lg p-2.5 border"
+                    style={{ backgroundColor: bgSurface, borderColor }}
+                  >
+                    <div
+                      className="h-1.5 w-16 rounded mb-1.5"
+                      style={{ backgroundColor: primaryColor, opacity: 0.7 }}
+                    />
+                    <div
+                      className="h-1.5 w-10 rounded"
+                      style={{ backgroundColor: textMuted, opacity: 0.4 }}
+                    />
                   </div>
                 </div>
                 <div className="flex justify-center pt-1">
-                  <div className="rounded-lg px-3 py-1.5 text-[11px] font-semibold text-white" style={{ background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}99)` }}>
+                  <div
+                    className="rounded-lg px-3 py-1.5 text-[11px] font-semibold text-white"
+                    style={{
+                      background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}99)`,
+                    }}
+                  >
                     Ação principal
                   </div>
                 </div>
@@ -760,21 +1093,42 @@ export default function MinhaContaPage() {
             disabled={saveSettingsMutation.isPending || settingsLoading}
             className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors active:scale-95 disabled:opacity-50"
             style={{
-              background: `linear-gradient(135deg, ${primaryColor}, ${primaryColor}99)`,
-              boxShadow: `0 4px 14px ${primaryColor}40`,
+              background: `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 80%, white))`,
+              boxShadow: `0 4px 14px color-mix(in srgb, var(--color-primary) 40%, transparent)`,
             }}
           >
             {saveSettingsMutation.isPending ? (
               <span className="flex items-center gap-2">
                 <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
                 </svg>
                 Salvando...
               </span>
             ) : (
               <>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4"
+                >
                   <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
                   <polyline points="17 21 17 13 7 13 7 21" />
                   <polyline points="7 3 7 8 15 8" />
