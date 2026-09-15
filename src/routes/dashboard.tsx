@@ -878,28 +878,33 @@ function DashboardPage() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="bg-[#101A2B] border-[#26364D] w-[300px] p-0 flex flex-col">
-                <div className="px-5 pt-6 pb-5 border-b border-[#26364D]/60">
-                  <div className="flex items-center gap-3">
-                    {getLogoUrl() ? (
-                    <img src={getLogoUrl()!} alt="Logo" className="w-full h-full object-contain" />
-                  ) : (
-                    <span className="text-base font-bold text-white">$</span>
-                  )}
-                </div>
-                <div className={getLogoUrl() ? "flex items-center gap-3" : "flex items-center gap-3"}>
-                  <div className="text-sm font-bold text-[#F3F6FA] leading-tight">
-                    {userSettings?.system_name ||
-                          (currentProfile?.first_name && currentProfile?.last_name
-                            ? `${currentProfile.first_name} ${currentProfile.last_name} Empréstimos`
-                            : currentProfile?.first_name
-                            ? `${currentProfile.first_name} Empréstimos`
-                            : "Empréstimos")}
+                                  <div className="px-5 pt-6 pb-5 border-b border-[#26364D]/60">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
+                        style={!getLogoUrl() ? { background: `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))`, boxShadow: `0 4px 16px color-mix(in srgb, var(--color-primary) 35%, transparent)` } : { backgroundColor: "#101A2B", border: "1px solid #26364D" }}>
+                        {getLogoUrl() ? (
+                          <img src={getLogoUrl()!} alt="Logo" className="w-full h-full object-contain" />
+                        ) : (
+                          <span className="text-xl font-bold text-white">$</span>
+                        )}
                       </div>
-                      <div className="text-[11px] text-[#718096] font-normal mt-0.5">
-                        {userSettings?.system_subtitle || "Sistema financeiro"}
+                      <div>
+                        <div className="text-sm font-bold text-[#F3F6FA] leading-tight">
+                          {userSettings?.system_name ||
+                            (currentProfile?.first_name && currentProfile?.last_name
+                              ? `${currentProfile.first_name} ${currentProfile.last_name} Empréstimos`
+                              : currentProfile?.first_name
+                              ? `${currentProfile.first_name} Empréstimos`
+                              : "Empréstimos")}
+                        </div>
+                        {userSettings?.system_subtitle && (
+                          <div className="text-[11px] text-[#718096] font-normal mt-0.5">
+                            {userSettings.system_subtitle}
+                          </div>
+                        )}
                       </div>
+                    </div>
                   </div>
-                </div>
                 <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
                   <div className="space-y-0.5">
                     <p className="text-[9px] font-bold text-[#718096] uppercase tracking-widest px-3 mb-2">Visão Geral</p>
@@ -973,11 +978,11 @@ function DashboardPage() {
               </SheetContent>
             </Sheet>
 
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg overflow-hidden" style={!getLogoUrl() ? { background: `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))` } : { backgroundColor: "#101A2B", border: "1px solid #26364D" }}>
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center shadow-lg overflow-hidden" style={!getLogoUrl() ? { background: `linear-gradient(135deg, var(--color-primary), color-mix(in srgb, var(--color-primary) 70%, #000))`, boxShadow: `0 4px 16px color-mix(in srgb, var(--color-primary) 35%, transparent)` } : { backgroundColor: "#101A2B", border: "1px solid #26364D" }}>
                       {getLogoUrl() ? (
                         <img src={getLogoUrl()!} alt="Logo" className="w-full h-full object-contain" />
                       ) : (
-                        <span className="text-sm font-bold text-white">$</span>
+                        <span className="text-base font-bold text-white">$</span>
                       )}
                     </div>
             <h1 className="text-sm sm:text-base font-bold text-[#F3F6FA] tracking-tight whitespace-nowrap">
