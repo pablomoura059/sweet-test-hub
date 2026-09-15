@@ -10,6 +10,7 @@ import {
   Sheet, SheetContent, SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+// force rebuild - appearance UI
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/minha-conta")({
