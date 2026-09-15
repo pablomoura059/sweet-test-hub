@@ -29,8 +29,8 @@ export default function MinhaContaPage() {
   const [birthDate, setBirthDate] = useState("");
 
   // Estados de logo do sistema
-  const [logoDbPath, setLogoDbPath] = useState<string>(""); // caminho real no Storage
-  const [logoPreview, setLogoPreview] = useState<string>(""); // URL de exibição
+  const [logoDbPath, setLogoDbPath] = useState<string>("");
+  const [logoPreview, setLogoPreview] = useState<string>("");
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   // Máscara brasileira de telefone
@@ -60,7 +60,6 @@ export default function MinhaContaPage() {
       return;
     }
 
-    // Valida usuário com getUser() para garantir sessão real antes do upload
     const { data: userData, error: userError } = await supabase.auth.getUser();
     if (userError || !userData?.user?.id) {
       toast.error(`Usuário não autenticado: ${userError?.message || "sessão inválida"}`);
@@ -68,7 +67,6 @@ export default function MinhaContaPage() {
     }
     const userId = userData.user.id;
 
-    // Preview temporário com blob URL
     const blobUrl = URL.createObjectURL(file);
     setLogoPreview(blobUrl);
     setIsUploadingLogo(true);
@@ -86,10 +84,8 @@ export default function MinhaContaPage() {
         return;
       }
 
-      // Salvar caminho real no estado (não blob)
       setLogoDbPath(filePath);
 
-      // Preview com URL pública real
       const { data: urlData } = supabase.storage
         .from("system-logos")
         .getPublicUrl(filePath);
@@ -137,7 +133,6 @@ export default function MinhaContaPage() {
     enabled: !!session?.user.id,
   });
 
-  // Calcular idade a partir da data de nascimento
   const calculateAge = (dateStr: string): number => {
     if (!dateStr) return 0;
     const today = new Date();
@@ -150,7 +145,6 @@ export default function MinhaContaPage() {
     return age > 0 ? age : 0;
   };
 
-  // Inicializar campos de perfil a partir do banco (profiles)
   useEffect(() => {
     const profileFirst = currentProfile?.first_name;
     const profileLast = currentProfile?.last_name;
@@ -172,12 +166,10 @@ export default function MinhaContaPage() {
       const parts = metaName.split(" ");
       setLastName(parts.slice(1).join(" ") || "");
     }
-    // Telefone e data de nascimento vindos de public.profiles
     if (currentProfile?.phone) setPhone(currentProfile.phone);
     if (currentProfile?.birth_date) setBirthDate(currentProfile.birth_date);
   }, [currentProfile, session]);
 
-  // Buscar configurações do usuário
   const { data: userSettings, isLoading: settingsLoading } = useQuery({
     queryKey: ["user-settings", session?.user.id],
     queryFn: async () => {
@@ -192,7 +184,6 @@ export default function MinhaContaPage() {
     enabled: !!session?.user.id,
   });
 
-  // Carregar campos de configuração quando userSettings for carregado
   useEffect(() => {
     if (userSettings) {
       setSystemName(userSettings.system_name || "");
@@ -201,7 +192,6 @@ export default function MinhaContaPage() {
       setPrimaryColor(colorNameToHex(userSettings.primary_color) || "#2F6FED");
       if (userSettings.logo_url) {
         setLogoDbPath(userSettings.logo_url);
-        // Converter caminho do Storage em URL pública para exibição
         const { data: urlData } = supabase.storage
           .from("system-logos")
           .getPublicUrl(userSettings.logo_url);
@@ -210,7 +200,6 @@ export default function MinhaContaPage() {
     }
   }, [userSettings]);
 
-  // Upsert inicial APENAS se userSettings ainda não existir
   useEffect(() => {
     if (!session?.user.id || userSettings) return;
 
@@ -254,14 +243,12 @@ export default function MinhaContaPage() {
     }).catch(console.error);
   }, [session?.user.id, userSettings, queryClient]);
 
-  // Mutation para salvar configurações
   const saveSettingsMutation = useMutation({
     mutationFn: async () => {
       if (!session?.user.id) throw new Error("Usuário não autenticado");
 
       const colorValue = hexToColorName(primaryColor);
 
-      // Salvar configurações de sistema em user_settings (inclui logo_url)
       const { error: settingsError } = await supabase
         .from("user_settings")
         .upsert(
@@ -283,7 +270,6 @@ export default function MinhaContaPage() {
         throw settingsError;
       }
 
-      // Salvar telefone e data de nascimento em public.profiles
       const { error: profileError } = await supabase
         .from("profiles")
         .update({
@@ -324,13 +310,11 @@ export default function MinhaContaPage() {
   const displaySystemName = systemName || defaultSystemName;
   const calculatedAge = calculateAge(birthDate);
 
-  // Determinar o que mostrar na previa da logo
   const logoPreviewSrc = logoPreview || null;
 
   const themeOptions = [
     { id: "dark", label: "Escuro", icon: <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /> },
     { id: "light", label: "Claro", icon: <><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" /></> },
-    { id: "system", label: "Sistema", icon: <><rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></> },
   ];
 
   const colorOptions = [
@@ -581,7 +565,6 @@ export default function MinhaContaPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium text-[#AAB5C5]">Logo do sistema</label>
               <div className="flex items-start gap-4">
-                {/* Prévia atual da logo */}
                 <div
                   className="w-16 h-16 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden border"
                   style={{
@@ -590,7 +573,6 @@ export default function MinhaContaPage() {
                   }}
                 >
                   {logoPreviewSrc ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={logoPreviewSrc}
                       alt="Logo do sistema"
@@ -602,7 +584,6 @@ export default function MinhaContaPage() {
                 </div>
 
                 <div className="flex flex-col gap-2 pt-1">
-                  {/* Input de arquivo oculto */}
                   <input
                     ref={logoInputRef}
                     type="file"
@@ -649,7 +630,6 @@ export default function MinhaContaPage() {
                   style={{ background: logoPreviewSrc ? "transparent" : `linear-gradient(135deg, ${primaryColor}, ${primaryColor}99)` }}
                 >
                   {logoPreviewSrc ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={logoPreviewSrc}
                       alt="Logo"
@@ -726,15 +706,6 @@ export default function MinhaContaPage() {
                     </button>
                   );
                 })}
-                <button
-                  className="relative flex items-center justify-center w-9 h-9 rounded-full border-2 border-dashed"
-                  style={{ borderColor: "#26364D", backgroundColor: "transparent" }}
-                  title="Personalizada"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#718096" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
-                </button>
               </div>
             </div>
 
