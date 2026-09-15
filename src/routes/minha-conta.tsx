@@ -81,8 +81,9 @@ export default function MinhaContaPage() {
         .upload(filePath, file, { upsert: true });
 
       if (uploadError) {
-        console.error("[Logo] Erro no upload:", uploadError);
-        toast.error(`Erro ao fazer upload: ${uploadError.message}`);
+        const diag = `USER_ID: ${session.user.id}\nPATH: ${filePath}\nERROR: ${uploadError.message}`;
+        console.error("[Logo] Diagnóstico:", diag);
+        toast.error(<div className="whitespace-pre-wrap text-left"><b>Diagnóstico do erro:</b><br/><span className="text-xs opacity-80">{diag}</span></div>);
         return;
       }
 
