@@ -339,7 +339,7 @@ export default function MinhaContaPage() {
   }
 
   // ── Theme-aware semantic variables ─────────────────────────────────────
-  // Tema Claro desabilitado — sempre usa tema Escuro
+  // Apenas tema Escuro disponível
   const isLight = false;
 
   // Background & surfaces
