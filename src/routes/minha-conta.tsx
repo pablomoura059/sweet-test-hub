@@ -342,21 +342,33 @@ export default function MinhaContaPage() {
 
   // Background & surfaces
   const bgMain = "var(--background)";
-  const bgSurface = "var(--card)";
-  const bgElevated = "var(--popover)";
+  const bgSurface = isLight
+    ? "var(--card, #E8EEF5)"
+    : "var(--card)";
+  const bgElevated = isLight
+    ? "var(--popover, #EAF0F6)"
+    : "var(--popover)";
   const bgSecondary = "var(--secondary)";
 
   // Text
-  const textPrimary = "var(--foreground)";
+  const textPrimary = isLight
+    ? "var(--card-foreground, #1E293B)"
+    : "var(--card-foreground)";
   const textSecondary = "var(--secondary-foreground)";
-  const textMuted = "var(--muted-foreground)";
+  const textMuted = isLight
+    ? "var(--muted-foreground, #64748B)"
+    : "var(--muted-foreground)";
 
   // Border & input
-  const borderColor = "var(--border)";
+  const borderColor = isLight
+    ? "var(--border, #CBD5E1)"
+    : "var(--border)";
   const inputBg = "var(--input)";
 
   // Shadow
-  const cardShadow = "var(--shadow-card)";
+  const cardShadow = isLight
+    ? "0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)"
+    : "var(--shadow-card)";
 
   return (
     <div
