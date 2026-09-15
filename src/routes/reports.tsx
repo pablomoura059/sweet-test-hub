@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChartContainer } from "@/components/ui/chart";
 import {
   LineChart,
@@ -39,7 +39,7 @@ const PERIOD_OPTIONS = [
 ];
 
 const STATUS_OPTIONS = [
-  { key: null, label: "Todos", color: "#718096" },
+  { key: null, label: "Todos", color: "var(--muted-foreground)" },
   { key: "active", label: "Ativos", color: "#60a5fa" },
   { key: "finished", label: "Finalizados", color: "#34d399" },
   { key: "atrasado", label: "Atrasados", color: "#f59e0b" },
@@ -50,6 +50,26 @@ function ReportsPage() {
   const router = useRouter();
   const [periodDays, setPeriodDays] = useState(30);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [isLight, setIsLight] = useState(false);
+
+  useEffect(() => {
+    const stored = document.documentElement.getAttribute("data-theme");
+    setIsLight(stored === "light");
+    const onChange = () => setIsLight(document.documentElement.getAttribute("data-theme") === "light");
+    window.addEventListener("theme-changed", onChange);
+    return () => window.removeEventListener("theme-changed", onChange);
+  }, []);
+
+  // Theme-aware CSS vars
+  const bgMain = "var(--background)";
+  const bgSidebar = "var(--sidebar)";
+  const bgCard = "var(--card)";
+  const bgElevated = "var(--popover)";
+  const bgSecondary = "var(--secondary)";
+  const fg = "var(--foreground)";
+  const fgMuted = "var(--muted-foreground)";
+  const border = "var(--border)";
+  const skeletonBg = isLight ? "#D5DEE8" : "#1e2d42";
 
   const handleStatusClick = (status: string | null) => {
     setSelectedStatus((prev) => (prev === status ? null : status));
@@ -121,7 +141,6 @@ function ReportsPage() {
     });
   })();
 
-  // Aplica filtro de status sobre o resultado já filtrado por período
   const getFilteredByStatus = () => {
     if (!selectedStatus) return filteredInvestments;
     switch (selectedStatus) {
@@ -144,7 +163,6 @@ function ReportsPage() {
 
   const today = new Date().toISOString().slice(0, 10);
 
-  // Métricas filtradas por período + status
   const filteredByStatus = getFilteredByStatus();
 
   const totalInvested = filteredByStatus.reduce(
@@ -240,12 +258,15 @@ function ReportsPage() {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null;
     return (
-      <div className="rounded-lg border border-[#26364D] bg-[#162235] px-3 py-2 text-xs shadow-xl">
-        <p className="mb-2 font-semibold text-[#F3F6FA]">{label}</p>
+      <div
+        className="rounded-lg border px-3 py-2 text-xs shadow-xl"
+        style={{ backgroundColor: bgElevated, borderColor: border }}
+      >
+        <p className="mb-2 font-semibold" style={{ color: fg }}>{label}</p>
         {payload.map((item: any) => (
           <div key={item.dataKey} className="flex items-center justify-between gap-4">
             <span style={{ color: item.color }}>{chartConfig[item.dataKey]?.label}</span>
-            <span className="font-mono font-medium text-[#F3F6FA]">
+            <span className="font-mono font-medium" style={{ color: fg }}>
               {formatCurrency(item.value)}
             </span>
           </div>
@@ -283,21 +304,25 @@ function ReportsPage() {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#0B1220" }}>
-      <header className="sticky top-0 z-40 bg-[#101A2B]/95 backdrop-blur-xl border-b border-[#26364D]/60">
+    <div className="min-h-screen" style={{ backgroundColor: bgMain }}>
+      <header
+        className="sticky top-0 z-40 backdrop-blur-xl"
+        style={{ backgroundColor: bgSidebar, borderBottom: `1px solid ${border}` }}
+      >
         <div className="flex items-center justify-between px-4 py-3 max-w-5xl mx-auto">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => router.navigate({ to: "/dashboard" })}
-              className="text-[#718096] hover:text-[#F3F6FA] hover:bg-[#162235] transition-colors"
+              className="transition-colors"
+              style={{ color: fgMuted }}
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-base font-bold text-[#F3F6FA]">Relatórios</h1>
-              <p className="text-xs text-[#718096]">Análise da sua carteira de empréstimos</p>
+              <h1 className="text-base font-bold" style={{ color: fg }}>Relatórios</h1>
+              <p className="text-xs" style={{ color: fgMuted }}>Análise da sua carteira de empréstimos</p>
             </div>
           </div>
         </div>
@@ -308,7 +333,7 @@ function ReportsPage() {
         <div className="flex flex-col gap-3">
           {/* Grupo 1 — Período */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[10px] font-bold text-[#718096] uppercase tracking-wider mr-1">Período</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider mr-1" style={{ color: fgMuted }}>Período</span>
             <div className="flex flex-wrap items-center gap-1.5">
               {PERIOD_OPTIONS.map((option) => {
                 const isActive = periodDays === option.days;
@@ -316,12 +341,12 @@ function ReportsPage() {
                   <button
                     key={option.days}
                     onClick={() => setPeriodDays(option.days)}
-                    className={
-                      "px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 cursor-pointer " +
-                      (isActive
-                        ? "bg-[var(--color-primary)] border-[var(--color-primary)] text-white shadow-sm"
-                        : "border-[#26364D] text-[#718096] hover:border-[var(--color-primary)]/50 hover:text-[#F3F6FA]")
-                    }
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 cursor-pointer"
+                    style={{
+                      backgroundColor: isActive ? "var(--color-primary)" : "transparent",
+                      borderColor: isActive ? "var(--color-primary)" : border,
+                      color: isActive ? "#fff" : fgMuted,
+                    }}
                   >
                     {option.label}
                   </button>
@@ -332,7 +357,7 @@ function ReportsPage() {
 
           {/* Grupo 2 — Status */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[10px] font-bold text-[#718096] uppercase tracking-wider mr-1">Status</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider mr-1" style={{ color: fgMuted }}>Status</span>
             <div className="flex flex-wrap items-center gap-1.5">
               {STATUS_OPTIONS.map((opt) => {
                 const isActive = selectedStatus === opt.key;
@@ -340,12 +365,12 @@ function ReportsPage() {
                   <button
                     key={opt.label}
                     onClick={() => handleStatusClick(opt.key)}
-                    className={
-                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-200 cursor-pointer " +
-                      (isActive
-                        ? "bg-[var(--color-primary)] border-[var(--color-primary)] text-white shadow-sm"
-                        : "border-[#26364D] text-[#718096] hover:border-[var(--color-primary)]/50 hover:text-[#F3F6FA]")
-                    }
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-200 cursor-pointer"
+                    style={{
+                      backgroundColor: isActive ? "var(--color-primary)" : "transparent",
+                      borderColor: isActive ? "var(--color-primary)" : border,
+                      color: isActive ? "#fff" : fgMuted,
+                    }}
                   >
                     <div
                       className="h-2 w-2 rounded-[2px]"
@@ -364,12 +389,12 @@ function ReportsPage() {
           {isLoading ? (
             <>
               {[1,2,3,4,5,6].map(i => (
-                <Card key={i} className="bg-[#162235] border-[#26364D]">
+                <Card key={i} className="border" style={{ backgroundColor: bgCard, borderColor: border }}>
                   <CardContent className="p-2 md:p-5 flex items-start gap-2 md:gap-4">
-                    <Skeleton className="h-8 w-8 md:h-12 md:w-12 rounded-xl skeleton-shimmer" />
+                    <Skeleton className="h-8 w-8 md:h-12 md:w-12 rounded-xl" style={{ background: skeletonBg }} />
                     <div className="space-y-2 flex-1">
-                      <Skeleton className="h-3 w-32 rounded skeleton-shimmer" />
-                      <Skeleton className="h-6 w-40 rounded skeleton-shimmer" />
+                      <Skeleton className="h-3 w-32 rounded" style={{ background: skeletonBg }} />
+                      <Skeleton className="h-6 w-40 rounded" style={{ background: skeletonBg }} />
                     </div>
                   </CardContent>
                 </Card>
@@ -377,102 +402,102 @@ function ReportsPage() {
             </>
           ) : (
             <>
-              <Card className="bg-[#162235] border-[#26364D] hover:border-[var(--color-primary)]/40 transition-all duration-300">
+              <Card className="border transition-all duration-300" style={{ backgroundColor: bgCard, borderColor: border }}>
                 <CardContent className="p-2 md:p-5 flex items-start gap-2 md:gap-4">
-                    <div className="p-1.5 md:p-2.5 rounded-xl shrink-0" style={{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 10%, transparent)', border: '1px solid #26364D' }}>
-                      <Wallet className="h-3.5 w-3.5 md:h-5 md:w-5" style={{ color: 'var(--color-primary)' }} />
-                    </div>
+                  <div className="p-1.5 md:p-2.5 rounded-xl shrink-0" style={{ backgroundColor: "color-mix(in srgb, var(--color-primary) 10%, transparent)", border: `1px solid ${border}` }}>
+                    <Wallet className="h-3.5 w-3.5 md:h-5 md:w-5" style={{ color: "var(--color-primary)" }} />
+                  </div>
                   <div>
-                    <p className="text-[9px] font-semibold text-[#718096] uppercase tracking-wider">Total Emprestado</p>
-                    <p className="text-xl font-bold text-[#F3F6FA] leading-none mt-0.5">
+                    <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: fgMuted }}>Total Emprestado</p>
+                    <p className="text-xl font-bold leading-none mt-0.5" style={{ color: fg }}>
                       {formatCurrency(totalInvested)}
                     </p>
-                    <p className="text-[9px] text-[#718096] mt-0.5 font-medium">
+                    <p className="text-[9px] mt-0.5 font-medium" style={{ color: fgMuted }}>
                       {filteredByStatus.length} empréstimo{filteredByStatus.length !== 1 ? "s" : ""} no período
                     </p>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-[#162235] border-[#26364D] hover:border-emerald-500/40 transition-all duration-300">
+              <Card className="border transition-all duration-300" style={{ backgroundColor: bgCard, borderColor: border }}>
                 <CardContent className="p-2 md:p-5 flex items-start gap-2 md:gap-4">
-                  <div className="p-1.5 md:p-2.5 rounded-xl bg-emerald-500/10 border border-[#26364D] shrink-0">
-                    <TrendingUp className="h-3.5 w-3.5 md:h-5 md:w-5 text-emerald-400" />
+                  <div className="p-1.5 md:p-2.5 rounded-xl shrink-0" style={{ backgroundColor: "rgba(52,211,153,0.1)", border: `1px solid ${border}` }}>
+                    <TrendingUp className="h-3.5 w-3.5 md:h-5 md:w-5" style={{ color: "#34d399" }} />
                   </div>
                   <div>
-                    <p className="text-[9px] font-semibold text-[#718096] uppercase tracking-wider">Retorno Previsto</p>
-                    <p className="text-xl font-bold text-[#F3F6FA] leading-none mt-0.5">
+                    <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: fgMuted }}>Retorno Previsto</p>
+                    <p className="text-xl font-bold leading-none mt-0.5" style={{ color: fg }}>
                       {formatCurrency(totalExpectedReturn)}
                     </p>
-                    <p className="text-[9px] text-[#718096] mt-0.5 font-medium">
+                    <p className="text-[9px] mt-0.5 font-medium" style={{ color: fgMuted }}>
                       Valor total a receber com lucros
                     </p>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-[#162235] border-[#26364D] hover:border-amber-500/40 transition-all duration-300">
+              <Card className="border transition-all duration-300" style={{ backgroundColor: bgCard, borderColor: border }}>
                 <CardContent className="p-2 md:p-5 flex items-start gap-2 md:gap-4">
-                  <div className="p-1.5 md:p-2.5 rounded-xl bg-amber-500/10 border border-[#26364D] shrink-0">
-                    <TrendingUp className="h-3.5 w-3.5 md:h-5 md:w-5 text-amber-400" />
+                  <div className="p-1.5 md:p-2.5 rounded-xl shrink-0" style={{ backgroundColor: "rgba(245,158,11,0.1)", border: `1px solid ${border}` }}>
+                    <TrendingUp className="h-3.5 w-3.5 md:h-5 md:w-5" style={{ color: "#f59e0b" }} />
                   </div>
                   <div>
-                    <p className="text-[9px] font-semibold text-[#718096] uppercase tracking-wider">Lucro Previsto</p>
-                    <p className="text-xl font-bold text-[#F3F6FA] leading-none mt-0.5">
+                    <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: fgMuted }}>Lucro Previsto</p>
+                    <p className="text-xl font-bold leading-none mt-0.5" style={{ color: fg }}>
                       {formatCurrency(totalExpectedProfit)}
                     </p>
-                    <p className="text-[9px] text-[#718096] mt-0.5 font-medium">
+                    <p className="text-[9px] mt-0.5 font-medium" style={{ color: fgMuted }}>
                       Lucro esperado dos empréstimos
                     </p>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-[#162235] border-[#26364D] hover:border-violet-500/40 transition-all duration-300">
+              <Card className="border transition-all duration-300" style={{ backgroundColor: bgCard, borderColor: border }}>
                 <CardContent className="p-2 md:p-5 flex items-start gap-2 md:gap-4">
-                  <div className="p-1.5 md:p-2.5 rounded-xl bg-violet-500/10 border border-[#26364D] shrink-0">
-                    <DollarSign className="h-3.5 w-3.5 md:h-5 md:w-5 text-violet-400" />
+                  <div className="p-1.5 md:p-2.5 rounded-xl shrink-0" style={{ backgroundColor: "rgba(139,92,246,0.1)", border: `1px solid ${border}` }}>
+                    <DollarSign className="h-3.5 w-3.5 md:h-5 md:w-5" style={{ color: "#8b5cf6" }} />
                   </div>
                   <div>
-                    <p className="text-[9px] font-semibold text-[#718096] uppercase tracking-wider">Total Recebido</p>
-                    <p className="text-xl font-bold text-[#F3F6FA] leading-none mt-0.5">
+                    <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: fgMuted }}>Total Recebido</p>
+                    <p className="text-xl font-bold leading-none mt-0.5" style={{ color: fg }}>
                       {formatCurrency(totalReceived)}
                     </p>
-                    <p className="text-[9px] text-[#718096] mt-0.5 font-medium">
+                    <p className="text-[9px] mt-0.5 font-medium" style={{ color: fgMuted }}>
                       Valor já recebido
                     </p>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-[#162235] border-[#26364D] hover:border-green-500/40 transition-all duration-300">
+              <Card className="border transition-all duration-300" style={{ backgroundColor: bgCard, borderColor: border }}>
                 <CardContent className="p-2 md:p-5 flex items-start gap-2 md:gap-4">
-                  <div className="p-1.5 md:p-2.5 rounded-xl bg-green-500/10 border border-[#26364D] shrink-0">
-                    <TrendingUp className="h-3.5 w-3.5 md:h-5 md:w-5 text-green-400" />
+                  <div className="p-1.5 md:p-2.5 rounded-xl shrink-0" style={{ backgroundColor: "rgba(74,222,128,0.1)", border: `1px solid ${border}` }}>
+                    <TrendingUp className="h-3.5 w-3.5 md:h-5 md:w-5" style={{ color: "#4ade80" }} />
                   </div>
                   <div>
-                    <p className="text-[9px] font-semibold text-[#718096] uppercase tracking-wider">Lucro Realizado</p>
-                    <p className="text-xl font-bold text-[#F3F6FA] leading-none mt-0.5">
+                    <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: fgMuted }}>Lucro Realizado</p>
+                    <p className="text-xl font-bold leading-none mt-0.5" style={{ color: fg }}>
                       {formatCurrency(totalActualProfit)}
                     </p>
-                    <p className="text-[9px] text-[#718096] mt-0.5 font-medium">
+                    <p className="text-[9px] mt-0.5 font-medium" style={{ color: fgMuted }}>
                       Lucro já realizado
                     </p>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-[#162235] border-[#26364D] hover:border-red-500/40 transition-all duration-300">
+              <Card className="border transition-all duration-300" style={{ backgroundColor: bgCard, borderColor: border }}>
                 <CardContent className="p-2 md:p-5 flex items-start gap-2 md:gap-4">
-                  <div className="p-1.5 md:p-2.5 rounded-xl bg-red-500/10 border border-[#26364D] shrink-0">
-                    <AlertCircle className="h-3.5 w-3.5 md:h-5 md:w-5 text-red-400" />
+                  <div className="p-1.5 md:p-2.5 rounded-xl shrink-0" style={{ backgroundColor: "rgba(248,113,113,0.1)", border: `1px solid ${border}` }}>
+                    <AlertCircle className="h-3.5 w-3.5 md:h-5 md:w-5" style={{ color: "#f87171" }} />
                   </div>
                   <div>
-                    <p className="text-[9px] font-semibold text-[#718096] uppercase tracking-wider">Em Atraso</p>
-                    <p className="text-xl font-bold text-red-400 leading-none mt-0.5">
+                    <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: fgMuted }}>Em Atraso</p>
+                    <p className="text-xl font-bold leading-none mt-0.5" style={{ color: overdueCount > 0 ? "#f87171" : fg }}>
                       {overdueCount}
                     </p>
-                    <p className="text-[9px] text-[#718096] mt-0.5 font-medium">
+                    <p className="text-[9px] mt-0.5 font-medium" style={{ color: fgMuted }}>
                       {overdueCount} empréstimo{overdueCount !== 1 ? "s" : ""} em atraso
                     </p>
                   </div>
@@ -482,36 +507,36 @@ function ReportsPage() {
           )}
         </div>
 
-        {/* Gráfico: Evolução da Carteira (filtrado por período + status) */}
+        {/* Gráfico: Evolução da Carteira */}
         <div>
-          <h2 className="text-sm font-bold text-[#F3F6FA] mb-3">Evolução da Carteira</h2>
+          <h2 className="text-sm font-bold mb-3" style={{ color: fg }}>Evolução da Carteira</h2>
           {chartData.length === 0 && !isLoading ? (
-            <Card className="bg-[#162235] border-[#26364D]">
+            <Card className="border" style={{ backgroundColor: bgCard, borderColor: border }}>
               <CardContent className="p-8 flex items-center justify-center">
-                <p className="text-[#718096] text-sm">Nenhum empréstimo cadastrado para exibir o gráfico.</p>
+                <p className="text-sm" style={{ color: fgMuted }}>Nenhum empréstimo cadastrado para exibir o gráfico.</p>
               </CardContent>
             </Card>
           ) : isLoading ? (
-            <Card className="bg-[#162235] border-[#26364D]">
+            <Card className="border" style={{ backgroundColor: bgCard, borderColor: border }}>
               <CardContent className="p-4">
-                <Skeleton className="h-64 w-full rounded skeleton-shimmer" />
+                <Skeleton className="h-64 w-full rounded" style={{ background: skeletonBg }} />
               </CardContent>
             </Card>
           ) : (
-            <Card className="bg-[#162235] border-[#26364D]">
+            <Card className="border" style={{ backgroundColor: bgCard, borderColor: border }}>
               <CardContent className="p-4">
                 <ChartContainer config={chartConfig} className="w-full h-64">
                   <ResponsiveContainer width="100%" height={256}>
                     <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#26364D" vertical={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke={border} vertical={false} />
                       <XAxis
                         dataKey="data"
-                        tick={{ fill: "#718096", fontSize: 11 }}
+                        tick={{ fill: fgMuted, fontSize: 11 }}
                         tickLine={false}
-                        axisLine={{ stroke: "#26364D" }}
+                        axisLine={{ stroke: border }}
                       />
                       <YAxis
-                        tick={{ fill: "#718096", fontSize: 11 }}
+                        tick={{ fill: fgMuted, fontSize: 11 }}
                         tickLine={false}
                         axisLine={false}
                         tickFormatter={(v) =>
@@ -529,15 +554,15 @@ function ReportsPage() {
                           <div className="flex items-center justify-center gap-4 pt-2 pb-1">
                             <div className="flex items-center gap-1.5">
                               <div className="h-2 w-2 rounded-[2px] bg-[#60a5fa]" />
-                              <span className="text-xs text-[#718096]">Total Emprestado</span>
+                              <span className="text-xs" style={{ color: fgMuted }}>Total Emprestado</span>
                             </div>
                             <div className="flex items-center gap-1.5">
                               <div className="h-2 w-2 rounded-[2px] bg-[#34d399]" />
-                              <span className="text-xs text-[#718096]">Retorno Previsto</span>
+                              <span className="text-xs" style={{ color: fgMuted }}>Retorno Previsto</span>
                             </div>
                             <div className="flex items-center gap-1.5">
                               <div className="h-2 w-2 rounded-[2px] bg-[#f59e0b]" />
-                              <span className="text-xs text-[#718096]">Lucro Previsto</span>
+                              <span className="text-xs" style={{ color: fgMuted }}>Lucro Previsto</span>
                             </div>
                           </div>
                         )}
@@ -553,34 +578,31 @@ function ReportsPage() {
           )}
         </div>
 
-        {/* Gráfico: Distribuição da Carteira (sem filtro local) */}
+        {/* Gráfico: Distribuição da Carteira */}
         <div>
-          <h2 className="text-sm font-bold text-[#F3F6FA] mb-3">Distribuição da Carteira</h2>
+          <h2 className="text-sm font-bold mb-3" style={{ color: fg }}>Distribuição da Carteira</h2>
           {chartData.length === 0 && !isLoading ? (
-            <Card className="bg-[#162235] border-[#26364D]">
+            <Card className="border" style={{ backgroundColor: bgCard, borderColor: border }}>
               <CardContent className="p-8 flex items-center justify-center">
-                <p className="text-[#718096] text-sm">Nenhum empréstimo cadastrado para exibir o gráfico.</p>
+                <p className="text-sm" style={{ color: fgMuted }}>Nenhum empréstimo cadastrado para exibir o gráfico.</p>
               </CardContent>
             </Card>
           ) : isLoading ? (
-            <Card className="bg-[#162235] border-[#26364D]">
+            <Card className="border" style={{ backgroundColor: bgCard, borderColor: border }}>
               <CardContent className="p-4">
-                <Skeleton className="h-64 w-full rounded skeleton-shimmer" />
+                <Skeleton className="h-64 w-full rounded" style={{ background: skeletonBg }} />
               </CardContent>
             </Card>
           ) : (
-            <Card className="bg-[#162235] border-[#26364D]">
+            <Card className="border" style={{ backgroundColor: bgCard, borderColor: border }}>
               <CardContent className="p-4">
                 <ChartContainer config={distributionConfig} className="w-full h-28 md:h-56">
                   <ResponsiveContainer width="100%" height={112}>
                     <BarChart data={filteredDistributionData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#26364D" vertical={false} />
-                      <XAxis
-                        dataKey="name"
-                        hide
-                      />
+                      <CartesianGrid strokeDasharray="3 3" stroke={border} vertical={false} />
+                      <XAxis dataKey="name" hide />
                       <YAxis
-                        tick={{ fill: "#718096", fontSize: 11 }}
+                        tick={{ fill: fgMuted, fontSize: 11 }}
                         tickLine={false}
                         axisLine={false}
                         allowDecimals={false}
@@ -590,26 +612,22 @@ function ReportsPage() {
                           if (!active || !payload?.length) return null;
                           const d = payload[0].payload;
                           return (
-                            <div className="rounded-lg border border-[#26364D] bg-[#162235] px-3 py-2 text-xs shadow-xl">
-                              <p className="font-semibold text-[#F3F6FA]">{d.name}</p>
+                            <div
+                              className="rounded-lg border px-3 py-2 text-xs shadow-xl"
+                              style={{ backgroundColor: bgElevated, borderColor: border }}
+                            >
+                              <p className="font-semibold" style={{ color: fg }}>{d.name}</p>
                               <p className="mt-1">
-                                <span className="text-[#718096]">Quantidade: </span>
-                                <span className="font-mono font-medium text-[#F3F6FA]">{d.quantidade}</span>
+                                <span style={{ color: fgMuted }}>Quantidade: </span>
+                                <span className="font-mono font-medium" style={{ color: fg }}>{d.quantidade}</span>
                               </p>
                             </div>
                           );
                         }}
                       />
-                      <Bar
-                        dataKey="quantidade"
-                        radius={[6, 6, 0, 0]}
-                        cursor="pointer"
-                      >
+                      <Bar dataKey="quantidade" radius={[6, 6, 0, 0]} cursor="pointer">
                         {filteredDistributionData.map((entry) => (
-                          <Cell
-                            key={entry.name}
-                            fill={entry.fill}
-                          />
+                          <Cell key={entry.name} fill={entry.fill} />
                         ))}
                       </Bar>
                     </BarChart>
@@ -620,91 +638,97 @@ function ReportsPage() {
           )}
         </div>
 
-        {/* Resumo da Carteira (filtrado por período + status) */}
+        {/* Resumo da Carteira */}
         <div>
-          <h2 className="text-sm font-bold text-[#F3F6FA] mb-1">Resumo da Carteira</h2>
-          <p className="text-xs text-[#718096] mb-3">Visão consolidada do desempenho dos seus empréstimos</p>
-          <Card className="bg-[#162235] border-[#26364D]">
+          <h2 className="text-sm font-bold mb-1" style={{ color: fg }}>Resumo da Carteira</h2>
+          <p className="text-xs mb-3" style={{ color: fgMuted }}>Visão consolidada do desempenho dos seus empréstimos</p>
+          <Card className="border" style={{ backgroundColor: bgCard, borderColor: border }}>
             <CardContent className="p-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 divide-x-0 md:divide-x divide-[#26364D]/40">
-                <div className="flex flex-col items-center px-3 py-4 first:pl-0 last:pr-0 md:px-4">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-600/20 mb-2">
-                    <Wallet className="h-4 w-4 text-blue-400" />
+              <div className="grid grid-cols-2 md:grid-cols-4">
+                <div className="flex flex-col items-center px-3 py-4 first:pl-0 last:pr-0 md:px-4" style={{ borderRight: `1px solid ${border}` }}>
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg mb-2" style={{ backgroundColor: "rgba(59,130,246,0.1)", border: `1px solid ${border}` }}>
+                    <Wallet className="h-4 w-4" style={{ color: "#60a5fa" }} />
                   </div>
-                  <p className="text-xs font-semibold text-[#718096] uppercase tracking-wider text-center mb-1">Total</p>
-                  <p className="text-xl font-bold text-[#F3F6FA] leading-none">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-center mb-1" style={{ color: fgMuted }}>Total</p>
+                  <p className="text-xl font-bold leading-none" style={{ color: fg }}>
                     {filteredByStatus.length}
                   </p>
-                  <p className="text-[10px] text-[#718096] mt-1">empréstimos</p>
+                  <p className="text-[10px] mt-1" style={{ color: fgMuted }}>empréstimos</p>
                 </div>
 
-                <div className="flex flex-col items-center px-3 py-4 first:pl-0 last:pr-0 md:px-4">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-600/10 border border-blue-600/20 mb-2">
-                    <Clock className="h-4 w-4 text-blue-400" />
+                <div className="flex flex-col items-center px-3 py-4 first:pl-0 last:pr-0 md:px-4" style={{ borderRight: `1px solid ${border}` }}>
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg mb-2" style={{ backgroundColor: "rgba(59,130,246,0.1)", border: `1px solid ${border}` }}>
+                    <Clock className="h-4 w-4" style={{ color: "#60a5fa" }} />
                   </div>
-                  <p className="text-xs font-semibold text-[#718096] uppercase tracking-wider text-center mb-1">Ativos</p>
-                  <p className="text-xl font-bold text-[#F3F6FA] leading-none">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-center mb-1" style={{ color: fgMuted }}>Ativos</p>
+                  <p className="text-xl font-bold leading-none" style={{ color: fg }}>
                     {filteredByStatus.filter((inv) => inv.status === "active").length}
                   </p>
-                  <p className="text-[10px] text-[#718096] mt-1">em andamento</p>
+                  <p className="text-[10px] mt-1" style={{ color: fgMuted }}>em andamento</p>
                 </div>
 
-                <div className="flex flex-col items-center px-3 py-4 first:pl-0 last:pr-0 md:px-4">
-                  <div className={"flex items-center justify-center w-8 h-8 rounded-lg border mb-2 " + (overdueCount > 0 ? "bg-red-500/10 border-red-500/30" : "bg-[#0B1220]/50 border-[#26364D]")}>
-                    <AlertCircle className={"h-4 w-4 " + (overdueCount > 0 ? "text-red-400" : "text-[#718096]")} />
+                <div className="flex flex-col items-center px-3 py-4 first:pl-0 last:pr-0 md:px-4" style={{ borderRight: `1px solid ${border}` }}>
+                  <div
+                    className="flex items-center justify-center w-8 h-8 rounded-lg border mb-2"
+                    style={{
+                      backgroundColor: overdueCount > 0 ? "rgba(248,113,113,0.1)" : bgSecondary,
+                      borderColor: overdueCount > 0 ? "rgba(248,113,113,0.3)" : border,
+                    }}
+                  >
+                    <AlertCircle className="h-4 w-4" style={{ color: overdueCount > 0 ? "#f87171" : fgMuted }} />
                   </div>
-                  <p className="text-xs font-semibold text-[#718096] uppercase tracking-wider text-center mb-1">Em Atraso</p>
-                  <p className={"text-xl font-bold leading-none " + (overdueCount > 0 ? "text-red-400" : "text-[#F3F6FA]")}>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-center mb-1" style={{ color: fgMuted }}>Em Atraso</p>
+                  <p className="text-xl font-bold leading-none" style={{ color: overdueCount > 0 ? "#f87171" : fg }}>
                     {overdueCount}
                   </p>
-                  <p className="text-[10px] text-[#718096] mt-1">vencidos</p>
+                  <p className="text-[10px] mt-1" style={{ color: fgMuted }}>vencidos</p>
                 </div>
 
                 <div className="flex flex-col items-center px-3 py-4 first:pl-0 last:pr-0 md:px-4">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 mb-2">
-                    <TrendingUp className="h-4 w-4 text-emerald-400" />
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg mb-2" style={{ backgroundColor: "rgba(52,211,153,0.1)", border: `1px solid ${border}` }}>
+                    <TrendingUp className="h-4 w-4" style={{ color: "#34d399" }} />
                   </div>
-                  <p className="text-xs font-semibold text-[#718096] uppercase tracking-wider text-center mb-1">Taxa Retorno</p>
-                  <p className="text-xl font-bold text-emerald-400 leading-none">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-center mb-1" style={{ color: fgMuted }}>Taxa Retorno</p>
+                  <p className="text-xl font-bold leading-none" style={{ color: "#34d399" }}>
                     {totalInvested > 0
                       ? `${((totalExpectedProfit / totalInvested) * 100).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`
                       : "0,0%"}
                   </p>
-                  <p className="text-[10px] text-[#718096] mt-1">lucro/valor</p>
+                  <p className="text-[10px] mt-1" style={{ color: fgMuted }}>lucro/valor</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Empréstimos do Período (filtrados por período + status) */}
+        {/* Empréstimos do Período */}
         <div>
-          <h2 className="text-sm font-bold text-[#F3F6FA] mb-3">Empréstimos do Período</h2>
-          <Card className="bg-[#162235] border-[#26364D] overflow-hidden">
+          <h2 className="text-sm font-bold mb-3" style={{ color: fg }}>Empréstimos do Período</h2>
+          <Card className="border overflow-hidden" style={{ backgroundColor: bgCard, borderColor: border }}>
             {isLoading ? (
               <CardContent className="p-4">
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} className="h-14 w-full rounded-lg skeleton-shimmer" />
+                    <Skeleton key={i} className="h-14 w-full rounded-lg" style={{ background: skeletonBg }} />
                   ))}
                 </div>
               </CardContent>
             ) : filteredByStatus.length === 0 ? (
               <CardContent className="p-8 flex items-center justify-center">
-                <p className="text-[#718096] text-sm">Nenhum empréstimo no período selecionado.</p>
+                <p className="text-sm" style={{ color: fgMuted }}>Nenhum empréstimo no período selecionado.</p>
               </CardContent>
             ) : (
               <>
                 <div className="hidden md:block overflow-hidden">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-[#26364D]/60">
-                        <th className="text-left text-[10px] font-semibold text-[#718096] uppercase tracking-wider px-4 py-3">Pessoa</th>
-                        <th className="text-right text-[10px] font-semibold text-[#718096] uppercase tracking-wider px-3 py-3">Emprestado</th>
-                        <th className="text-right text-[10px] font-semibold text-[#718096] uppercase tracking-wider px-3 py-3">Retorno</th>
-                        <th className="text-right text-[10px] font-semibold text-[#718096] uppercase tracking-wider px-3 py-3">Lucro</th>
-                        <th className="text-right text-[10px] font-semibold text-[#718096] uppercase tracking-wider px-3 py-3">Vencimento</th>
-                        <th className="text-center text-[10px] font-semibold text-[#718096] uppercase tracking-wider px-3 py-3">Status</th>
+                      <tr style={{ borderBottom: `1px solid ${border}` }}>
+                        <th className="text-left text-[10px] font-semibold uppercase tracking-wider px-4 py-3" style={{ color: fgMuted }}>Pessoa</th>
+                        <th className="text-right text-[10px] font-semibold uppercase tracking-wider px-3 py-3" style={{ color: fgMuted }}>Emprestado</th>
+                        <th className="text-right text-[10px] font-semibold uppercase tracking-wider px-3 py-3" style={{ color: fgMuted }}>Retorno</th>
+                        <th className="text-right text-[10px] font-semibold uppercase tracking-wider px-3 py-3" style={{ color: fgMuted }}>Lucro</th>
+                        <th className="text-right text-[10px] font-semibold uppercase tracking-wider px-3 py-3" style={{ color: fgMuted }}>Vencimento</th>
+                        <th className="text-center text-[10px] font-semibold uppercase tracking-wider px-3 py-3" style={{ color: fgMuted }}>Status</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -717,7 +741,8 @@ function ReportsPage() {
                         return (
                           <tr
                             key={inv.id}
-                            className={"border-b border-[#26364D]/30 last:border-0 hover:bg-[#0B1220]/40 transition-colors " + (idx % 2 === 0 ? "bg-[#162235]/30" : "")}
+                            className="last:border-0 hover:opacity-80 transition-colors"
+                            style={{ borderTop: idx === 0 ? "none" : `1px solid ${border}` }}
                           >
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2.5">
@@ -725,39 +750,40 @@ function ReportsPage() {
                                   <img
                                     src={photoUrl}
                                     alt={inv.person_name || "Pessoa"}
-                                    className="h-8 w-8 rounded-full object-cover border-2 border-[#26364D] shrink-0"
+                                    className="h-8 w-8 rounded-full object-cover border-2 shrink-0"
+                                    style={{ borderColor: border }}
                                     onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                                   />
                                 ) : (
                                   <div
-                                    className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-                                    style={{ background: `linear-gradient(135deg, ${statusCfg.color}cc, ${statusCfg.color}66)` }}
+                                    className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                                    style={{ background: `linear-gradient(135deg, ${statusCfg.color}cc, ${statusCfg.color}66)`, color: "#fff" }}
                                   >
                                     {initials}
                                   </div>
                                 )}
-                                <span className="text-sm font-medium text-[#F3F6FA] truncate max-w-[140px]">
+                                <span className="text-sm font-medium truncate max-w-[140px]" style={{ color: fg }}>
                                   {inv.person_name || "—"}
                                 </span>
                               </div>
                             </td>
                             <td className="text-right px-3 py-3">
-                              <span className="text-sm font-semibold text-[#F3F6FA] font-mono">
+                              <span className="text-sm font-semibold font-mono" style={{ color: fg }}>
                                 {formatCurrency(Number(inv.invested_amount))}
                               </span>
                             </td>
                             <td className="text-right px-3 py-3">
-                              <span className="text-sm font-semibold text-[#F3F6FA] font-mono">
+                              <span className="text-sm font-semibold font-mono" style={{ color: fg }}>
                                 {formatCurrency(Number(inv.expected_return || 0))}
                               </span>
                             </td>
                             <td className="text-right px-3 py-3">
-                              <span className="text-sm font-semibold text-[#34d399] font-mono">
+                              <span className="text-sm font-semibold font-mono" style={{ color: "#34d399" }}>
                                 {formatCurrency(Number(inv.expected_profit || 0))}
                               </span>
                             </td>
                             <td className="text-right px-3 py-3">
-                              <span className="text-xs text-[#718096] font-mono">
+                              <span className="text-xs font-mono" style={{ color: fgMuted }}>
                                 {formatDate(inv.return_date)}
                               </span>
                             </td>
@@ -781,7 +807,7 @@ function ReportsPage() {
                   </table>
                 </div>
 
-                <div className="md:hidden divide-y divide-[#26364D]/30">
+                <div className="md:hidden divide-y" style={{ borderColor: border }}>
                   {filteredByStatus.map((inv) => {
                     const displayStatus = getDisplayStatus(inv);
                     const statusCfg = getStatusConfig(displayStatus);
@@ -789,27 +815,28 @@ function ReportsPage() {
                     const initials = (inv.person_name || "?").split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase();
                     const photoUrl = getPersonPhotoUrl(inv.person_id);
                     return (
-                      <div key={inv.id} className="p-4 space-y-3 last:border-0">
+                      <div key={inv.id} className="p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2.5">
                             {photoUrl ? (
                               <img
                                 src={photoUrl}
                                 alt={inv.person_name || "Pessoa"}
-                                className="h-10 w-10 rounded-full object-cover border-2 border-[#26364D] shrink-0"
+                                className="h-10 w-10 rounded-full object-cover border-2 shrink-0"
+                                style={{ borderColor: border }}
                                 onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                               />
                             ) : (
                               <div
-                                className="h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
-                                style={{ background: `linear-gradient(135deg, ${statusCfg.color}cc, ${statusCfg.color}66)` }}
+                                className="h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
+                                style={{ background: `linear-gradient(135deg, ${statusCfg.color}cc, ${statusCfg.color}66)`, color: "#fff" }}
                               >
                                 {initials}
                               </div>
                             )}
                             <div>
-                              <p className="text-sm font-semibold text-[#F3F6FA]">{inv.person_name || "—"}</p>
-                              <p className="text-[10px] text-[#718096] font-mono">Vencimento: {formatDate(inv.return_date)}</p>
+                              <p className="text-sm font-semibold" style={{ color: fg }}>{inv.person_name || "—"}</p>
+                              <p className="text-[10px] font-mono" style={{ color: fgMuted }}>Vencimento: {formatDate(inv.return_date)}</p>
                             </div>
                           </div>
                           <span
@@ -825,17 +852,17 @@ function ReportsPage() {
                           </span>
                         </div>
                         <div className="grid grid-cols-3 gap-2">
-                          <div className="bg-[#0B1220]/50 rounded-lg p-2">
-                            <p className="text-[9px] text-[#718096] uppercase tracking-wider mb-0.5">Emprestado</p>
-                            <p className="text-xs font-semibold text-[#F3F6FA] font-mono leading-tight">{formatCurrency(Number(inv.invested_amount))}</p>
+                          <div className="rounded-lg p-2" style={{ backgroundColor: bgMain }}>
+                            <p className="text-[9px] uppercase tracking-wider mb-0.5" style={{ color: fgMuted }}>Emprestado</p>
+                            <p className="text-xs font-semibold font-mono leading-tight" style={{ color: fg }}>{formatCurrency(Number(inv.invested_amount))}</p>
                           </div>
-                          <div className="bg-[#0B1220]/50 rounded-lg p-2">
-                            <p className="text-[9px] text-[#718096] uppercase tracking-wider mb-0.5">Retorno</p>
-                            <p className="text-xs font-semibold text-[#F3F6FA] font-mono leading-tight">{formatCurrency(Number(inv.expected_return || 0))}</p>
+                          <div className="rounded-lg p-2" style={{ backgroundColor: bgMain }}>
+                            <p className="text-[9px] uppercase tracking-wider mb-0.5" style={{ color: fgMuted }}>Retorno</p>
+                            <p className="text-xs font-semibold font-mono leading-tight" style={{ color: fg }}>{formatCurrency(Number(inv.expected_return || 0))}</p>
                           </div>
-                          <div className="bg-[#0B1220]/50 rounded-lg p-2">
-                            <p className="text-[9px] text-[#718096] uppercase tracking-wider mb-0.5">Lucro</p>
-                            <p className="text-xs font-semibold text-[#34d399] font-mono leading-tight">{formatCurrency(Number(inv.expected_profit || 0))}</p>
+                          <div className="rounded-lg p-2" style={{ backgroundColor: bgMain }}>
+                            <p className="text-[9px] uppercase tracking-wider mb-0.5" style={{ color: fgMuted }}>Lucro</p>
+                            <p className="text-xs font-semibold font-mono leading-tight" style={{ color: "#34d399" }}>{formatCurrency(Number(inv.expected_profit || 0))}</p>
                           </div>
                         </div>
                       </div>
