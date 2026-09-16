@@ -330,18 +330,18 @@ function ReportsPage() {
 
       <main className="p-4 max-w-5xl mx-auto space-y-6">
         {/* Filtros de período e status no topo da página */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           {/* Grupo 1 — Período */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider mr-1" style={{ color: fgMuted }}>Período</span>
-            <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider shrink-0" style={{ color: fgMuted }}>Período</span>
+            <div className="flex gap-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [scroll-snap-type:x_mandatory] *:[scroll-snap-align:start]">
               {PERIOD_OPTIONS.map((option) => {
                 const isActive = periodDays === option.days;
                 return (
                   <button
                     key={option.days}
                     onClick={() => setPeriodDays(option.days)}
-                    className="px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 cursor-pointer"
+                    className="px-2 py-1 rounded-md text-[10px] font-semibold border transition-all duration-200 cursor-pointer shrink-0"
                     style={{
                       backgroundColor: isActive ? "var(--color-primary)" : "transparent",
                       borderColor: isActive ? "var(--color-primary)" : border,
@@ -356,16 +356,16 @@ function ReportsPage() {
           </div>
 
           {/* Grupo 2 — Status */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider mr-1" style={{ color: fgMuted }}>Status</span>
-            <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider shrink-0" style={{ color: fgMuted }}>Status</span>
+            <div className="flex gap-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [scroll-snap-type:x_mandatory] *:[scroll-snap-align:start]">
               {STATUS_OPTIONS.map((opt) => {
                 const isActive = selectedStatus === opt.key;
                 return (
                   <button
                     key={opt.label}
                     onClick={() => handleStatusClick(opt.key)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-200 cursor-pointer"
+                    className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium border transition-all duration-200 cursor-pointer shrink-0"
                     style={{
                       backgroundColor: isActive ? "var(--color-primary)" : "transparent",
                       borderColor: isActive ? "var(--color-primary)" : border,
@@ -373,7 +373,7 @@ function ReportsPage() {
                     }}
                   >
                     <div
-                      className="h-2 w-2 rounded-[2px]"
+                      className="h-1.5 w-1.5 rounded-[2px] shrink-0"
                       style={{ backgroundColor: isActive ? "white" : opt.color }}
                     />
                     {opt.label}
