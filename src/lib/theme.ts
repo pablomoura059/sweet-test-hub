@@ -44,9 +44,14 @@ function mixWith(hex: string, target: number, amount: number): string {
 
 export function applyPrimaryColor(hex: string): void {
   const root = document.documentElement;
+  root.style.setProperty("--primary", hex);
   root.style.setProperty("--color-primary", hex);
-  root.style.setProperty("--color-primary-dark", mixWith(hex, 0, 0.35));
-  root.style.setProperty("--color-primary-light", mixWith(hex, 255, 0.25));
+  const dark = mixWith(hex, 0, 0.35);
+  const light = mixWith(hex, 255, 0.25);
+  root.style.setProperty("--primary-dark", dark);
+  root.style.setProperty("--primary-light", light);
+  root.style.setProperty("--color-primary-dark", dark);
+  root.style.setProperty("--color-primary-light", light);
 }
 
 export function applyResolvedTheme(theme: ResolvedTheme): void {
