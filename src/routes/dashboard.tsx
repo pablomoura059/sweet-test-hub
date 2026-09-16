@@ -124,7 +124,7 @@ export default function DashboardPage() {
       }
 
       const [loansRes, paymentsRes] = await Promise.all([
-        supabase.from("investments").select("*").eq("manager_id", session.user.id),
+        supabase.from("investments").select("*").eq("user_id", session.user.id),
         supabase.from("payments").select("*, investment:investments(*)").gte("payment_date", dateRange.start || "1970-01-01").lte("payment_date", dateRange.end || "2100-01-01"),
       ]);
 
@@ -170,7 +170,7 @@ export default function DashboardPage() {
       let query = supabase
         .from("investments")
         .select("*, client:profiles!investments_client_id_fkey(first_name, last_name)")
-        .eq("manager_id", session.user.id)
+        .eq("user_id", session.user.id)
         .order("created_at", { ascending: false })
         .limit(10);
 
