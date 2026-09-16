@@ -189,8 +189,7 @@ export default function MinhaContaPage() {
     if (userSettings) {
       setSystemName(userSettings.system_name || "");
       setSystemSubtitle(userSettings.system_subtitle || "Sistema financeiro");
-      const savedTheme = userSettings.theme;
-      setTheme(savedTheme === "light" ? "dark" : (savedTheme || "dark"));
+      setTheme(userSettings.theme || "dark");
       setPrimaryColor(colorNameToHex(userSettings.primary_color) || "#2F6FED");
       if (userSettings.logo_url) {
         setLogoDbPath(userSettings.logo_url);
@@ -377,7 +376,6 @@ export default function MinhaContaPage() {
     <div
       className="min-h-screen"
       style={{ backgroundColor: bgMain }}
-      data-theme={isLight ? "light" : "dark"}
     >
       {/* Header */}
       <header
