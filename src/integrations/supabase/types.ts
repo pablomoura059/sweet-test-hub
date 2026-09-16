@@ -121,38 +121,80 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          birth_date: string | null
+          created_at: string
+          email: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          name: string | null
+          phone: string | null
+          role: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          birth_date?: string | null
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          name?: string | null
+          phone?: string | null
+          role?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          birth_date?: string | null
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          name?: string | null
+          phone?: string | null
+          role?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_settings: {
         Row: {
-          created_at: string | null
-          id: string
+          created_at: string
           logo_url: string | null
-          primary_color: string | null
+          primary_color: string
+          profile_photo_url: string | null
           system_name: string | null
           system_subtitle: string | null
-          theme: string | null
-          updated_at: string | null
+          theme: string
+          updated_at: string
           user_id: string
         }
         Insert: {
-          created_at?: string | null
-          id?: string
+          created_at?: string
           logo_url?: string | null
-          primary_color?: string | null
+          primary_color?: string
+          profile_photo_url?: string | null
           system_name?: string | null
           system_subtitle?: string | null
-          theme?: string | null
-          updated_at?: string | null
+          theme?: string
+          updated_at?: string
           user_id: string
         }
         Update: {
-          created_at?: string | null
-          id?: string
+          created_at?: string
           logo_url?: string | null
-          primary_color?: string | null
+          primary_color?: string
+          profile_photo_url?: string | null
           system_name?: string | null
           system_subtitle?: string | null
-          theme?: string | null
-          updated_at?: string | null
+          theme?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -162,7 +204,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
