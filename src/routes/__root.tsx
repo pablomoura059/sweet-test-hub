@@ -7,12 +7,20 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  DEFAULT_THEME,
+  applyPrimaryColor,
+  applyResolvedTheme,
+  getPrimaryColorHex,
+  normalizeTheme,
+  type ThemePreference,
+} from "@/lib/theme";
 
 function NotFoundComponent() {
   return (
@@ -143,78 +151,68 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
-  const [primaryColor, setPrimaryColor] = useState("#2F6FED");
 
-  // Carregar cor primária do user_settings e definir em document.documentElement
+  // Fonte global única para tema e cor principal do usuário autenticado.
   useEffect(() => {
-    const loadPrimaryColor = async () => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    let currentPreference: ThemePreference = DEFAULT_THEME;
+
+    const applyThemePreference = () => {
+      const resolvedTheme = currentPreference === "system"
+        ? (mediaQuery.matches ? "dark" : "light")
+        : currentPreference;
+      applyResolvedTheme(resolvedTheme);
+    };
+
+    const resetTheme = () => {
+      currentPreference = DEFAULT_THEME;
+      applyThemePreference();
+      applyPrimaryColor(getPrimaryColorHex(null));
+    };
+
+    const loadUserTheme = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) {
-        document.documentElement.style.setProperty("--color-primary", "#2F6FED");
+        resetTheme();
         return;
       }
 
       const { data } = await supabase
         .from("user_settings")
-        .select("primary_color")
+        .select("theme, primary_color")
         .eq("user_id", session.user.id)
-        .single();
+        .maybeSingle();
 
-        const colorMap: Record<string, string> = {
-    blue: "#2F6FED",
-    purple: "#7C3AED",
-    green: "#059669",
-    orange: "#D97706",
-    red: "#DC2626",
-    pink: "#DB2777",
-  };
-  const hex = data?.primary_color ? (colorMap[data.primary_color] || "#2F6FED") : "#2F6FED";
-  const darken = (h: string) => {
-    const r = parseInt(h.slice(1, 3), 16);
-    const g = parseInt(h.slice(3, 5), 16);
-    const b = parseInt(h.slice(5, 7), 16);
-    const blend = (v: number, t: number) => Math.round(v * (1 - t) + 0 * t);
-    const d = "#" + [r, g, b].map((v, i) => Math.max(0, [40, 20, 120][i])).map(v => Math.max(0, Math.round(v * 0.65)).toString(16).padStart(2, "0")).join("");
-    const lighter = "#" + [r, g, b].map(v => Math.min(255, Math.round(v * 1.25))).map(v => v.toString(16).padStart(2, "0")).join("");
-    setPrimaryColor(hex);
-    document.documentElement.style.setProperty("--color-primary", hex);
-    document.documentElement.style.setProperty("--color-primary-dark", d);
-    document.documentElement.style.setProperty("--color-primary-light", lighter);
-  };
-  darken(hex);
+      currentPreference = normalizeTheme(data?.theme);
+      applyThemePreference();
+      applyPrimaryColor(getPrimaryColorHex(data?.primary_color));
     };
 
-    loadPrimaryColor();
+    const handleSystemThemeChange = () => {
+      if (currentPreference === "system") applyThemePreference();
+    };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      loadPrimaryColor();
+    const handleThemeChanged = () => {
+      void loadUserTheme();
+    };
+
+    void loadUserTheme();
+    mediaQuery.addEventListener("change", handleSystemThemeChange);
+    window.addEventListener("theme-changed", handleThemeChanged);
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+      window.setTimeout(() => {
+        void loadUserTheme();
+      }, 0);
     });
 
     return () => {
       subscription.unsubscribe();
+      mediaQuery.removeEventListener("change", handleSystemThemeChange);
+      window.removeEventListener("theme-changed", handleThemeChanged);
     };
   }, []);
-
-  // Atualizar todas as variáveis de cor primária sempre que primaryColor mudar
-  useEffect(() => {
-    const colorMap: Record<string, string> = {
-      blue: "#2F6FED",
-      purple: "#7C3AED",
-      green: "#059669",
-      orange: "#D97706",
-      red: "#DC2626",
-      pink: "#DB2777",
-    };
-    const hex = colorMap[primaryColor] || primaryColor;
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
-    const dark = "#" + [40, 20, 120].map((v, i) => Math.round([r, g, b][i] * 0.65)).map(v => Math.max(0, v).toString(16).padStart(2, "0")).join("");
-    const light = "#" + [r, g, b].map(v => Math.min(255, Math.round(v * 1.25))).map(v => v.toString(16).padStart(2, "0")).join("");
-    document.documentElement.style.setProperty("--color-primary", hex);
-    document.documentElement.style.setProperty("--color-primary-dark", dark);
-    document.documentElement.style.setProperty("--color-primary-light", light);
-  }, [primaryColor]);
 
   // Proteção global: verificar profile em cada navegação
   useEffect(() => {

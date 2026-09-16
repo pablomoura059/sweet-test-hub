@@ -51,7 +51,7 @@ export function applyPrimaryColor(hex: string): void {
 
 export function applyResolvedTheme(theme: ResolvedTheme): void {
   const root = document.documentElement;
-  root.dataset.theme = theme;
+  root.dataset["theme"] = theme;
   root.classList.toggle("dark", theme === "dark");
   root.style.colorScheme = theme;
 }
