@@ -167,13 +167,13 @@ function GestoresPage() {
         return;
       }
       const profileRole: string = profile.role;
+      const canAccess =
+        (profileRole === "admin" && profile.status === "active") ||
+        (profileRole === "manager" && profile.status === "active");
       if (profileRole !== "admin") {
         router.navigate({ to: "/dashboard" });
         return;
       }
-      const canAccess =
-        (profileRole === "admin" && profile.status === "active") ||
-        (profileRole === "manager" && profile.status === "active");
       if (!canAccess) {
         router.navigate({ to: "/conta-bloqueada" });
         return;
