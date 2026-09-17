@@ -856,7 +856,7 @@ function DashboardPage() {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
-  const primaryDark = "#" + [40, 20, 120].map((v, i) => Math.round([r, g, b][i] * 0.65)).map(v => Math.max(0, v).toString(16).padStart(2, "0")).join("");
+  const primaryDark = "#" + [r, g, b].map(v => Math.round(v * 0.65)).map(v => Math.max(0, v).toString(16).padStart(2, "0")).join("");
   const primaryLight = "#" + [r, g, b].map(v => Math.min(255, Math.round(v * 1.25))).map(v => v.toString(16).padStart(2, "0")).join("");
 
   return (

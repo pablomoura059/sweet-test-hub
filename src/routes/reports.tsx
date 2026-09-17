@@ -127,7 +127,7 @@ function ReportsPage() {
     switch (selectedStatus) {
       case "active":
         return filteredInvestments.filter(
-          (inv) => inv.status === "active" && !(inv.return_date < today && inv.status !== "finished" && inv.status !== "cancelled")
+          (inv) => inv.status === "active" && inv.return_date >= today
         );
       case "finished":
         return filteredInvestments.filter((inv) => inv.status === "finished");
@@ -244,7 +244,9 @@ function ReportsPage() {
         <p className="mb-2 font-semibold text-[#F3F6FA]">{label}</p>
         {payload.map((item: any) => (
           <div key={item.dataKey} className="flex items-center justify-between gap-4">
-            <span style={{ color: item.color }}>{chartConfig[item.dataKey]?.label}</span>
+            <span style={{ color: item.color }}>
+              {chartConfig[item.dataKey as keyof typeof chartConfig]?.label}
+            </span>
             <span className="font-mono font-medium text-[#F3F6FA]">
               {formatCurrency(item.value)}
             </span>
@@ -576,7 +578,8 @@ function ReportsPage() {
                       <Tooltip
                         content={({ active, payload }) => {
                           if (!active || !payload?.length) return null;
-                          const d = payload[0].payload;
+                          const d = payload[0]?.payload;
+                          if (!d) return null;
                           return (
                             <div className="rounded-lg border border-[#26364D] bg-[#162235] px-3 py-2 text-xs shadow-xl">
                               <p className="font-semibold text-[#F3F6FA]">{d.name}</p>

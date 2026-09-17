@@ -159,9 +159,9 @@ export default function MinhaContaPage() {
   useEffect(() => {
     const profileFirst = currentProfile?.first_name;
     const profileLast = currentProfile?.last_name;
-    const metaFirst = session?.user?.user_metadata?.first_name;
-    const metaLast = session?.user?.user_metadata?.last_name;
-    const metaName = session?.user?.user_metadata?.name;
+    const metaFirst = session?.user?.user_metadata?.["first_name"];
+    const metaLast = session?.user?.user_metadata?.["last_name"];
+    const metaName = session?.user?.user_metadata?.["name"];
     if (profileFirst !== undefined && profileFirst !== null && profileFirst !== "") {
       setFirstName(profileFirst);
     } else if (metaFirst) {
@@ -229,7 +229,7 @@ export default function MinhaContaPage() {
           .single();
         return data;
       },
-    }).then(({ data: profile }) => {
+    }).then((profile) => {
       if (!profile) return;
 
       const fullName = [profile.first_name, profile.last_name]
