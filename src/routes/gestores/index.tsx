@@ -166,11 +166,14 @@ function GestoresPage() {
         router.navigate({ to: "/login" });
         return;
       }
-      if (profile.role !== "admin") {
+      const profileRole: string = profile.role;
+      if (profileRole !== "admin") {
         router.navigate({ to: "/dashboard" });
         return;
       }
-      const canAccess = profile.role === "admin" && profile.status === "active";
+      const canAccess =
+        (profileRole === "admin" && profile.status === "active") ||
+        (profileRole === "manager" && profile.status === "active");
       if (!canAccess) {
         router.navigate({ to: "/conta-bloqueada" });
         return;

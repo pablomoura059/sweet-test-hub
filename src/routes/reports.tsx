@@ -127,7 +127,7 @@ function ReportsPage() {
     switch (selectedStatus) {
       case "active":
         return filteredInvestments.filter(
-          (inv) => inv.status === "active" && inv.return_date >= today
+          (inv) => inv.status === "active" && !(inv.return_date < today && (inv.status as string) !== "finished" && (inv.status as string) !== "cancelled")
         );
       case "finished":
         return filteredInvestments.filter((inv) => inv.status === "finished");
