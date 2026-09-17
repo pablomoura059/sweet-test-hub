@@ -9,7 +9,7 @@ export const Route = createFileRoute("/conta-bloqueada")({
 
 function ContaBloqueadaPage() {
   const router = useRouter();
-  const { status } = Route.useSearch();
+  const { status } = Route.useSearch() as { status?: string };
   const isPending = status === "pending";
 
   return (

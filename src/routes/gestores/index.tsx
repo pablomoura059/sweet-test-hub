@@ -166,13 +166,14 @@ function GestoresPage() {
         router.navigate({ to: "/login" });
         return;
       }
-      if (profile.role !== "admin") {
+      const profileRole: string = profile.role;
+      const canAccess =
+        (profileRole === "admin" && profile.status === "active") ||
+        (profileRole === "manager" && profile.status === "active");
+      if (profileRole !== "admin") {
         router.navigate({ to: "/dashboard" });
         return;
       }
-      const canAccess =
-        (profile.role === "admin" && profile.status === "active") ||
-        (profile.role === "manager" && profile.status === "active");
       if (!canAccess) {
         router.navigate({ to: "/conta-bloqueada" });
         return;
@@ -203,7 +204,7 @@ function GestoresPage() {
     enabled: !!session?.user.id,
   });
 
-  const systemName = userSettings?.system_name || session?.user.user_metadata?.name || "Empréstimos";
+  const systemName = userSettings?.system_name || session?.user.user_metadata?.["name"] || "Empréstimos";
 
   const { data: profiles, isLoading } = useQuery({
     queryKey: ["profiles-managers"],

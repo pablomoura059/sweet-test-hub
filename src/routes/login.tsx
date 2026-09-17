@@ -122,7 +122,7 @@ function LoginPage() {
 
   const fallbackURL = () => {
     if (!window.location.origin.includes('localhost')) return window.location.origin;
-    const envUrl = import.meta.env.VITE_APP_URL;
+    const envUrl = import.meta.env["VITE_APP_URL"];
     if (envUrl) return envUrl;
     // Fallback direto se a var de ambiente não estiver disponível
     console.warn('[resetPassword] VITE_APP_URL não disponível, usando URL publicada como fallback');
