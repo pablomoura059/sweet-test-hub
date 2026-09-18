@@ -7,8 +7,7 @@ import {
   CheckCircle, AlertCircle, Clock, User, Search, Filter,
   ChevronRight, Calendar, Home, Users, BarChart2, Settings,
   type LucideIcon, ChevronDown, X, UserPlus, Check,
-  Camera, Upload, Loader2, Image,
-  Trash2, Eye, Download,
+  Camera, Upload, Loader2, Image, Eye, Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -61,12 +60,6 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const formatFileSize = (bytes: number): string => {
-  if (bytes < 1024) return bytes + " B";
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
-};
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
@@ -352,6 +345,12 @@ function AddPersonDialog({
   const [pendingDocFiles, setPendingDocFiles] = useState<PendingDoc[]>([]);
   const [viewDocUrl, setViewDocUrl] = useState<string | null>(null);
   const docFileInputRef = useRef<HTMLInputElement>(null);
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  };
 
   const applyPhoneMask = (value: string) => {
     const digits = value.replace(/\D/g, "").slice(0, 11);
