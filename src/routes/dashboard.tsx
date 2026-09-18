@@ -62,6 +62,12 @@ export const Route = createFileRoute("/dashboard")({
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+const formatFileSize = (bytes: number): string => {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+};
+
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
@@ -113,12 +119,6 @@ const getPhotoUrl = (photoPath: string | null | undefined): string | null => {
     .getPublicUrl(photoPath);
 
   return data.publicUrl;
-};
-
-const formatFileSize = (bytes: number): string => {
-  if (bytes < 1024) return bytes + " B";
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 };
 
 // ─── Person Avatar ─────────────────────────────────────────────────────────────
