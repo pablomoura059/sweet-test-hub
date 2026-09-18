@@ -307,46 +307,50 @@ function ReportsPage() {
 
       <main className="p-4 max-w-5xl mx-auto space-y-6">
         {/* Filtros de período e status no topo da página */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          {PERIOD_OPTIONS.map((option) => (
-            <Button
-              key={option.days}
-              variant={periodDays === option.days ? "default" : "outline"}
-              size="sm"
-              onClick={() => setPeriodDays(option.days)}
-              className={
-                periodDays === option.days
-                  ? "bg-[var(--color-primary)] hover:bg-[var(--color-primary)] text-white border-[var(--color-primary)] font-semibold text-xs"
-                  : "border-[#26364D] text-[#718096] hover:bg-[#162235] hover:text-[#F3F6FA] text-xs"
-              }
-            >
-              {option.label}
-            </Button>
-          ))}
-
-          <div className="h-6 w-px bg-[#26364D]/60 hidden sm:block mx-1" />
-
-          {STATUS_OPTIONS.map((opt) => {
-            const isActive = selectedStatus === opt.key;
-            return (
-              <button
-                key={opt.label}
-                onClick={() => handleStatusClick(opt.key)}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            {PERIOD_OPTIONS.map((option) => (
+              <Button
+                key={option.days}
+                variant={periodDays === option.days ? "default" : "outline"}
+                size="sm"
+                onClick={() => setPeriodDays(option.days)}
                 className={
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-200 cursor-pointer " +
-                  (isActive
-                    ? "bg-[var(--color-primary)] border-[var(--color-primary)] text-white shadow-sm"
-                    : "border-[#26364D] text-[#718096] hover:border-[var(--color-primary)]/50 hover:text-[#F3F6FA]")
+                  periodDays === option.days
+                    ? "bg-[var(--color-primary)] hover:bg-[var(--color-primary)] text-white border-[var(--color-primary)] font-semibold text-xs px-2 py-1.5"
+                    : "border-[#26364D] text-[#718096] hover:bg-[#162235] hover:text-[#F3F6FA] text-xs px-2 py-1.5"
                 }
               >
-                <div
-                  className="h-2 w-2 rounded-[2px]"
-                  style={{ backgroundColor: isActive ? "white" : opt.color }}
-                />
-                {opt.label}
-              </button>
-            );
-          })}
+                {option.label}
+              </Button>
+            ))}
+          </div>
+
+          <div className="h-5 w-px bg-[#26364D]/60 hidden sm:block" />
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            {STATUS_OPTIONS.map((opt) => {
+              const isActive = selectedStatus === opt.key;
+              return (
+                <button
+                  key={opt.label}
+                  onClick={() => handleStatusClick(opt.key)}
+                  className={
+                    "flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-medium border transition-all duration-200 cursor-pointer " +
+                    (isActive
+                      ? "bg-[var(--color-primary)] border-[var(--color-primary)] text-white shadow-sm"
+                      : "border-[#26364D] text-[#718096] hover:border-[var(--color-primary)]/50 hover:text-[#F3F6FA]")
+                  }
+                >
+                  <div
+                    className="h-2 w-2 rounded-[2px]"
+                    style={{ backgroundColor: isActive ? "white" : opt.color }}
+                  />
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Indicadores filtrados */}
