@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   PRIMARY_COLOR_OPTIONS,
   getPrimaryColorHex,
+  getPrimaryColorName,
 } from "@/lib/theme";
 
 export const Route = createFileRoute("/minha-conta")({
@@ -276,7 +277,7 @@ export default function MinhaContaPage() {
             system_name: systemName,
             system_subtitle: systemSubtitle,
             theme: "dark",
-            primary_color: primaryColor,
+            primary_color: getPrimaryColorName(primaryColor),
             logo_url: logoDbPath || null,
           },
           { onConflict: "user_id" }
@@ -301,10 +302,9 @@ export default function MinhaContaPage() {
         throw new Error(profileError.message);
       }
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Configurações salvas com sucesso!");
-      queryClient.resetQueries({ queryKey: ["user-settings", session?.user.id] });
-      queryClient.refetchQueries({ queryKey: ["user-settings", session?.user.id] });
+      await queryClient.refetchQueries({ queryKey: ["user-settings", session?.user.id] });
       queryClient.invalidateQueries({ queryKey: ["current-profile", session?.user.id] });
       window.dispatchEvent(new Event("theme-changed"));
     },
