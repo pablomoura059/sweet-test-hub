@@ -5,7 +5,7 @@ import {
   Plus, Search, Pencil, Trash2, ArrowLeft, Users, Check,
   Camera, User, Phone, Calendar, FileText, DollarSign,
   TrendingUp, Clock, ChevronRight,
-  Image, Upload, X, Loader2,
+  Image, Upload, X, Loader2, Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -832,9 +832,23 @@ function PeoplePage() {
         <DialogContent className="bg-[#101A2B] border border-[#26364D] text-[#F3F6FA] max-w-2xl max-h-[90vh] flex flex-col">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-sm font-bold text-[#F3F6FA]">Documento</DialogTitle>
-            <Button variant="ghost" size="icon" onClick={() => setViewDocUrl(null)}
-              className="h-7 w-7 text-[#718096] hover:text-[#F3F6FA]">
-              <X className="h-4 w-4" />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                const doc = personDocuments?.find((d) => docThumbnails[d.id] === viewDocUrl);
+                if (viewDocUrl) {
+                  const link = document.createElement("a");
+                  link.href = viewDocUrl;
+                  link.download = doc?.file_name || "documento.jpg";
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }
+              }}
+              className="text-xs text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] transition-colors gap-1.5">
+              <Download className="h-4 w-4" />
+              Baixar foto
             </Button>
           </div>
           <div className="flex-1 overflow-auto flex items-center justify-center bg-[#0B1220] rounded-lg">
