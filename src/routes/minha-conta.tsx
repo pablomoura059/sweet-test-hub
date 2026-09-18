@@ -269,8 +269,7 @@ export default function MinhaContaPage() {
       if (!session?.user.id) throw new Error("Usuário não autenticado");
 
       // Normaliza para hex sem # antes de converter para nome
-      const hexValue = normalizeColor(primaryColor);
-      const colorValue = getPrimaryColorName(hexValue);
+      const colorValue = getPrimaryColorName(primaryColor);
 
       // Salvar configurações de sistema em user_settings (inclui logo_url)
       const { error: settingsError } = await supabase

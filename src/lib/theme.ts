@@ -19,7 +19,7 @@ const primaryColorByName = new Map<string, string>(
 );
 
 const primaryColorNameByHex = new Map<string, PrimaryColorName>(
-  PRIMARY_COLOR_OPTIONS.map(({ name, color }) => [color.toLowerCase(), name]),
+  PRIMARY_COLOR_OPTIONS.map(({ name, color }) => [color.replace("#", "").toLowerCase(), name]),
 );
 
 export function getPrimaryColorHex(name: string | null | undefined): string {
@@ -27,8 +27,9 @@ export function getPrimaryColorHex(name: string | null | undefined): string {
 }
 
 export function getPrimaryColorName(hex: string): PrimaryColorName {
-  // First try hex lookup
-  const fromHex = primaryColorNameByHex.get(hex.toLowerCase());
+  // First try hex lookup (normalize: remove #)
+  const cleaned = hex.replace("#", "").toLowerCase();
+  const fromHex = primaryColorNameByHex.get(cleaned);
   if (fromHex) return fromHex;
   // Fallback: accept direct color name if it exists in options
   const isValidName = (PRIMARY_COLOR_OPTIONS as readonly { name: string }[]).some(
