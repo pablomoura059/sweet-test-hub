@@ -5,6 +5,7 @@ import {
   Plus, Search, Pencil, Trash2, ArrowLeft, Users, Check,
   Camera, User, Phone, Calendar, FileText, DollarSign,
   TrendingUp, Clock, ChevronRight,
+  Image, Upload, X, Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,6 +42,21 @@ type Investment = {
   status: string; start_date: string; return_date: string;
 };
 
+type Document = {
+  id: string;
+  user_id: string;
+  person_id: string;
+  file_name: string;
+  file_path: string;
+  file_type: string | null;
+  file_size: number | null;
+  created_at: string;
+};
+
+const MAX_DOCUMENTS = 3;
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png"];
+
 const applyPhoneMask = (value: string) => {
   const digits = value.replace(/\D/g, "").slice(0, 11);
   if (digits.length <= 2) return digits.length ? `(${digits}` : "";
@@ -64,6 +80,13 @@ const formatDateBR = (date: string | null | undefined) => {
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+
+const formatFileSize = (bytes: number | null | undefined) => {
+  if (!bytes) return "—";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 const getPhotoUrl = (photoPath: string | null | undefined): string | null => {
   if (!photoPath) return null;
@@ -148,6 +171,9 @@ function PeoplePage() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const photoFileRef = useRef<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const docFileInputRef = useRef<HTMLInputElement>(null);
+  const [viewDocUrl, setViewDocUrl] = useState<string | null>(null);
+  const [deleteDocId, setDeleteDocId] = useState<string | null>(null);
 
   const { data: session } = useQuery({
     queryKey: ["auth-session"],
@@ -189,6 +215,23 @@ function PeoplePage() {
     enabled: !!session?.user.id,
   });
 
+  // Documents query - fetches for the currently viewed person
+  const { data: personDocuments } = useQuery({
+    queryKey: ["person-documents", viewPerson?.id],
+    queryFn: async () => {
+      if (!session?.user.id || !viewPerson?.id) return [];
+      const { data, error } = await supabase
+        .from("person_documents")
+        .select("*")
+        .eq("person_id", viewPerson.id)
+        .eq("user_id", session.user.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as Document[];
+    },
+    enabled: !!session?.user.id && !!viewPerson?.id,
+  });
+
   const uploadPhoto = async (userId: string, personId: string, file: File): Promise<string> => {
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const path = `${userId}/${personId}.${ext}`;
@@ -215,6 +258,119 @@ function PeoplePage() {
 
     return data.path;
   };
+
+  // Upload document mutation
+  const uploadDocMutation = useMutation({
+    mutationFn: async ({ personId, file }: { personId: string; file: File }) => {
+      if (!session?.user.id) throw new Error("Não autenticado");
+
+      // Validate file type
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        throw new Error("Formato não permitido. Use JPG, JPEG ou PNG.");
+      }
+
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        throw new Error(`Arquivo muito grande. Máximo: 10 MB.`);
+      }
+
+      // Check current document count
+      const { count, error: countError } = await supabase
+        .from("person_documents")
+        .select("*", { count: "exact", head: true })
+        .eq("person_id", personId)
+        .eq("user_id", session.user.id);
+
+      if (countError) throw countError;
+
+      if ((count || 0) >= MAX_DOCUMENTS) {
+        throw new Error(`Limite de ${MAX_DOCUMENTS} documentos atingido.`);
+      }
+
+      // Generate unique filename
+      const docId = crypto.randomUUID();
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 100);
+      const filePath = `${session.user.id}/${personId}/${docId}-${safeName}`;
+
+      // Upload to storage
+      const { error: uploadError } = await supabase.storage
+        .from("person-documents")
+        .upload(filePath, file, { contentType: file.type });
+
+      if (uploadError) {
+        throw new Error("Erro ao enviar documento: " + uploadError.message);
+      }
+
+      // Create database record
+      const { error: insertError } = await supabase.from("person_documents").insert({
+        user_id: session.user.id,
+        person_id: personId,
+        file_name: file.name,
+        file_path: filePath,
+        file_type: file.type,
+        file_size: file.size,
+      });
+
+      if (insertError) {
+        // Rollback: delete uploaded file
+        await supabase.storage.from("person-documents").remove([filePath]);
+        throw new Error("Erro ao salvar registro: " + insertError.message);
+      }
+
+      return filePath;
+    },
+    onSuccess: () => {
+      toast.success("Documento adicionado!", {
+        className: "!bg-[#101A2B] !border-[var(--color-primary)]/30 !text-[#F3F6FA] !font-medium !rounded-xl",
+      });
+      queryClient.invalidateQueries({ queryKey: ["person-documents"] });
+    },
+    onError: (err: Error) => {
+      toast.error(err?.message || "Erro ao enviar documento", {
+        className: "!bg-red-900/50 !border-red-500/30 !text-red-200 !font-medium !rounded-xl",
+      });
+    },
+  });
+
+  // Delete document mutation
+  const deleteDocMutation = useMutation({
+    mutationFn: async ({ docId, filePath }: { docId: string; filePath: string }) => {
+      if (!session?.user.id) throw new Error("Não autenticado");
+
+      // Delete from storage first
+      const { error: storageError } = await supabase.storage
+        .from("person-documents")
+        .remove([filePath]);
+
+      if (storageError) {
+        throw new Error("Erro ao excluir arquivo: " + storageError.message);
+      }
+
+      // Delete database record
+      const { error: dbError } = await supabase
+        .from("person_documents")
+        .delete()
+        .eq("id", docId)
+        .eq("user_id", session.user.id);
+
+      if (dbError) {
+        throw new Error("Erro ao excluir registro: " + dbError.message);
+      }
+    },
+    onSuccess: () => {
+      toast.success("Documento removido.", {
+        className: "!bg-[#101A2B] !border-[var(--color-primary)]/30 !text-[#F3F6FA] !font-medium !rounded-xl",
+      });
+      queryClient.invalidateQueries({ queryKey: ["person-documents"] });
+      setDeleteDocId(null);
+    },
+    onError: (err: Error) => {
+      toast.error(err?.message || "Erro ao excluir documento", {
+        className: "!bg-red-900/50 !border-red-500/30 !text-red-200 !font-medium !rounded-xl",
+      });
+    },
+  });
 
   const createMutation = useMutation({
     mutationFn: async ({ photoFile }: { photoFile: File | null }) => {
@@ -360,6 +516,37 @@ function PeoplePage() {
     photoFileRef.current = file;
   };
 
+  const handleDocChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+
+    // Validate type before upload
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast.error("Formato não permitido. Use JPG, JPEG ou PNG.", {
+        className: "!bg-red-900/50 !border-red-500/30 !text-red-200 !font-medium !rounded-xl",
+      });
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("Arquivo muito grande. Máximo: 10 MB.", {
+        className: "!bg-red-900/50 !border-red-500/30 !text-red-200 !font-medium !rounded-xl",
+      });
+      return;
+    }
+
+    const personId = editPerson?.id;
+    if (!personId) {
+      toast.error("Salve a pessoa primeiro para adicionar documentos.", {
+        className: "!bg-red-900/50 !border-red-500/30 !text-red-200 !font-medium !rounded-xl",
+      });
+      return;
+    }
+
+    uploadDocMutation.mutate({ personId, file });
+  };
+
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormPhone(applyPhoneMask(e.target.value));
   };
@@ -392,6 +579,23 @@ function PeoplePage() {
   const getPersonInvestments = (person: Person): Investment[] => {
     if (!investments) return [];
     return investments.filter((i) => i.person_name.toLowerCase() === person.name.toLowerCase());
+  };
+
+  const openDocViewer = async (doc: Document) => {
+    if (!session?.user.id) return;
+    try {
+      const { data, error } = await supabase.storage
+        .from("person-documents")
+        .createSignedUrl(doc.file_path, 3600);
+
+      if (error || !data?.signedUrl) {
+        toast.error("Não foi possível abrir o documento.");
+        return;
+      }
+      setViewDocUrl(data.signedUrl);
+    } catch {
+      toast.error("Erro ao obter URL do documento.");
+    }
   };
 
   return (
@@ -505,6 +709,49 @@ function PeoplePage() {
         )}
       </main>
 
+      {/* Document viewer modal */}
+      <Dialog open={!!viewDocUrl} onOpenChange={(open) => { if (!open) setViewDocUrl(null); }}>
+        <DialogContent className="bg-[#101A2B] border border-[#26364D] text-[#F3F6FA] max-w-2xl max-h-[90vh] flex flex-col">
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-sm font-bold text-[#F3F6FA]">Documento</DialogTitle>
+            <Button variant="ghost" size="icon" onClick={() => setViewDocUrl(null)}
+              className="h-7 w-7 text-[#718096] hover:text-[#F3F6FA]">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="flex-1 overflow-auto flex items-center justify-center bg-[#0B1220] rounded-lg">
+            {viewDocUrl && (
+              <img src={viewDocUrl} alt="Documento" className="max-w-full max-h-[70vh] object-contain rounded" />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete document confirmation */}
+      <AlertDialog open={!!deleteDocId} onOpenChange={() => setDeleteDocId(null)}>
+        <AlertDialogContent className="bg-[#101A2B] border-[#26364D] animate-scale-in">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-[#F3F6FA] font-bold">Excluir documento</AlertDialogTitle>
+            <AlertDialogDescription className="text-[#AAB5C5] text-sm">
+              Tem certeza que deseja excluir este documento? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-[#26364D] text-[#AAB5C5] hover:bg-[#162235] hover:text-[#F3F6FA] transition-colors">Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (!deleteDocId) return;
+              const doc = personDocuments?.find((d) => d.id === deleteDocId);
+              if (doc) {
+                deleteDocMutation.mutate({ docId: doc.id, filePath: doc.file_path });
+              }
+            }}
+              className="bg-red-600 hover:bg-red-700 text-white transition-colors active:scale-95">
+              {deleteDocMutation.isPending ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Dialog open={isFormOpen} onOpenChange={(open) => { if (!open) closeForm(); }}>
         <DialogContent className="bg-[#101A2B] border border-[#26364D] text-[#F3F6FA] max-h-[90vh] overflow-y-auto max-w-md animate-scale-in">
           <DialogHeader>
@@ -558,6 +805,85 @@ function PeoplePage() {
                 style={{ borderColor: "#26364D" }} />
             </div>
 
+            {/* Documents section - only for edit mode */}
+            {editPerson && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-semibold text-[#AAB5C5]">Documentos</Label>
+                  <span className="text-[10px] text-[#718096]">
+                    {editPerson ? (personDocuments?.length || 0) : 0} / {MAX_DOCUMENTS}
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  {/* Show existing documents */}
+                  {personDocuments && personDocuments.length > 0 && (
+                    <div className="space-y-1.5">
+                      {personDocuments.map((doc) => (
+                        <div key={doc.id} className="flex items-center gap-2 p-2 rounded-lg bg-[#1e2d42] border border-[#26364D]">
+                          <Image className="h-4 w-4 text-[#718096] shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-[#F3F6FA] truncate">{doc.file_name}</p>
+                            <p className="text-[10px] text-[#718096]">{formatFileSize(doc.file_size)} · {formatDateBR(doc.created_at?.split("T")[0])}</p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openDocViewer(doc)}
+                            className="h-7 w-7 shrink-0 text-[#718096] hover:text-[#F3F6FA]">
+                            <Image className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setDeleteDocId(doc.id)}
+                            className="h-7 w-7 shrink-0 text-[#718096] hover:text-red-400 hover:bg-red-500/10">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add button */}
+                  <input
+                    ref={docFileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png"
+                    onChange={handleDocChange}
+                    className="hidden"
+                  />
+                  {(personDocuments?.length || 0) < MAX_DOCUMENTS ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => docFileInputRef.current?.click()}
+                      disabled={uploadDocMutation.isPending}
+                      className="w-full border-[#26364D] text-[#AAB5C5] hover:bg-[#162235] hover:text-[#F3F6FA] transition-colors text-xs h-9">
+                      {uploadDocMutation.isPending ? (
+                        <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Enviando...</>
+                      ) : (
+                        <><Upload className="h-3.5 w-3.5 mr-1.5" /> Adicionar documento (JPG, PNG)</>
+                      )}
+                    </Button>
+                  ) : (
+                    <div className="text-center py-2 px-3 rounded-lg bg-[#1e2d42] border border-[#26364D]">
+                      <p className="text-xs text-[#718096]">Limite de {MAX_DOCUMENTS} documentos atingido.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {editPerson && !personDocuments && (
+              <div className="flex items-center gap-2 py-1">
+                <Loader2 className="h-3 w-3 animate-spin text-[#718096]" />
+                <p className="text-[10px] text-[#718096]">Carregando documentos...</p>
+              </div>
+            )}
+
             <div className="flex gap-3 pt-1">
               <Button type="button" variant="outline" onClick={closeForm}
                 className="flex-1 border-[#26364D] text-[#AAB5C5] hover:bg-[#162235] hover:text-[#F3F6FA] transition-colors"
@@ -582,6 +908,7 @@ function PeoplePage() {
             const totalInvested = personInvs.reduce((s, i) => s + Number(i.invested_amount), 0);
             const totalReceived = personInvs.reduce((s, i) => s + Number(i.actual_received || 0), 0);
             const totalProfit = totalReceived - totalInvested;
+            const docs = personDocuments || [];
 
             return (
               <div className="space-y-5">
@@ -630,6 +957,39 @@ function PeoplePage() {
                         <p className="text-[10px] font-semibold text-[#718096] uppercase tracking-wider">Observações</p>
                       </div>
                       <p className="text-sm text-[#AAB5C5] leading-relaxed pl-11">{viewPerson.notes}</p>
+                    </div>
+                  )}
+
+                  {/* Documents section in view */}
+                  {docs.length > 0 && (
+                    <div className="p-3 rounded-xl bg-[#162235] border border-[#26364D]">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                          style={{ backgroundColor: "color-mix(in srgb, var(--color-primary) 10%, transparent)" }}>
+                          <Image className="h-4 w-4" style={{ color: "var(--color-primary)" }} />
+                        </div>
+                        <p className="text-[10px] font-semibold text-[#718096] uppercase tracking-wider">Documentos</p>
+                        <span className="text-[10px] text-[#718096] ml-auto">{docs.length}/{MAX_DOCUMENTS}</span>
+                      </div>
+                      <div className="space-y-2 pl-11">
+                        {docs.map((doc) => (
+                          <div key={doc.id} className="flex items-center gap-2">
+                            <Image className="h-3.5 w-3.5 text-[#718096] shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs text-[#F3F6FA] truncate">{doc.file_name}</p>
+                              <p className="text-[10px] text-[#718096]">{formatFileSize(doc.file_size)} · {formatDateBR(doc.created_at?.split("T")[0])}</p>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openDocViewer(doc)}
+                              className="h-7 w-7 shrink-0 text-[#718096] hover:text-[#F3F6FA]">
+                              <Image className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
