@@ -7,7 +7,7 @@ import {
   CheckCircle, AlertCircle, Clock, User, Search, Filter,
   ChevronRight, Calendar, Home, Users, BarChart2, Settings,
   type LucideIcon, ChevronDown, X, UserPlus, Check,
-  Camera,
+  Camera, Upload, Loader2, Image,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,6 +44,16 @@ type Person = {
   created_at: string;
   updated_at: string;
 };
+
+type PendingDoc = {
+  file: File;
+  id: string;
+  previewUrl: string;
+};
+
+const MAX_DOCUMENTS = 3;
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const ALLOWED_DOC_TYPES = ["image/jpeg", "image/jpg", "image/png"];
 
 export const Route = createFileRoute("/dashboard")({
   component: DashboardPage,
@@ -332,6 +342,8 @@ function AddPersonDialog({
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingDocFiles, setPendingDocFiles] = useState<PendingDoc[]>([]);
+  const docFileInputRef = useRef<HTMLInputElement>(null);
 
   const applyPhoneMask = (value: string) => {
     const digits = value.replace(/\D/g, "").slice(0, 11);
@@ -356,6 +368,56 @@ function AddPersonDialog({
     };
     reader.readAsDataURL(file);
     setPhotoFile(file);
+  };
+
+  const uploadDocFile = async (userId: string, personId: string, file: File): Promise<void> => {
+    const docId = crypto.randomUUID();
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 100);
+    const filePath = `${userId}/${personId}/${docId}-${safeName}`;
+    const { error: uploadError } = await supabase.storage
+      .from("person-documents")
+      .upload(filePath, file, { contentType: file.type });
+    if (uploadError) throw new Error("Erro ao enviar documento: " + uploadError.message);
+    const { error: insertError } = await supabase.from("person_documents").insert({
+      user_id: userId, person_id: personId, file_name: file.name,
+      file_path: filePath, file_type: file.type, file_size: file.size,
+    });
+    if (insertError) {
+      await supabase.storage.from("person-documents").remove([filePath]);
+      throw new Error("Erro ao salvar registro: " + insertError.message);
+    }
+  };
+
+  const addPendingDoc = (file: File) => {
+    if (pendingDocFiles.length >= MAX_DOCUMENTS) {
+      toast.error(`Limite de ${MAX_DOCUMENTS} documentos atingido.`);
+      return;
+    }
+    if (!ALLOWED_DOC_TYPES.includes(file.type)) {
+      toast.error("Formato não permitido. Use JPG, JPEG ou PNG.");
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("Arquivo muito grande. Máximo: 10 MB.");
+      return;
+    }
+    const previewUrl = URL.createObjectURL(file);
+    setPendingDocFiles((prev) => [...prev, { file, id: crypto.randomUUID(), previewUrl }]);
+  };
+
+  const removePendingDoc = (id: string) => {
+    setPendingDocFiles((prev) => {
+      const doc = prev.find((d) => d.id === id);
+      if (doc && doc.previewUrl.startsWith('blob:')) URL.revokeObjectURL(doc.previewUrl);
+      return prev.filter((d) => d.id !== id);
+    });
+  };
+
+  const handleDocChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    addPendingDoc(file);
   };
 
   const uploadPhoto = async (userId: string, personId: string, file: File): Promise<string | null> => {
@@ -516,6 +578,44 @@ function AddPersonDialog({
               className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] resize-none focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50"
               rows={3}
             />
+          </div>
+
+          {/* Documents section */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-semibold text-[#AAB5C5]">Documentos</Label>
+              <span className="text-[10px] text-[#718096]">{pendingDocFiles.length}/{MAX_DOCUMENTS}</span>
+            </div>
+            {pendingDocFiles.length > 0 && (
+              <div className="space-y-1.5">
+                {pendingDocFiles.map((pending, idx) => (
+                  <div key={pending.id} className="flex items-center gap-2 p-2 rounded-lg bg-[#1e2d42] border border-[#26364D]">
+                    <button type="button" onClick={() => setViewDocUrl(pending.previewUrl)} className="w-12 h-12 rounded-lg overflow-hidden bg-[#26364D] border border-[#26364D] shrink-0">
+                      <img src={pending.previewUrl} alt={`Documento ${idx + 1}`} className="w-full h-full object-cover" />
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-[#F3F6FA]">Documento {idx + 1}</p>
+                      <p className="text-[10px] text-[#718096]">{formatFileSize(pending.file.size)} · Pendente</p>
+                    </div>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removePendingDoc(pending.id)}
+                      className="h-7 w-7 shrink-0 text-[#718096] hover:text-red-400 hover:bg-red-500/10">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <input ref={docFileInputRef} type="file" accept="image/jpeg,image/jpg,image/png" onChange={handleDocChange} className="hidden" />
+            {pendingDocFiles.length < MAX_DOCUMENTS ? (
+              <Button type="button" variant="outline" onClick={() => docFileInputRef.current?.click()}
+                className="w-full border-[#26364D] text-[#AAB5C5] hover:bg-[#162235] hover:text-[#F3F6FA] transition-colors text-xs h-9">
+                <Upload className="h-3.5 w-3.5 mr-1.5" /> Adicionar documento (JPG, PNG)
+              </Button>
+            ) : (
+              <div className="text-center py-2 px-3 rounded-lg bg-[#1e2d42] border border-[#26364D]">
+                <p className="text-xs text-[#718096]">Limite de {MAX_DOCUMENTS} documentos atingido.</p>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3">
