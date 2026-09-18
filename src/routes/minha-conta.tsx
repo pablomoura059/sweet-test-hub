@@ -14,7 +14,6 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   PRIMARY_COLOR_OPTIONS,
   getPrimaryColorHex,
-  getPrimaryColorName,
 } from "@/lib/theme";
 
 export const Route = createFileRoute("/minha-conta")({
@@ -268,9 +267,6 @@ export default function MinhaContaPage() {
     mutationFn: async () => {
       if (!session?.user.id) throw new Error("Usuário não autenticado");
 
-      // Normaliza para hex sem # antes de converter para nome
-      const colorValue = getPrimaryColorName(primaryColor);
-
       // Salvar configurações de sistema em user_settings (inclui logo_url)
       const { error: settingsError } = await supabase
         .from("user_settings")
@@ -280,7 +276,7 @@ export default function MinhaContaPage() {
             system_name: systemName,
             system_subtitle: systemSubtitle,
             theme: "dark",
-            primary_color: colorValue,
+            primary_color: primaryColor,
             logo_url: logoDbPath || null,
           },
           { onConflict: "user_id" }
