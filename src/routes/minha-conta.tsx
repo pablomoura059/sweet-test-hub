@@ -197,6 +197,10 @@ export default function MinhaContaPage() {
     enabled: !!session?.user.id,
   });
 
+  // Helper: normaliza cor para formato sem # (usado em comparações e estado)
+  const normalizeColor = (color: string): string =>
+    color.replace(/^#/, "");
+
   // Carregar campos de configuração quando userSettings for carregado
   useEffect(() => {
     if (userSettings) {
@@ -264,7 +268,9 @@ export default function MinhaContaPage() {
     mutationFn: async () => {
       if (!session?.user.id) throw new Error("Usuário não autenticado");
 
-      const colorValue = getPrimaryColorName(primaryColor);
+      // Normaliza para hex sem # antes de converter para nome
+      const hexValue = normalizeColor(primaryColor);
+      const colorValue = getPrimaryColorName(hexValue);
 
       // Salvar configurações de sistema em user_settings (inclui logo_url)
       const { error: settingsError } = await supabase
@@ -693,7 +699,8 @@ export default function MinhaContaPage() {
               <label className="text-sm font-medium text-[#AAB5C5]">Cor principal</label>
               <div className="flex flex-wrap items-center gap-3">
                 {PRIMARY_COLOR_OPTIONS.map((item) => {
-                  const isActive = item.color === primaryColor;
+                  // Normaliza ambos os valores para comparação consistente
+                  const isActive = normalizeColor(item.color) === normalizeColor(primaryColor);
                   return (
                     <button
                       key={item.color}
