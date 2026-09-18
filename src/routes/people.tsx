@@ -174,6 +174,8 @@ function PeoplePage() {
   const docFileInputRef = useRef<HTMLInputElement>(null);
   const [viewDocUrl, setViewDocUrl] = useState<string | null>(null);
   const [deleteDocId, setDeleteDocId] = useState<string | null>(null);
+  // Pending documents for new person (before person_id exists)
+  const [pendingDocFiles, setPendingDocFiles] = useState<{ file: File; id: string }[]>([]);
 
   const { data: session } = useQuery({
     queryKey: ["auth-session"],
@@ -232,6 +234,41 @@ function PeoplePage() {
     enabled: !!session?.user.id && !!viewPerson?.id,
   });
 
+  // Upload a single document file to a person
+  const uploadDocFile = async (personId: string, file: File): Promise<void> => {
+    if (!session?.user.id) throw new Error("Não autenticado");
+
+    // Generate unique filename
+    const docId = crypto.randomUUID();
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 100);
+    const filePath = `${session.user.id}/${personId}/${docId}-${safeName}`;
+
+    // Upload to storage
+    const { error: uploadError } = await supabase.storage
+      .from("person-documents")
+      .upload(filePath, file, { contentType: file.type });
+
+    if (uploadError) {
+      throw new Error("Erro ao enviar documento: " + uploadError.message);
+    }
+
+    // Create database record
+    const { error: insertError } = await supabase.from("person_documents").insert({
+      user_id: session.user.id,
+      person_id: personId,
+      file_name: file.name,
+      file_path: filePath,
+      file_type: file.type,
+      file_size: file.size,
+    });
+
+    if (insertError) {
+      // Rollback: delete uploaded file
+      await supabase.storage.from("person-documents").remove([filePath]);
+      throw new Error("Erro ao salvar registro: " + insertError.message);
+    }
+  };
+
   const uploadPhoto = async (userId: string, personId: string, file: File): Promise<string> => {
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const path = `${userId}/${personId}.${ext}`;
@@ -259,7 +296,7 @@ function PeoplePage() {
     return data.path;
   };
 
-  // Upload document mutation
+  // Upload document mutation - for edit mode (person already exists)
   const uploadDocMutation = useMutation({
     mutationFn: async ({ personId, file }: { personId: string; file: File }) => {
       if (!session?.user.id) throw new Error("Não autenticado");
@@ -287,38 +324,7 @@ function PeoplePage() {
         throw new Error(`Limite de ${MAX_DOCUMENTS} documentos atingido.`);
       }
 
-      // Generate unique filename
-      const docId = crypto.randomUUID();
-      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 100);
-      const filePath = `${session.user.id}/${personId}/${docId}-${safeName}`;
-
-      // Upload to storage
-      const { error: uploadError } = await supabase.storage
-        .from("person-documents")
-        .upload(filePath, file, { contentType: file.type });
-
-      if (uploadError) {
-        throw new Error("Erro ao enviar documento: " + uploadError.message);
-      }
-
-      // Create database record
-      const { error: insertError } = await supabase.from("person_documents").insert({
-        user_id: session.user.id,
-        person_id: personId,
-        file_name: file.name,
-        file_path: filePath,
-        file_type: file.type,
-        file_size: file.size,
-      });
-
-      if (insertError) {
-        // Rollback: delete uploaded file
-        await supabase.storage.from("person-documents").remove([filePath]);
-        throw new Error("Erro ao salvar registro: " + insertError.message);
-      }
-
-      return filePath;
+      await uploadDocFile(personId, file);
     },
     onSuccess: () => {
       toast.success("Documento adicionado!", {
@@ -373,7 +379,7 @@ function PeoplePage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async ({ photoFile }: { photoFile: File | null }) => {
+    mutationFn: async ({ photoFile, pendingDocs }: { photoFile: File | null; pendingDocs: { file: File; id: string }[] }) => {
       if (!session?.user.id) throw new Error("Não autenticado");
 
       if (photoFile !== null && !(photoFile instanceof File)) {
@@ -403,13 +409,30 @@ function PeoplePage() {
         }
       }
 
-      return data;
+      // Upload pending documents after person is created
+      const uploadErrors: string[] = [];
+      for (const pending of pendingDocs) {
+        try {
+          await uploadDocFile(data.id, pending.file);
+        } catch (err) {
+          uploadErrors.push(pending.file.name);
+        }
+      }
+
+      return { person: data, uploadErrors };
     },
-    onSuccess: () => {
+    onSuccess: ({ uploadErrors }) => {
       toast.success("Pessoa cadastrada com sucesso!", {
         className: "!bg-[#101A2B] !border-[var(--color-primary)]/30 !text-[#F3F6FA] !font-medium !rounded-xl",
       });
+      if (uploadErrors.length > 0) {
+        toast.warning(`Cadastro concluído, mas ${uploadErrors.length} documento(s) não foram enviados: ${uploadErrors.join(", ")}. Você pode adicionar na edição.`, {
+          className: "!bg-yellow-900/50 !border-yellow-500/30 !text-yellow-200 !font-medium !rounded-xl",
+          duration: 8000,
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ["people"] });
+      queryClient.invalidateQueries({ queryKey: ["person-documents"] });
     },
     onError: (err: Error) => {
       toast.error(err?.message || "Erro ao cadastrar pessoa", {
@@ -477,6 +500,7 @@ function PeoplePage() {
     setEditPerson(null);
     setFormName(""); setFormPhone(""); setFormBirthDate(""); setFormNotes("");
     setPhotoPreview(null); photoFileRef.current = null;
+    setPendingDocFiles([]);
     setIsFormOpen(true);
   };
 
@@ -489,6 +513,7 @@ function PeoplePage() {
     const previewUrl = person.photo_url ? getPhotoUrl(person.photo_url) : null;
     setPhotoPreview(previewUrl);
     photoFileRef.current = null;
+    setPendingDocFiles([]);
     setIsFormOpen(true);
   };
 
@@ -500,6 +525,7 @@ function PeoplePage() {
     setEditPerson(null);
     setFormName(""); setFormPhone(""); setFormBirthDate(""); setFormNotes("");
     setPhotoPreview(null); photoFileRef.current = null;
+    setPendingDocFiles([]);
   };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -516,12 +542,31 @@ function PeoplePage() {
     photoFileRef.current = file;
   };
 
+  const addPendingDoc = (file: File) => {
+    const currentCount = editPerson
+      ? (personDocuments?.length || 0)
+      : pendingDocFiles.length;
+
+    if (currentCount >= MAX_DOCUMENTS) {
+      toast.error(`Limite de ${MAX_DOCUMENTS} documentos atingido.`, {
+        className: "!bg-red-900/50 !border-red-500/30 !text-red-200 !font-medium !rounded-xl",
+      });
+      return;
+    }
+
+    setPendingDocFiles((prev) => [...prev, { file, id: crypto.randomUUID() }]);
+  };
+
+  const removePendingDoc = (id: string) => {
+    setPendingDocFiles((prev) => prev.filter((d) => d.id !== id));
+  };
+
   const handleDocChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
 
-    // Validate type before upload
+    // Validate type
     if (!ALLOWED_TYPES.includes(file.type)) {
       toast.error("Formato não permitido. Use JPG, JPEG ou PNG.", {
         className: "!bg-red-900/50 !border-red-500/30 !text-red-200 !font-medium !rounded-xl",
@@ -529,6 +574,7 @@ function PeoplePage() {
       return;
     }
 
+    // Validate size
     if (file.size > MAX_FILE_SIZE) {
       toast.error("Arquivo muito grande. Máximo: 10 MB.", {
         className: "!bg-red-900/50 !border-red-500/30 !text-red-200 !font-medium !rounded-xl",
@@ -536,15 +582,13 @@ function PeoplePage() {
       return;
     }
 
-    const personId = editPerson?.id;
-    if (!personId) {
-      toast.error("Salve a pessoa primeiro para adicionar documentos.", {
-        className: "!bg-red-900/50 !border-red-500/30 !text-red-200 !font-medium !rounded-xl",
-      });
-      return;
+    if (editPerson) {
+      // Edit mode: upload directly (person already exists)
+      uploadDocMutation.mutate({ personId: editPerson.id, file });
+    } else {
+      // Create mode: add to pending files
+      addPendingDoc(file);
     }
-
-    uploadDocMutation.mutate({ personId, file });
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -561,7 +605,7 @@ function PeoplePage() {
       if (editPerson) {
         await updateMutation.mutateAsync({ id: editPerson.id, photoFile: fileToUpload });
       } else {
-        await createMutation.mutateAsync({ photoFile: fileToUpload });
+        await createMutation.mutateAsync({ photoFile: fileToUpload, pendingDocs: pendingDocFiles });
       }
       closeForm();
     } catch {
@@ -597,6 +641,12 @@ function PeoplePage() {
       toast.error("Erro ao obter URL do documento.");
     }
   };
+
+  // Calculate document count for form
+  const formDocCount = editPerson
+    ? (personDocuments?.length || 0)
+    : pendingDocFiles.length;
+  const canAddMoreDocs = formDocCount < MAX_DOCUMENTS;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#0B1220" }}>
@@ -805,84 +855,98 @@ function PeoplePage() {
                 style={{ borderColor: "#26364D" }} />
             </div>
 
-            {/* Documents section - only for edit mode */}
-            {editPerson && (
+            {/* Documents section - for both create and edit modes */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold text-[#AAB5C5]">Documentos</Label>
+                <span className="text-[10px] text-[#718096]">
+                  {formDocCount} / {MAX_DOCUMENTS}
+                </span>
+              </div>
+
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs font-semibold text-[#AAB5C5]">Documentos</Label>
-                  <span className="text-[10px] text-[#718096]">
-                    {editPerson ? (personDocuments?.length || 0) : 0} / {MAX_DOCUMENTS}
-                  </span>
-                </div>
-
-                <div className="space-y-2">
-                  {/* Show existing documents */}
-                  {personDocuments && personDocuments.length > 0 && (
-                    <div className="space-y-1.5">
-                      {personDocuments.map((doc) => (
-                        <div key={doc.id} className="flex items-center gap-2 p-2 rounded-lg bg-[#1e2d42] border border-[#26364D]">
-                          <Image className="h-4 w-4 text-[#718096] shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs text-[#F3F6FA] truncate">{doc.file_name}</p>
-                            <p className="text-[10px] text-[#718096]">{formatFileSize(doc.file_size)} · {formatDateBR(doc.created_at?.split("T")[0])}</p>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openDocViewer(doc)}
-                            className="h-7 w-7 shrink-0 text-[#718096] hover:text-[#F3F6FA]">
-                            <Image className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setDeleteDocId(doc.id)}
-                            className="h-7 w-7 shrink-0 text-[#718096] hover:text-red-400 hover:bg-red-500/10">
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
+                {/* Show existing documents (edit mode only) */}
+                {editPerson && personDocuments && personDocuments.length > 0 && (
+                  <div className="space-y-1.5">
+                    {personDocuments.map((doc) => (
+                      <div key={doc.id} className="flex items-center gap-2 p-2 rounded-lg bg-[#1e2d42] border border-[#26364D]">
+                        <Image className="h-4 w-4 text-[#718096] shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-[#F3F6FA] truncate">{doc.file_name}</p>
+                          <p className="text-[10px] text-[#718096]">{formatFileSize(doc.file_size)} · {formatDateBR(doc.created_at?.split("T")[0])}</p>
                         </div>
-                      ))}
-                    </div>
-                  )}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openDocViewer(doc)}
+                          className="h-7 w-7 shrink-0 text-[#718096] hover:text-[#F3F6FA]">
+                          <Image className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteDocId(doc.id)}
+                          className="h-7 w-7 shrink-0 text-[#718096] hover:text-red-400 hover:bg-red-500/10">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-                  {/* Add button */}
-                  <input
-                    ref={docFileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/jpg,image/png"
-                    onChange={handleDocChange}
-                    className="hidden"
-                  />
-                  {(personDocuments?.length || 0) < MAX_DOCUMENTS ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => docFileInputRef.current?.click()}
-                      disabled={uploadDocMutation.isPending}
-                      className="w-full border-[#26364D] text-[#AAB5C5] hover:bg-[#162235] hover:text-[#F3F6FA] transition-colors text-xs h-9">
-                      {uploadDocMutation.isPending ? (
-                        <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Enviando...</>
-                      ) : (
-                        <><Upload className="h-3.5 w-3.5 mr-1.5" /> Adicionar documento (JPG, PNG)</>
-                      )}
-                    </Button>
-                  ) : (
-                    <div className="text-center py-2 px-3 rounded-lg bg-[#1e2d42] border border-[#26364D]">
-                      <p className="text-xs text-[#718096]">Limite de {MAX_DOCUMENTS} documentos atingido.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+                {/* Show pending documents (create mode) */}
+                {!editPerson && pendingDocFiles.length > 0 && (
+                  <div className="space-y-1.5">
+                    {pendingDocFiles.map((pending) => (
+                      <div key={pending.id} className="flex items-center gap-2 p-2 rounded-lg bg-[#1e2d42] border border-[#26364D]">
+                        <Image className="h-4 w-4 text-[#718096] shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-[#F3F6FA] truncate">{pending.file.name}</p>
+                          <p className="text-[10px] text-[#718096]">{formatFileSize(pending.file.size)} · Pendente</p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removePendingDoc(pending.id)}
+                          className="h-7 w-7 shrink-0 text-[#718096] hover:text-red-400 hover:bg-red-500/10">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-            {editPerson && !personDocuments && (
-              <div className="flex items-center gap-2 py-1">
-                <Loader2 className="h-3 w-3 animate-spin text-[#718096]" />
-                <p className="text-[10px] text-[#718096]">Carregando documentos...</p>
+                {/* Add button */}
+                <input
+                  ref={docFileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png"
+                  onChange={handleDocChange}
+                  className="hidden"
+                />
+                {canAddMoreDocs ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => docFileInputRef.current?.click()}
+                    disabled={uploadDocMutation.isPending}
+                    className="w-full border-[#26364D] text-[#AAB5C5] hover:bg-[#162235] hover:text-[#F3F6FA] transition-colors text-xs h-9">
+                    {uploadDocMutation.isPending ? (
+                      <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Enviando...</>
+                    ) : (
+                      <><Upload className="h-3.5 w-3.5 mr-1.5" /> Adicionar documento (JPG, PNG)</>
+                    )}
+                  </Button>
+                ) : (
+                  <div className="text-center py-2 px-3 rounded-lg bg-[#1e2d42] border border-[#26364D]">
+                    <p className="text-xs text-[#718096]">Limite de {MAX_DOCUMENTS} documentos atingido.</p>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
 
             <div className="flex gap-3 pt-1">
               <Button type="button" variant="outline" onClick={closeForm}
