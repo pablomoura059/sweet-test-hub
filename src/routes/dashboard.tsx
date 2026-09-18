@@ -350,6 +350,7 @@ function AddPersonDialog({
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingDocFiles, setPendingDocFiles] = useState<PendingDoc[]>([]);
+  const [viewDocUrl, setViewDocUrl] = useState<string | null>(null);
   const docFileInputRef = useRef<HTMLInputElement>(null);
 
   const applyPhoneMask = (value: string) => {
@@ -494,13 +495,31 @@ function AddPersonDialog({
       }
     }
 
+    // Upload pending documents after person is created
+    const uploadErrors: string[] = [];
+    for (const pending of pendingDocFiles) {
+      try {
+        await uploadDocFile(session.user.id, data.id, pending.file);
+      } catch (err) {
+        uploadErrors.push(pending.file.name);
+      }
+    }
+
     setLoading(false);
     toast.success("Pessoa cadastrada com sucesso!", {
       className: "!bg-[#101A2B] !border-[#2F6FED]/30 !text-[#F3F6FA] !font-medium !rounded-xl",
     });
+    if (uploadErrors.length > 0) {
+      toast.warning(`Cadastro concluído, mas ${uploadErrors.length} documento(s) não foram enviados: ${uploadErrors.join(", ")}. Você pode adicionar na edição.`, {
+        className: "!bg-yellow-900/50 !border-yellow-500/30 !text-yellow-200 !font-medium !rounded-xl",
+        duration: 8000,
+      });
+    }
     queryClient.invalidateQueries({ queryKey: ["people"] });
+    queryClient.invalidateQueries({ queryKey: ["person-documents"] });
     setName(""); setPhone(""); setBirthDate(""); setNotes("");
     setPhotoPreview(null); setPhotoFile(null);
+    setPendingDocFiles([]);
     onCreated(data as Person);
     onClose();
   };
