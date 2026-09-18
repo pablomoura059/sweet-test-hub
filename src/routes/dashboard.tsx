@@ -8,6 +8,7 @@ import {
   ChevronRight, Calendar, Home, Users, BarChart2, Settings,
   type LucideIcon, ChevronDown, X, UserPlus, Check,
   Camera, Upload, Loader2, Image,
+  Trash2, Eye, Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -112,6 +113,12 @@ const getPhotoUrl = (photoPath: string | null | undefined): string | null => {
     .getPublicUrl(photoPath);
 
   return data.publicUrl;
+};
+
+const formatFileSize = (bytes: number): string => {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 };
 
 // ─── Person Avatar ─────────────────────────────────────────────────────────────
