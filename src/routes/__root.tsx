@@ -15,6 +15,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
   DEFAULT_THEME,
+  PRIMARY_COLOR_OPTIONS,
   applyPrimaryColor,
   applyResolvedTheme,
   getPrimaryColorHex,
