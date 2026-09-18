@@ -868,11 +868,11 @@ function PeoplePage() {
                 {/* Show existing documents (edit mode only) */}
                 {editPerson && personDocuments && personDocuments.length > 0 && (
                   <div className="space-y-1.5">
-                    {personDocuments.map((doc) => (
+                    {personDocuments.map((doc, idx) => (
                       <div key={doc.id} className="flex items-center gap-2 p-2 rounded-lg bg-[#1e2d42] border border-[#26364D]">
                         <Image className="h-4 w-4 text-[#718096] shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs text-[#F3F6FA] truncate">{doc.file_name}</p>
+                          <p className="text-xs text-[#F3F6FA]">Documento {idx + 1}</p>
                           <p className="text-[10px] text-[#718096]">{formatFileSize(doc.file_size)} · {formatDateBR(doc.created_at?.split("T")[0])}</p>
                         </div>
                         <Button
@@ -899,11 +899,11 @@ function PeoplePage() {
                 {/* Show pending documents (create mode) */}
                 {!editPerson && pendingDocFiles.length > 0 && (
                   <div className="space-y-1.5">
-                    {pendingDocFiles.map((pending) => (
+                    {pendingDocFiles.map((pending, idx) => (
                       <div key={pending.id} className="flex items-center gap-2 p-2 rounded-lg bg-[#1e2d42] border border-[#26364D]">
                         <Image className="h-4 w-4 text-[#718096] shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs text-[#F3F6FA] truncate">{pending.file.name}</p>
+                          <p className="text-xs text-[#F3F6FA]">Documento {idx + 1}</p>
                           <p className="text-[10px] text-[#718096]">{formatFileSize(pending.file.size)} · Pendente</p>
                         </div>
                         <Button
@@ -1036,11 +1036,11 @@ function PeoplePage() {
                         <span className="text-[10px] text-[#718096] ml-auto">{docs.length}/{MAX_DOCUMENTS}</span>
                       </div>
                       <div className="space-y-2 pl-11">
-                        {docs.map((doc) => (
+                        {docs.map((doc, idx) => (
                           <div key={doc.id} className="flex items-center gap-2">
                             <Image className="h-3.5 w-3.5 text-[#718096] shrink-0" />
                             <div className="flex-1 min-w-0">
-                              <p className="text-xs text-[#F3F6FA] truncate">{doc.file_name}</p>
+                              <p className="text-xs text-[#F3F6FA]">Documento {idx + 1}</p>
                               <p className="text-[10px] text-[#718096]">{formatFileSize(doc.file_size)} · {formatDateBR(doc.created_at?.split("T")[0])}</p>
                             </div>
                             <Button
