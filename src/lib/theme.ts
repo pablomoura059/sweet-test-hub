@@ -27,7 +27,15 @@ export function getPrimaryColorHex(name: string | null | undefined): string {
 }
 
 export function getPrimaryColorName(hex: string): PrimaryColorName {
-  return primaryColorNameByHex.get(hex.toLowerCase()) ?? DEFAULT_PRIMARY_COLOR;
+  // First try hex lookup
+  const fromHex = primaryColorNameByHex.get(hex.toLowerCase());
+  if (fromHex) return fromHex;
+  // Fallback: accept direct color name if it exists in options
+  const isValidName = (PRIMARY_COLOR_OPTIONS as readonly { name: string }[]).some(
+    (o) => o.name === hex.toLowerCase()
+  );
+  if (isValidName) return hex.toLowerCase() as PrimaryColorName;
+  return DEFAULT_PRIMARY_COLOR;
 }
 
 export function normalizeTheme(theme: string | null | undefined): ThemePreference {

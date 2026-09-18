@@ -185,7 +185,12 @@ function RootComponent() {
 
       currentPreference = normalizeTheme(data?.theme);
       applyThemePreference();
-      applyPrimaryColor(getPrimaryColorHex(data?.primary_color));
+      // Always resolve to hex so applyPrimaryColor receives a consistent value
+      const rawColor = data?.primary_color;
+      const colorHex = rawColor && (PRIMARY_COLOR_OPTIONS as readonly { name: string; color: string }[]).some((o) => o.name === rawColor)
+        ? getPrimaryColorHex(rawColor)
+        : getPrimaryColorHex(null);
+      applyPrimaryColor(colorHex);
     };
 
     const handleSystemThemeChange = () => {
