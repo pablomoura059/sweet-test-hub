@@ -115,8 +115,8 @@ export default function MinhaContaPage() {
   };
 
   // Estados dos campos de configuração
-  const [systemName, setSystemName] = useState("");
-  const [systemSubtitle, setSystemSubtitle] = useState("Sistema financeiro");
+  const [systemName, setSystemName] = useState<string>("");
+  const [systemSubtitle, setSystemSubtitle] = useState<string>("Sistema financeiro");
   const [theme, setTheme] = useState<string>("dark");
   const [primaryColor, setPrimaryColor] = useState<string>("#2F6FED");
 
@@ -203,19 +203,19 @@ export default function MinhaContaPage() {
 
   // Carregar campos de configuração quando userSettings for carregado
   useEffect(() => {
-    if (userSettings) {
-      setSystemName(userSettings.system_name || "");
-      setSystemSubtitle(userSettings.system_subtitle || "Sistema financeiro");
-      setTheme("dark");
-      setPrimaryColor(getPrimaryColorHex(userSettings.primary_color));
-      if (userSettings.logo_url) {
-        setLogoDbPath(userSettings.logo_url);
-        // Converter caminho do Storage em URL pública para exibição
-        const { data: urlData } = supabase.storage
-          .from("system-logos")
-          .getPublicUrl(userSettings.logo_url);
-        setLogoPreview(urlData.publicUrl);
-      }
+    if (!userSettings) return;
+    setSystemName(userSettings.system_name || "");
+    setSystemSubtitle(userSettings.system_subtitle || "Sistema financeiro");
+    setTheme("dark");
+    // Usa getPrimaryColorHex para garantir que o banco (nome) vire hex
+    setPrimaryColor(getPrimaryColorHex(userSettings.primary_color));
+    if (userSettings.logo_url) {
+      setLogoDbPath(userSettings.logo_url);
+      // Converter caminho do Storage em URL pública para exibição
+      const { data: urlData } = supabase.storage
+        .from("system-logos")
+        .getPublicUrl(userSettings.logo_url);
+      setLogoPreview(urlData.publicUrl);
     }
   }, [userSettings]);
 
@@ -285,13 +285,11 @@ export default function MinhaContaPage() {
             logo_url: logoDbPath || null,
           },
           { onConflict: "user_id" }
-        )
-        .select("primary_color, logo_url")
-        .single();
+        );
 
       if (settingsError) {
         console.error("[MinhaConta] Erro ao salvar settings:", settingsError);
-        throw settingsError;
+        throw new Error(settingsError.message);
       }
 
       // Salvar telefone e data de nascimento em public.profiles
@@ -305,7 +303,7 @@ export default function MinhaContaPage() {
 
       if (profileError) {
         console.error("[MinhaConta] Erro ao salvar perfil:", profileError);
-        throw profileError;
+        throw new Error(profileError.message);
       }
     },
     onSuccess: () => {
@@ -580,7 +578,6 @@ export default function MinhaContaPage() {
                   }}
                 >
                   {logoPreviewSrc ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={logoPreviewSrc}
                       alt="Logo do sistema"
@@ -639,7 +636,6 @@ export default function MinhaContaPage() {
                   style={{ background: logoPreviewSrc ? "transparent" : `linear-gradient(135deg, ${primaryColor}, ${primaryColor}99)` }}
                 >
                   {logoPreviewSrc ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={logoPreviewSrc}
                       alt="Logo"
