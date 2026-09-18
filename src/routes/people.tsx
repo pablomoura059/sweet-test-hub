@@ -53,6 +53,12 @@ type Document = {
   created_at: string;
 };
 
+type PendingDoc = {
+  file: File;
+  id: string;
+  previewUrl: string;
+};
+
 const MAX_DOCUMENTS = 3;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png"];
@@ -156,6 +162,28 @@ function PersonAvatarSmall({ photoUrl, name }: {
   );
 }
 
+function DocThumbnail({ src, alt, onClick }: { src: string; alt: string; onClick?: () => void }) {
+  const [imgError, setImgError] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-12 h-12 rounded-lg overflow-hidden bg-[#26364D] border border-[#26364D] shrink-0 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/50"
+    >
+      {src && !imgError ? (
+        <img
+          src={src}
+          alt={alt}
+          className="w-full h-full object-cover"
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        <Image className="w-full h-full text-[#718096] p-1" />
+      )}
+    </button>
+  );
+}
+
 function PeoplePage() {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -175,7 +203,9 @@ function PeoplePage() {
   const [viewDocUrl, setViewDocUrl] = useState<string | null>(null);
   const [deleteDocId, setDeleteDocId] = useState<string | null>(null);
   // Pending documents for new person (before person_id exists)
-  const [pendingDocFiles, setPendingDocFiles] = useState<{ file: File; id: string }[]>([]);
+  const [pendingDocFiles, setPendingDocFiles] = useState<PendingDoc[]>([]);
+  // Signed URLs for doc thumbnails (edit/view mode)
+  const [docThumbnails, setDocThumbnails] = useState<Record<string, string>>({});
 
   const { data: session } = useQuery({
     queryKey: ["auth-session"],
@@ -232,6 +262,28 @@ function PeoplePage() {
       return data as Document[];
     },
     enabled: !!session?.user.id && !!viewPerson?.id,
+  });
+
+  // Load signed URLs for doc thumbnails when personDocuments change
+  useQuery({
+    queryKey: ["doc-thumbnails", viewPerson?.id, personDocuments],
+    queryFn: async () => {
+      if (!personDocuments || personDocuments.length === 0) return;
+      const newThumbnails: Record<string, string> = {};
+      for (const doc of personDocuments) {
+        if (docThumbnails[doc.id]) continue;
+        const { data } = await supabase.storage
+          .from("person-documents")
+          .createSignedUrl(doc.file_path, 3600);
+        if (data?.signedUrl) {
+          newThumbnails[doc.id] = data.signedUrl;
+        }
+      }
+      if (Object.keys(newThumbnails).length > 0) {
+        setDocThumbnails((prev) => ({ ...prev, ...newThumbnails }));
+      }
+    },
+    enabled: !!personDocuments && personDocuments.length > 0,
   });
 
   // Upload a single document file to a person
@@ -379,7 +431,7 @@ function PeoplePage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async ({ photoFile, pendingDocs }: { photoFile: File | null; pendingDocs: { file: File; id: string }[] }) => {
+    mutationFn: async ({ photoFile, pendingDocs }: { photoFile: File | null; pendingDocs: PendingDoc[] }) => {
       if (!session?.user.id) throw new Error("Não autenticado");
 
       if (photoFile !== null && !(photoFile instanceof File)) {
@@ -501,6 +553,7 @@ function PeoplePage() {
     setFormName(""); setFormPhone(""); setFormBirthDate(""); setFormNotes("");
     setPhotoPreview(null); photoFileRef.current = null;
     setPendingDocFiles([]);
+    setDocThumbnails({});
     setIsFormOpen(true);
   };
 
@@ -514,6 +567,7 @@ function PeoplePage() {
     setPhotoPreview(previewUrl);
     photoFileRef.current = null;
     setPendingDocFiles([]);
+    setDocThumbnails({});
     setIsFormOpen(true);
   };
 
@@ -521,11 +575,18 @@ function PeoplePage() {
     if (photoPreview && photoPreview.startsWith('blob:')) {
       URL.revokeObjectURL(photoPreview);
     }
+    // Release blob URLs for pending docs
+    pendingDocFiles.forEach((d) => {
+      if (d.previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(d.previewUrl);
+      }
+    });
     setIsFormOpen(false);
     setEditPerson(null);
     setFormName(""); setFormPhone(""); setFormBirthDate(""); setFormNotes("");
     setPhotoPreview(null); photoFileRef.current = null;
     setPendingDocFiles([]);
+    setDocThumbnails({});
   };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -554,11 +615,18 @@ function PeoplePage() {
       return;
     }
 
-    setPendingDocFiles((prev) => [...prev, { file, id: crypto.randomUUID() }]);
+    const previewUrl = URL.createObjectURL(file);
+    setPendingDocFiles((prev) => [...prev, { file, id: crypto.randomUUID(), previewUrl }]);
   };
 
   const removePendingDoc = (id: string) => {
-    setPendingDocFiles((prev) => prev.filter((d) => d.id !== id));
+    setPendingDocFiles((prev) => {
+      const doc = prev.find((d) => d.id === id);
+      if (doc && doc.previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(doc.previewUrl);
+      }
+      return prev.filter((d) => d.id !== id);
+    });
   };
 
   const handleDocChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -870,19 +938,15 @@ function PeoplePage() {
                   <div className="space-y-1.5">
                     {personDocuments.map((doc, idx) => (
                       <div key={doc.id} className="flex items-center gap-2 p-2 rounded-lg bg-[#1e2d42] border border-[#26364D]">
-                        <Image className="h-4 w-4 text-[#718096] shrink-0" />
+                        <DocThumbnail
+                          src={docThumbnails[doc.id] || ""}
+                          alt={`Documento ${idx + 1}`}
+                          onClick={() => openDocViewer(doc)}
+                        />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs text-[#F3F6FA]">Documento {idx + 1}</p>
                           <p className="text-[10px] text-[#718096]">{formatFileSize(doc.file_size)} · {formatDateBR(doc.created_at?.split("T")[0])}</p>
                         </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openDocViewer(doc)}
-                          className="h-7 w-7 shrink-0 text-[#718096] hover:text-[#F3F6FA]">
-                          <Image className="h-3.5 w-3.5" />
-                        </Button>
                         <Button
                           type="button"
                           variant="ghost"
@@ -901,7 +965,11 @@ function PeoplePage() {
                   <div className="space-y-1.5">
                     {pendingDocFiles.map((pending, idx) => (
                       <div key={pending.id} className="flex items-center gap-2 p-2 rounded-lg bg-[#1e2d42] border border-[#26364D]">
-                        <Image className="h-4 w-4 text-[#718096] shrink-0" />
+                        <DocThumbnail
+                          src={pending.previewUrl}
+                          alt={`Documento ${idx + 1}`}
+                          onClick={() => setViewDocUrl(pending.previewUrl)}
+                        />
                         <div className="flex-1 min-w-0">
                           <p className="text-xs text-[#F3F6FA]">Documento {idx + 1}</p>
                           <p className="text-[10px] text-[#718096]">{formatFileSize(pending.file.size)} · Pendente</p>
@@ -1038,19 +1106,15 @@ function PeoplePage() {
                       <div className="space-y-2 pl-11">
                         {docs.map((doc, idx) => (
                           <div key={doc.id} className="flex items-center gap-2">
-                            <Image className="h-3.5 w-3.5 text-[#718096] shrink-0" />
+                            <DocThumbnail
+                              src={docThumbnails[doc.id] || ""}
+                              alt={`Documento ${idx + 1}`}
+                              onClick={() => openDocViewer(doc)}
+                            />
                             <div className="flex-1 min-w-0">
                               <p className="text-xs text-[#F3F6FA]">Documento {idx + 1}</p>
                               <p className="text-[10px] text-[#718096]">{formatFileSize(doc.file_size)} · {formatDateBR(doc.created_at?.split("T")[0])}</p>
                             </div>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => openDocViewer(doc)}
-                              className="h-7 w-7 shrink-0 text-[#718096] hover:text-[#F3F6FA]">
-                              <Image className="h-3.5 w-3.5" />
-                            </Button>
                           </div>
                         ))}
                       </div>
