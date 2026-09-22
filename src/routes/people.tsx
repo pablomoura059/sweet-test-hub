@@ -23,6 +23,7 @@ import {
   AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { applyBirthDateMask, birthDateFromDatabase, birthDateToDatabase } from "@/lib/birth-date";
 
 export const Route = createFileRoute("/people")({
   component: PeoplePage,
@@ -431,7 +432,7 @@ function PeoplePage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async ({ photoFile, pendingDocs }: { photoFile: File | null; pendingDocs: PendingDoc[] }) => {
+    mutationFn: async ({ photoFile, pendingDocs, birthDate }: { photoFile: File | null; pendingDocs: PendingDoc[]; birthDate: string | null }) => {
       if (!session?.user.id) throw new Error("Não autenticado");
 
       if (photoFile !== null && !(photoFile instanceof File)) {
@@ -442,7 +443,7 @@ function PeoplePage() {
         user_id: session.user.id,
         name: formName.trim(),
         phone: formPhone || null,
-        birth_date: formBirthDate || null,
+        birth_date: birthDate,
         notes: formNotes || null,
         photo_url: null,
       }).select().single();
@@ -494,7 +495,7 @@ function PeoplePage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, photoFile }: { id: string; photoFile: File | null }) => {
+    mutationFn: async ({ id, photoFile, birthDate }: { id: string; photoFile: File | null; birthDate: string | null }) => {
       if (!session?.user.id) throw new Error("Não autenticado");
 
       let photoUrl: string | null = editPerson?.photo_url || null;
@@ -511,7 +512,7 @@ function PeoplePage() {
       const { error } = await supabase.from("people").update({
         name: formName.trim(),
         phone: formPhone || null,
-        birth_date: formBirthDate || null,
+        birth_date: birthDate,
         notes: formNotes || null,
         photo_url: photoUrl,
       }).eq("id", id);
@@ -561,7 +562,7 @@ function PeoplePage() {
     setEditPerson(person);
     setFormName(person.name);
     setFormPhone(person.phone || "");
-    setFormBirthDate(person.birth_date || "");
+    setFormBirthDate(birthDateFromDatabase(person.birth_date));
     setFormNotes(person.notes || "");
     const previewUrl = person.photo_url ? getPhotoUrl(person.photo_url) : null;
     setPhotoPreview(previewUrl);
@@ -666,14 +667,19 @@ function PeoplePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) { toast.error("Informe o nome da pessoa"); return; }
+    const birthDateForDatabase = birthDateToDatabase(formBirthDate);
+    if (birthDateForDatabase === undefined) {
+      toast.error("Informe uma data de nascimento válida no formato DD/MM/AAAA");
+      return;
+    }
 
     const fileToUpload = photoFileRef.current;
 
     try {
       if (editPerson) {
-        await updateMutation.mutateAsync({ id: editPerson.id, photoFile: fileToUpload });
+        await updateMutation.mutateAsync({ id: editPerson.id, photoFile: fileToUpload, birthDate: birthDateForDatabase });
       } else {
-        await createMutation.mutateAsync({ photoFile: fileToUpload, pendingDocs: pendingDocFiles });
+        await createMutation.mutateAsync({ photoFile: fileToUpload, pendingDocs: pendingDocFiles, birthDate: birthDateForDatabase });
       }
       closeForm();
     } catch {
@@ -923,8 +929,10 @@ function PeoplePage() {
 
             <div className="space-y-1.5">
               <Label htmlFor="person-birth" className="text-xs font-semibold text-[#AAB5C5]">Data de nascimento</Label>
-              <Input id="person-birth" type="date" value={formBirthDate} onChange={(e) => setFormBirthDate(e.target.value)}
-                className="bg-[#162235] border-[#26364D] text-[#F3F6FA] [&::-webkit-calendar-picker-indicator]:invert-50"
+              <Input id="person-birth" type="text" inputMode="numeric" value={formBirthDate}
+                onChange={(e) => setFormBirthDate(applyBirthDateMask(e.target.value))}
+                placeholder="DD/MM/AAAA" maxLength={10} autoComplete="bday"
+                className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096]"
                 style={{ borderColor: "#26364D" }} />
             </div>
 
