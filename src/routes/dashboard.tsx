@@ -30,6 +30,7 @@ import {
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { Database } from "@/integrations/supabase/types";
+import { applyBirthDateMask, birthDateToDatabase } from "@/lib/birth-date";
 
 type Investment = Database["public"]["Tables"]["investments"]["Row"];
 
@@ -463,6 +464,11 @@ function AddPersonDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) { toast.error("Informe o nome da pessoa"); return; }
+    const birthDateForDatabase = birthDateToDatabase(birthDate);
+    if (birthDateForDatabase === undefined) {
+      toast.error("Informe uma data de nascimento válida no formato DD/MM/AAAA");
+      return;
+    }
     setLoading(true);
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { setLoading(false); return; }
@@ -473,7 +479,7 @@ function AddPersonDialog({
         user_id: session.user.id,
         name: name.trim(),
         phone: phone || null,
-        birth_date: birthDate || null,
+        birth_date: birthDateForDatabase,
         notes: notes || null,
         photo_url: null,
       })
@@ -586,10 +592,14 @@ function AddPersonDialog({
             <Label htmlFor="new-person-birth" className="text-xs font-semibold text-[#AAB5C5]">Data de nascimento</Label>
             <Input
               id="new-person-birth"
-              type="date"
+              type="text"
+              inputMode="numeric"
               value={birthDate}
-              onChange={(e) => setBirthDate(e.target.value)}
-              className="bg-[#162235] border-[#26364D] text-[#F3F6FA] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50 [&::-webkit-calendar-picker-indicator]:invert-50"
+              onChange={(e) => setBirthDate(applyBirthDateMask(e.target.value))}
+              placeholder="DD/MM/AAAA"
+              maxLength={10}
+              autoComplete="bday"
+              className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50"
             />
           </div>
 
