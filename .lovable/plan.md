@@ -1,22 +1,13 @@
-# Plano: landing page inicial
+# Ajustar datas de nascimento
 
-## Objetivo
-Substituir a tela placeholder atual por uma landing page simples e elegante para apresentar o projeto.
+## Alterações
+- Criar funções compartilhadas para aplicar a máscara `DD/MM/AAAA`, validar datas reais e converter entre exibição e o formato `AAAA-MM-DD` usado no banco.
+- Trocar somente os campos de nascimento por texto com teclado numérico no cadastro pelo Dashboard e no cadastro/edição da página Pessoas.
+- Bloquear o salvamento quando a data preenchida estiver incompleta ou for inválida; manter o campo opcional e preservar todo o restante dos formulários.
 
-## O que será entregue
-- Hero com título, subtítulo e call-to-action.
-- Seção de destaques (3 cards).
-- Footer minimalista.
-- Design responsivo usando Tailwind CSS e os tokens de cor já definidos.
-- SEO básico com `head()` na rota `/`.
+## Validação
+- Executar TypeScript e build.
+- Testar na prévia os três fluxos: Nova Pessoa, Cadastrar nova pessoa em Novo Empréstimo e Editar Pessoa, incluindo máscara, rejeição de data inválida e ausência do calendário.
 
-## Escopo
-- Alterar apenas `src/routes/index.tsx`.
-- Nenhum backend, banco de dados ou nova dependência.
-- Manter `src/routes/__root.tsx` e o tema existente.
-
-## Passos
-1. Ler `src/routes/index.tsx` e `src/styles.css` para confirmar os tokens disponíveis.
-2. Criar componentes visuais inline na rota `/` (hero, features, footer).
-3. Adicionar `head()` com título, descrição e metatags sociais.
-4. Verificar visualmente no preview.
+## Limites
+- Nenhuma alteração em banco, RLS, Storage, documentos, empréstimos ou outros campos.
