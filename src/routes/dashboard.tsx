@@ -5,7 +5,7 @@ import {
   Wallet, TrendingUp, DollarSign, PieChart, Activity,
   Plus, LogOut, Menu, ArrowRight, Trash2, Pencil,
   CheckCircle, AlertCircle, Clock, User, Search, Filter,
-  ChevronRight, Calendar, Home, Users, BarChart2, Settings,
+  ChevronRight, Calendar as CalendarIcon, Home, Users, BarChart2, Settings,
   type LucideIcon, ChevronDown, X, UserPlus, Check,
   Camera, Upload, Loader2, Image, Eye, Download,
 } from "lucide-react";
@@ -17,6 +17,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Dialog, DialogContent, DialogDescription,
   DialogHeader, DialogTitle, DialogTrigger,
@@ -70,6 +72,60 @@ const formatDate = (date: string) => {
   const [year, month, day] = date.split("-");
   return `${day}/${month}/${year}`;
 };
+
+function LoanDatePicker({
+  id,
+  value,
+  onChange,
+}: {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const selectedDate = value ? new Date(`${value}T12:00:00`) : undefined;
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          id={id}
+          type="button"
+          variant="outline"
+          className="h-10 w-full min-w-0 justify-start overflow-hidden border-[#26364D] bg-[#162235] px-2.5 text-left text-xs font-normal text-[#F3F6FA] hover:bg-[#18263A] hover:text-[#F3F6FA] focus-visible:ring-[#2F6FED]"
+        >
+          <CalendarIcon className="h-3.5 w-3.5 shrink-0 text-[#2F6FED]" />
+          <span className="truncate">{value ? formatDate(value) : "Selecione"}</span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="center"
+        collisionPadding={12}
+        className="pointer-events-auto w-auto max-w-[calc(100vw-1.5rem)] overflow-hidden border-[#26364D] bg-[#101A2B] p-0 text-[#F3F6FA]"
+      >
+        <Calendar
+          mode="single"
+          selected={selectedDate}
+          onSelect={(date) => {
+            if (!date) return;
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, "0");
+            const day = String(date.getDate()).padStart(2, "0");
+            onChange(`${year}-${month}-${day}`);
+          }}
+          className="pointer-events-auto bg-[#101A2B] p-2 [--cell-size:1.75rem] sm:[--cell-size:2rem]"
+          classNames={{
+            caption_label: "text-xs font-semibold text-[#F3F6FA]",
+            weekday: "flex-1 select-none rounded-md text-[0.7rem] font-normal text-[#718096]",
+            outside: "text-[#718096] opacity-50",
+            today: "rounded-md bg-[#18263A] text-[#F3F6FA]",
+          }}
+          buttonVariant="ghost"
+          initialFocus
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 const getStatusInfo = (status: string, returnDate: string) => {
   const today = new Date().toISOString().slice(0, 10);
@@ -1178,11 +1234,11 @@ function DashboardPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label htmlFor="start_date" className="text-xs font-semibold text-[#AAB5C5]">Data de Início *</Label>
-                    <Input id="start_date" type="date" value={formData.start_date} onChange={(e) => setFormData({ ...formData, start_date: e.target.value })} className="bg-[#162235] border-[#26364D] text-[#F3F6FA] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50 [&::-webkit-calendar-picker-indicator]:invert-50" required />
+                    <LoanDatePicker id="start_date" value={formData.start_date} onChange={(start_date) => setFormData({ ...formData, start_date })} />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="return_date" className="text-xs font-semibold text-[#AAB5C5]">Data de Retorno *</Label>
-                    <Input id="return_date" type="date" value={formData.return_date} onChange={(e) => setFormData({ ...formData, return_date: e.target.value })} className="bg-[#162235] border-[#26364D] text-[#F3F6FA] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50 [&::-webkit-calendar-picker-indicator]:invert-50" required />
+                    <LoanDatePicker id="return_date" value={formData.return_date} onChange={(return_date) => setFormData({ ...formData, return_date })} />
                   </div>
                 </div>
 
@@ -1210,7 +1266,7 @@ function DashboardPage() {
         {/* ── Filtro de Período ─────────────────────────── */}
         <div className="bg-[#162235] border border-[#26364D] rounded-2xl p-3 sm:p-4 space-y-3 animate-fade-in-up">
           <div className="flex flex-wrap items-center gap-2">
-            <Calendar className="h-4 w-4 shrink-0" style={{ color: "var(--color-primary)" }} />
+            <CalendarIcon className="h-4 w-4 shrink-0" style={{ color: "var(--color-primary)" }} />
             <span className="text-xs font-semibold text-[#AAB5C5] mr-1">Período:</span>
             {([
               { value: "30", label: "Últimos 30 dias" },
@@ -1285,7 +1341,7 @@ function DashboardPage() {
                     <div key={inv.id} className="flex items-center justify-between px-4 py-3 hover:bg-[#18263A]/50 transition-colors">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className={`p-1.5 rounded-lg ${statusInfo.bg} shrink-0`}>
-                          <Calendar className={`h-3.5 w-3.5 ${statusInfo.text}`} />
+                          <CalendarIcon className={`h-3.5 w-3.5 ${statusInfo.text}`} />
                         </div>
                         <div className="min-w-0">
                           <p className="text-xs font-semibold text-[#F3F6FA] truncate">{inv.person_name}</p>
