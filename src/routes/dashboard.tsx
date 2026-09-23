@@ -719,7 +719,7 @@ function DashboardPage() {
     person_name: "",
     invested_amount: "",
     profit_percent: "",
-    start_date: new Date().toISOString().slice(0, 10),
+    start_date: loanDateFromDatabase(new Date().toISOString().slice(0, 10)),
     return_date: "",
     notes: "",
   };
@@ -920,11 +920,21 @@ function DashboardPage() {
   const handleSubmitLoan = (e: React.FormEvent) => {
     e.preventDefault();
     if (!session?.user.id) { toast.error("Você precisa estar logado"); return; }
-    if (!formData.person_name || !formData.invested_amount || !formData.profit_percent || !formData.return_date) {
+    if (!formData.person_name || !formData.invested_amount || !formData.profit_percent || !formData.start_date || !formData.return_date) {
       toast.error("Preencha todos os campos obrigatórios");
       return;
     }
-    createMutation.mutate(formData);
+    const startDateForDatabase = loanDateToDatabase(formData.start_date);
+    const returnDateForDatabase = loanDateToDatabase(formData.return_date);
+    if (!startDateForDatabase || !returnDateForDatabase) {
+      toast.error("Informe datas válidas no formato DD/MM/AAAA");
+      return;
+    }
+    createMutation.mutate({
+      ...formData,
+      start_date: startDateForDatabase,
+      return_date: returnDateForDatabase,
+    });
   };
 
   const handleFinish = () => {
@@ -943,8 +953,8 @@ function DashboardPage() {
       person_name: investment.person_name,
       invested_amount: String(investment.invested_amount),
       profit_percent: String(investment.profit_percent),
-      start_date: investment.start_date,
-      return_date: investment.return_date,
+      start_date: loanDateFromDatabase(investment.start_date),
+      return_date: loanDateFromDatabase(investment.return_date),
       notes: investment.notes || "",
     });
   };
@@ -952,13 +962,19 @@ function DashboardPage() {
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editData) return;
+    const startDateForDatabase = loanDateToDatabase(formData.start_date);
+    const returnDateForDatabase = loanDateToDatabase(formData.return_date);
+    if (!startDateForDatabase || !returnDateForDatabase) {
+      toast.error("Informe datas válidas no formato DD/MM/AAAA");
+      return;
+    }
     updateMutation.mutate({ id: editData.id, data: {
       person_id: formData.person_id,
       person_name: formData.person_name,
       invested_amount: parseFloat(formData.invested_amount),
       profit_percent: parseFloat(formData.profit_percent),
-      start_date: formData.start_date,
-      return_date: formData.return_date,
+      start_date: startDateForDatabase,
+      return_date: returnDateForDatabase,
       notes: formData.notes || null,
     }});
   };
@@ -1204,11 +1220,11 @@ function DashboardPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label htmlFor="start_date" className="text-xs font-semibold text-[#AAB5C5]">Data de Início *</Label>
-                    <LoanDatePicker id="start_date" value={formData.start_date} onChange={(start_date) => setFormData({ ...formData, start_date })} />
+                    <Input id="start_date" type="text" inputMode="numeric" value={formData.start_date} onChange={(e) => setFormData({ ...formData, start_date: applyBirthDateMask(e.target.value) })} placeholder="DD/MM/AAAA" maxLength={10} className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50" required />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="return_date" className="text-xs font-semibold text-[#AAB5C5]">Data de Retorno *</Label>
-                    <LoanDatePicker id="return_date" value={formData.return_date} onChange={(return_date) => setFormData({ ...formData, return_date })} />
+                    <Input id="return_date" type="text" inputMode="numeric" value={formData.return_date} onChange={(e) => setFormData({ ...formData, return_date: applyBirthDateMask(e.target.value) })} placeholder="DD/MM/AAAA" maxLength={10} className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50" required />
                   </div>
                 </div>
 
@@ -1492,11 +1508,11 @@ function DashboardPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="edit_start" className="text-xs font-semibold text-[#AAB5C5]">Data de Início *</Label>
-                <Input id="edit_start" type="date" value={formData.start_date} onChange={(e) => setFormData({ ...formData, start_date: e.target.value })} className="bg-[#162235] border-[#26364D] text-[#F3F6FA] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50 [&::-webkit-calendar-picker-indicator]:invert-50" required />
+                <Input id="edit_start" type="text" inputMode="numeric" value={formData.start_date} onChange={(e) => setFormData({ ...formData, start_date: applyBirthDateMask(e.target.value) })} placeholder="DD/MM/AAAA" maxLength={10} className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50" required />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="edit_return" className="text-xs font-semibold text-[#AAB5C5]">Data de Retorno *</Label>
-                <Input id="edit_return" type="date" value={formData.return_date} onChange={(e) => setFormData({ ...formData, return_date: e.target.value })} className="bg-[#162235] border-[#26364D] text-[#F3F6FA] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50 [&::-webkit-calendar-picker-indicator]:invert-50" required />
+                <Input id="edit_return" type="text" inputMode="numeric" value={formData.return_date} onChange={(e) => setFormData({ ...formData, return_date: applyBirthDateMask(e.target.value) })} placeholder="DD/MM/AAAA" maxLength={10} className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50" required />
               </div>
             </div>
             <div className="space-y-1.5">
