@@ -17,8 +17,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Dialog, DialogContent, DialogDescription,
   DialogHeader, DialogTitle, DialogTrigger,
@@ -73,59 +71,31 @@ const formatDate = (date: string) => {
   return `${day}/${month}/${year}`;
 };
 
-function LoanDatePicker({
-  id,
-  value,
-  onChange,
-}: {
-  id: string;
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  const selectedDate = value ? new Date(`${value}T12:00:00`) : undefined;
+const loanDateToDatabase = (value: string): string | undefined => {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+  if (!match) return undefined;
 
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          id={id}
-          type="button"
-          variant="outline"
-          className="h-10 w-full min-w-0 justify-start overflow-hidden border-[#26364D] bg-[#162235] px-2.5 text-left text-xs font-normal text-[#F3F6FA] hover:bg-[#18263A] hover:text-[#F3F6FA] focus-visible:ring-[#2F6FED]"
-        >
-          <CalendarIcon className="h-3.5 w-3.5 shrink-0 text-[#2F6FED]" />
-          <span className="truncate">{value ? formatDate(value) : "Selecione"}</span>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        align="center"
-        collisionPadding={12}
-        className="pointer-events-auto w-auto max-w-[calc(100vw-1.5rem)] overflow-hidden border-[#26364D] bg-[#101A2B] p-0 text-[#F3F6FA]"
-      >
-        <Calendar
-          mode="single"
-          selected={selectedDate}
-          onSelect={(date) => {
-            if (!date) return;
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, "0");
-            const day = String(date.getDate()).padStart(2, "0");
-            onChange(`${year}-${month}-${day}`);
-          }}
-          className="pointer-events-auto bg-[#101A2B] p-2 [--cell-size:1.75rem] sm:[--cell-size:2rem]"
-          classNames={{
-            caption_label: "text-xs font-semibold text-[#F3F6FA]",
-            weekday: "flex-1 select-none rounded-md text-[0.7rem] font-normal text-[#718096]",
-            outside: "text-[#718096] opacity-50",
-            today: "rounded-md bg-[#18263A] text-[#F3F6FA]",
-          }}
-          buttonVariant="ghost"
-          initialFocus
-        />
-      </PopoverContent>
-    </Popover>
-  );
-}
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const year = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
+    return undefined;
+  }
+
+  return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+};
+
+const loanDateFromDatabase = (value: string): string => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  if (!match) return "";
+  return `${match[3]}/${match[2]}/${match[1]}`;
+};
 
 const getStatusInfo = (status: string, returnDate: string) => {
   const today = new Date().toISOString().slice(0, 10);
