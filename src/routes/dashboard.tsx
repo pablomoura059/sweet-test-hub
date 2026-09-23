@@ -17,8 +17,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Dialog, DialogContent, DialogDescription,
   DialogHeader, DialogTitle, DialogTrigger,
@@ -73,59 +71,31 @@ const formatDate = (date: string) => {
   return `${day}/${month}/${year}`;
 };
 
-function LoanDatePicker({
-  id,
-  value,
-  onChange,
-}: {
-  id: string;
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  const selectedDate = value ? new Date(`${value}T12:00:00`) : undefined;
+const loanDateToDatabase = (value: string): string | undefined => {
+  const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+  if (!match) return undefined;
 
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          id={id}
-          type="button"
-          variant="outline"
-          className="h-10 w-full min-w-0 justify-start overflow-hidden border-[#26364D] bg-[#162235] px-2.5 text-left text-xs font-normal text-[#F3F6FA] hover:bg-[#18263A] hover:text-[#F3F6FA] focus-visible:ring-[#2F6FED]"
-        >
-          <CalendarIcon className="h-3.5 w-3.5 shrink-0 text-[#2F6FED]" />
-          <span className="truncate">{value ? formatDate(value) : "Selecione"}</span>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        align="center"
-        collisionPadding={12}
-        className="pointer-events-auto w-auto max-w-[calc(100vw-1.5rem)] overflow-hidden border-[#26364D] bg-[#101A2B] p-0 text-[#F3F6FA]"
-      >
-        <Calendar
-          mode="single"
-          selected={selectedDate}
-          onSelect={(date) => {
-            if (!date) return;
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, "0");
-            const day = String(date.getDate()).padStart(2, "0");
-            onChange(`${year}-${month}-${day}`);
-          }}
-          className="pointer-events-auto bg-[#101A2B] p-2 [--cell-size:1.75rem] sm:[--cell-size:2rem]"
-          classNames={{
-            caption_label: "text-xs font-semibold text-[#F3F6FA]",
-            weekday: "flex-1 select-none rounded-md text-[0.7rem] font-normal text-[#718096]",
-            outside: "text-[#718096] opacity-50",
-            today: "rounded-md bg-[#18263A] text-[#F3F6FA]",
-          }}
-          buttonVariant="ghost"
-          initialFocus
-        />
-      </PopoverContent>
-    </Popover>
-  );
-}
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const year = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
+    return undefined;
+  }
+
+  return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+};
+
+const loanDateFromDatabase = (value: string): string => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  if (!match) return "";
+  return `${match[3]}/${match[2]}/${match[1]}`;
+};
 
 const getStatusInfo = (status: string, returnDate: string) => {
   const today = new Date().toISOString().slice(0, 10);
@@ -749,7 +719,7 @@ function DashboardPage() {
     person_name: "",
     invested_amount: "",
     profit_percent: "",
-    start_date: new Date().toISOString().slice(0, 10),
+    start_date: loanDateFromDatabase(new Date().toISOString().slice(0, 10)),
     return_date: "",
     notes: "",
   };
@@ -950,11 +920,21 @@ function DashboardPage() {
   const handleSubmitLoan = (e: React.FormEvent) => {
     e.preventDefault();
     if (!session?.user.id) { toast.error("Você precisa estar logado"); return; }
-    if (!formData.person_name || !formData.invested_amount || !formData.profit_percent || !formData.return_date) {
+    if (!formData.person_name || !formData.invested_amount || !formData.profit_percent || !formData.start_date || !formData.return_date) {
       toast.error("Preencha todos os campos obrigatórios");
       return;
     }
-    createMutation.mutate(formData);
+    const startDateForDatabase = loanDateToDatabase(formData.start_date);
+    const returnDateForDatabase = loanDateToDatabase(formData.return_date);
+    if (!startDateForDatabase || !returnDateForDatabase) {
+      toast.error("Informe datas válidas no formato DD/MM/AAAA");
+      return;
+    }
+    createMutation.mutate({
+      ...formData,
+      start_date: startDateForDatabase,
+      return_date: returnDateForDatabase,
+    });
   };
 
   const handleFinish = () => {
@@ -973,8 +953,8 @@ function DashboardPage() {
       person_name: investment.person_name,
       invested_amount: String(investment.invested_amount),
       profit_percent: String(investment.profit_percent),
-      start_date: investment.start_date,
-      return_date: investment.return_date,
+      start_date: loanDateFromDatabase(investment.start_date),
+      return_date: loanDateFromDatabase(investment.return_date),
       notes: investment.notes || "",
     });
   };
@@ -982,13 +962,19 @@ function DashboardPage() {
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editData) return;
+    const startDateForDatabase = loanDateToDatabase(formData.start_date);
+    const returnDateForDatabase = loanDateToDatabase(formData.return_date);
+    if (!startDateForDatabase || !returnDateForDatabase) {
+      toast.error("Informe datas válidas no formato DD/MM/AAAA");
+      return;
+    }
     updateMutation.mutate({ id: editData.id, data: {
       person_id: formData.person_id,
       person_name: formData.person_name,
       invested_amount: parseFloat(formData.invested_amount),
       profit_percent: parseFloat(formData.profit_percent),
-      start_date: formData.start_date,
-      return_date: formData.return_date,
+      start_date: startDateForDatabase,
+      return_date: returnDateForDatabase,
       notes: formData.notes || null,
     }});
   };
@@ -1234,11 +1220,11 @@ function DashboardPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label htmlFor="start_date" className="text-xs font-semibold text-[#AAB5C5]">Data de Início *</Label>
-                    <LoanDatePicker id="start_date" value={formData.start_date} onChange={(start_date) => setFormData({ ...formData, start_date })} />
+                    <Input id="start_date" type="text" inputMode="numeric" value={formData.start_date} onChange={(e) => setFormData({ ...formData, start_date: applyBirthDateMask(e.target.value) })} placeholder="DD/MM/AAAA" maxLength={10} className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50" required />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="return_date" className="text-xs font-semibold text-[#AAB5C5]">Data de Retorno *</Label>
-                    <LoanDatePicker id="return_date" value={formData.return_date} onChange={(return_date) => setFormData({ ...formData, return_date })} />
+                    <Input id="return_date" type="text" inputMode="numeric" value={formData.return_date} onChange={(e) => setFormData({ ...formData, return_date: applyBirthDateMask(e.target.value) })} placeholder="DD/MM/AAAA" maxLength={10} className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50" required />
                   </div>
                 </div>
 
@@ -1522,11 +1508,11 @@ function DashboardPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="edit_start" className="text-xs font-semibold text-[#AAB5C5]">Data de Início *</Label>
-                <Input id="edit_start" type="date" value={formData.start_date} onChange={(e) => setFormData({ ...formData, start_date: e.target.value })} className="bg-[#162235] border-[#26364D] text-[#F3F6FA] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50 [&::-webkit-calendar-picker-indicator]:invert-50" required />
+                <Input id="edit_start" type="text" inputMode="numeric" value={formData.start_date} onChange={(e) => setFormData({ ...formData, start_date: applyBirthDateMask(e.target.value) })} placeholder="DD/MM/AAAA" maxLength={10} className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50" required />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="edit_return" className="text-xs font-semibold text-[#AAB5C5]">Data de Retorno *</Label>
-                <Input id="edit_return" type="date" value={formData.return_date} onChange={(e) => setFormData({ ...formData, return_date: e.target.value })} className="bg-[#162235] border-[#26364D] text-[#F3F6FA] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50 [&::-webkit-calendar-picker-indicator]:invert-50" required />
+                <Input id="edit_return" type="text" inputMode="numeric" value={formData.return_date} onChange={(e) => setFormData({ ...formData, return_date: applyBirthDateMask(e.target.value) })} placeholder="DD/MM/AAAA" maxLength={10} className="bg-[#162235] border-[#26364D] text-[#F3F6FA] placeholder:text-[#718096] focus:border-[#2F6FED] focus:ring-1 focus:ring-[#2F6FED]/50" required />
               </div>
             </div>
             <div className="space-y-1.5">
