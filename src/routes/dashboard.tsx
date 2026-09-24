@@ -1341,6 +1341,7 @@ function DashboardPage() {
               <div className="divide-y divide-[#26364D]/60">
                 {upcomingDue.map((inv) => {
                   const statusInfo = getStatusInfo(inv.status, inv.return_date);
+                  const personPhotoUrl = people?.find((person) => person.id === inv.person_id)?.photo_url;
                   return (
                     <div key={inv.id} className="flex items-center justify-between px-4 py-3 hover:bg-[#18263A]/50 transition-colors">
                       <div className="flex items-center gap-3 min-w-0">
@@ -1348,7 +1349,14 @@ function DashboardPage() {
                           <CalendarIcon className={`h-3.5 w-3.5 ${statusInfo.text}`} />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-xs font-semibold text-[#F3F6FA] truncate">{inv.person_name}</p>
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <LoanCardPersonAvatar
+                              key={personPhotoUrl || "fallback"}
+                              photoUrl={personPhotoUrl ?? null}
+                              name={inv.person_name}
+                            />
+                            <p className="text-xs font-semibold text-[#F3F6FA] truncate">{inv.person_name}</p>
+                          </div>
                           <p className="text-[10px] text-[#718096]">{formatDate(inv.return_date)}</p>
                         </div>
                       </div>
