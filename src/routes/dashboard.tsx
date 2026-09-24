@@ -161,6 +161,24 @@ function PersonAvatarSmall({ photoUrl, name }: { photoUrl?: string | null; name:
   );
 }
 
+function LoanCardPersonAvatar({ photoUrl, name }: { photoUrl?: string | null; name: string }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const resolvedUrl = getPhotoUrl(photoUrl);
+
+  if (!resolvedUrl || imageFailed) {
+    return <User className="h-4 w-4 text-[#718096] shrink-0" />;
+  }
+
+  return (
+    <img
+      src={resolvedUrl}
+      alt={name}
+      className="h-4 w-4 rounded-full object-cover shrink-0"
+      onError={() => setImageFailed(true)}
+    />
+  );
+}
+
 // ─── Person Selector Component ────────────────────────────────────────────────
 
 function PersonSelector({
@@ -1400,6 +1418,7 @@ function DashboardPage() {
             <div className="grid sm:grid-cols-2 gap-3">
               {filteredInvestments.map((inv, idx) => {
                 const statusInfo = getStatusInfo(inv.status, inv.return_date);
+                const personPhotoUrl = people?.find((person) => person.id === inv.person_id)?.photo_url;
                 return (
                   <Card
                     key={inv.id}
@@ -1409,7 +1428,11 @@ function DashboardPage() {
                     <CardContent className="p-4 sm:p-5 space-y-3">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
-                          <User className="h-4 w-4 text-[#718096] shrink-0" />
+                          <LoanCardPersonAvatar
+                            key={personPhotoUrl || "fallback"}
+                            photoUrl={personPhotoUrl ?? null}
+                            name={inv.person_name}
+                          />
                           <p className="font-bold text-[#F3F6FA] truncate text-sm">{inv.person_name}</p>
                         </div>
                         <StatusBadge status={inv.status} returnDate={inv.return_date} />
