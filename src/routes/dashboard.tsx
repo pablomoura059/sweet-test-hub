@@ -1430,7 +1430,7 @@ function DashboardPage() {
                         <div className="flex items-center gap-2 min-w-0">
                           <LoanCardPersonAvatar
                             key={personPhotoUrl || "fallback"}
-                            photoUrl={personPhotoUrl}
+                            photoUrl={personPhotoUrl ?? null}
                             name={inv.person_name}
                           />
                           <p className="font-bold text-[#F3F6FA] truncate text-sm">{inv.person_name}</p>
