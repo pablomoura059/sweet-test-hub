@@ -716,6 +716,29 @@ function PeoplePage() {
     }
   };
 
+  const downloadViewedDocument = async () => {
+    if (!viewDocUrl) return;
+
+    const doc = personDocuments?.find((item) => docThumbnails[item.id] === viewDocUrl);
+
+    try {
+      const response = await fetch(viewDocUrl);
+      if (!response.ok) throw new Error("Falha ao baixar documento");
+
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = doc?.file_name || "documento.jpg";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      toast.error("Não foi possível baixar o documento.");
+    }
+  };
+
   // Calculate document count for form
   const formDocCount = editPerson
     ? (personDocuments?.length || 0)
@@ -841,17 +864,7 @@ function PeoplePage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => {
-                const doc = personDocuments?.find((d) => docThumbnails[d.id] === viewDocUrl);
-                if (viewDocUrl) {
-                  const link = document.createElement("a");
-                  link.href = viewDocUrl;
-                  link.download = doc?.file_name || "documento.jpg";
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                }
-              }}
+              onClick={downloadViewedDocument}
               className="text-xs text-[#AAB5C5] hover:text-[#F3F6FA] hover:bg-[#162235] transition-colors gap-1.5">
               <Download className="h-4 w-4" />
               Baixar foto
