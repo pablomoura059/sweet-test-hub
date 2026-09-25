@@ -5,7 +5,7 @@ import {
   Wallet, TrendingUp, DollarSign, PieChart, Activity,
   Plus, LogOut, Menu, ArrowRight, Trash2, Pencil,
   CheckCircle, AlertCircle, Clock, User, Search, Filter,
-  ChevronRight, Calendar as CalendarIcon, Home, Users, BarChart2, Settings,
+  Calendar as CalendarIcon, Home, Users, BarChart2, Settings,
   type LucideIcon, ChevronDown, X, UserPlus, Check,
   Camera, Upload, Loader2, Image, Eye, Download,
 } from "lucide-react";
@@ -1368,7 +1368,6 @@ function DashboardPage() {
                             {statusInfo.label}
                           </span>
                         </div>
-                        <ChevronRight className="h-4 w-4 text-[#718096]" />
                       </div>
                     </div>
                   );
