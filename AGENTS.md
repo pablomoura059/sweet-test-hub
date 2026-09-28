@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Keep the Cakto webhook isolated at `/api/public/cakto-webhook`; this first stage validates requests only and must not modify application data.
