@@ -41,7 +41,10 @@ export function secretsMatch(received: string, expected: string) {
 
   let difference = 0;
   for (let index = 0; index < receivedBytes.length; index += 1) {
-    difference |= receivedBytes[index] ^ expectedBytes[index];
+    const receivedByte = receivedBytes.at(index);
+    const expectedByte = expectedBytes.at(index);
+    if (receivedByte === undefined || expectedByte === undefined) return false;
+    difference |= receivedByte ^ expectedByte;
   }
 
   return difference === 0;
