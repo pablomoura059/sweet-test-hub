@@ -19,6 +19,7 @@ import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as GestoresIndexRouteImport } from './routes/gestores/index'
+import { Route as ApiPublicCaktoWebhookRouteImport } from './routes/api/public/cakto-webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -70,6 +71,11 @@ const GestoresIndexRoute = GestoresIndexRouteImport.update({
   path: '/gestores/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCaktoWebhookRoute = ApiPublicCaktoWebhookRouteImport.update({
+  id: '/api/public/cakto-webhook',
+  path: '/api/public/cakto-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/gestores/': typeof GestoresIndexRoute
+  '/api/public/cakto-webhook': typeof ApiPublicCaktoWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/gestores': typeof GestoresIndexRoute
+  '/api/public/cakto-webhook': typeof ApiPublicCaktoWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/gestores/': typeof GestoresIndexRoute
+  '/api/public/cakto-webhook': typeof ApiPublicCaktoWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/gestores/'
+    | '/api/public/cakto-webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/gestores'
+    | '/api/public/cakto-webhook'
   id:
     | '__root__'
     | '/'
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/gestores/'
+    | '/api/public/cakto-webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -158,6 +170,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   GestoresIndexRoute: typeof GestoresIndexRoute
+  ApiPublicCaktoWebhookRoute: typeof ApiPublicCaktoWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -232,6 +245,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GestoresIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cakto-webhook': {
+      id: '/api/public/cakto-webhook'
+      path: '/api/public/cakto-webhook'
+      fullPath: '/api/public/cakto-webhook'
+      preLoaderRoute: typeof ApiPublicCaktoWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -246,6 +266,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   GestoresIndexRoute: GestoresIndexRoute,
+  ApiPublicCaktoWebhookRoute: ApiPublicCaktoWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
