@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import officialLogo from "../assets/vyncopay-logo-official.png.asset.json";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -94,7 +95,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "VyncoPay" },
       { property: "og:description", content: "VyncoPay" },
       { property: "og:type", content: "website" },
+      {
+        property: "og:image",
+        content: `https://warm-fuzzy-creations.lovable.app${officialLogo.url}`,
+      },
       { name: "twitter:card", content: "summary_large_image" },
+      {
+        name: "twitter:image",
+        content: `https://warm-fuzzy-creations.lovable.app${officialLogo.url}`,
+      },
     ],
     links: [
       {
